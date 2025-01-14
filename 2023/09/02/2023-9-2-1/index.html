@@ -1,0 +1,514 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Unity 中的委托与事件 | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="前言 本篇博客是为了给下一篇博客：UE 中的委托机制，铺路的。起因是在学习 ue 的过程中发现 ue 使用委托这个概念的频率与深度都比 unity 中要高得多，因此在这里总结一下学习 unity 期间对于委托的理解。 C# 中的委托与事件 C# 委托 ( delegate ) C# 中的委托（Delegate）类似于 C 或 C++ 中函数的指针。委托（Delegate） 是存有对某个方法的引用的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unity 中的委托与事件">
+<meta property="og:url" content="https://qlipphoth.github.io/2023/09/02/2023-9-2-1/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="前言 本篇博客是为了给下一篇博客：UE 中的委托机制，铺路的。起因是在学习 ue 的过程中发现 ue 使用委托这个概念的频率与深度都比 unity 中要高得多，因此在这里总结一下学习 unity 期间对于委托的理解。 C# 中的委托与事件 C# 委托 ( delegate ) C# 中的委托（Delegate）类似于 C 或 C++ 中函数的指针。委托（Delegate） 是存有对某个方法的引用的">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg">
+<meta property="article:published_time" content="2023-09-02T22:38:57.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="Unity">
+<meta property="article:tag" content="C#">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2023/09/02/2023-9-2-1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Unity 中的委托与事件',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Unity 中的委托与事件</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2023-09-02T22:38:57.000Z" title="Created 2023-09-02 22:38:57">2023-09-02</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Unity/">Unity</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">2.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>8min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Unity 中的委托与事件"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="前言">前言</h2>
+<p>本篇博客是为了给下一篇博客：<a href="https://qlipphoth.github.io/2023/09/15/2023-9-15-1/">UE 中的委托机制</a>，铺路的。起因是在学习 ue 的过程中发现 ue 使用委托这个概念的频率与深度都比 unity 中要高得多，因此在这里总结一下学习 unity 期间对于委托的理解。</p>
+<h2 id="C-中的委托与事件">C# 中的委托与事件</h2>
+<h3 id="C-委托-delegate">C# 委托 ( delegate )</h3>
+<p>C# 中的委托（Delegate）类似于 C 或 C++ 中函数的指针。委托（Delegate） 是<strong>存有对某个方法的引用的一种引用类型变量</strong>。引用可在运行时被改变。</p>
+<p>委托（Delegate）特别用于实现事件和回调方法。所有的委托（Delegate）都派生自 System.Delegate 类。</p>
+<ol>
+<li>声明委托</li>
+</ol>
+<p>委托声明决定了可由该委托引用的方法。委托可指向一个与其具有相同标签的方法。</p>
+<p>例如，假设有一个委托：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">delegate</span> <span class="built_in">int</span> <span class="title">MyDelegate</span> (<span class="params"><span class="built_in">string</span> s</span>)</span>;</span><br></pre></td></tr></table></figure>
+<p>上面的委托可被用于引用任何一个带有一个单一的 <code>string</code> 参数的方法，并返回一个 <code>int</code> 类型变量。</p>
+<p>声明委托的语法如下：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">delegate</span> &lt;<span class="keyword">return</span> type&gt; &lt;<span class="built_in">delegate</span>-name&gt; &lt;parameter list&gt;</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>实例化委托</li>
+</ol>
+<p>一旦声明了委托类型，委托对象必须使用 new 关键字来创建，且与一个特定的方法有关。当创建委托时，传递到 new 语句的参数就像方法调用一样书写，但是不带有参数。例如：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">delegate</span> <span class="keyword">void</span> <span class="title">printString</span>(<span class="params"><span class="built_in">string</span> s</span>)</span>;</span><br><span class="line">...</span><br><span class="line">printString ps1 = <span class="keyword">new</span> printString(WriteToScreen);</span><br><span class="line">printString ps2 = <span class="keyword">new</span> printString(WriteToFile);</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>委托的多播</li>
+</ol>
+<p>委托对象可使用 “+” 运算符进行合并。一个合并委托调用它所合并的两个委托。只有相同类型的委托可被合并。“-” 运算符可用于从合并的委托中移除组件委托。</p>
+<p>使用委托的这个有用的特点，您可以创建一个委托被调用时要调用的方法的调用列表。这被称为委托的 多播（multicasting），也叫组播。</p>
+<h3 id="为什么-C-会有委托">为什么 C# 会有委托?</h3>
+<p>解决观察者模式的缺陷。这里又引申出一个问题，什么是观察者模式，观察者模式的缺陷又是什么？在回答这个问题前，我们其实已经知道一个答案，那就是先有设计模式中的观察者模式，再有委托事件这一技术。它有一个前后顺序，如果你要彻底学会委托，那么就要先学会观察者模式，还要了解观察者模式的缺陷。</p>
+<h3 id="观察者模式的缺陷">观察者模式的缺陷</h3>
+<p>观察者模式是对主题对象和观察者对象进行解耦，使双方都依赖与抽象，而不是依赖于对方的具体对象，使双方的变化都不会影响到对方的具体对象。当多个对象需要根据一个对象的状态发生相应的改变或操作时，可使用观察者模式。</p>
+<p>这里我写一个小 demo，非常简洁。还是猫和老鼠，猫是主题对象，人和老鼠是观察者。猫叫的时候，人和老鼠要执行相应操作。</p>
+<h4 id="使用观察者模式">使用观察者模式</h4>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System.Collections;</span><br><span class="line"><span class="keyword">using</span> System.Collections.Generic;</span><br><span class="line"><span class="keyword">using</span> UnityEngine;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">ObserverCatDemo</span> : <span class="title">MonoBehaviour</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">Start</span>()</span></span><br><span class="line">    &#123;</span><br><span class="line">        CatSubject cat = <span class="keyword">new</span> CatSubject();</span><br><span class="line">        Mouse mouse = <span class="keyword">new</span> Mouse();</span><br><span class="line">        Person person = <span class="keyword">new</span> Person();</span><br><span class="line">        cat.Add(mouse);</span><br><span class="line">        cat.Add(person);</span><br><span class="line">        cat.Call();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 抽象类，代表被观察者</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title">Subjectss</span></span><br><span class="line">&#123;   </span><br><span class="line">    <span class="comment">// 添加观察者</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">Add</span>(<span class="params">Observerss observer</span>)</span>;</span><br><span class="line">    <span class="comment">// 移除观察者</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">Remove</span>(<span class="params">Observerss observer</span>)</span>;</span><br><span class="line">    <span class="comment">// 通知观察者</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">Call</span>()</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 抽象类，代表观察者</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title">Observerss</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 被通知后状态更新</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">Update</span>()</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 猫，这里作为被观察者</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">CatSubject</span> : <span class="title">Subjectss</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> IList&lt;Observerss&gt; Observers = <span class="keyword">new</span> List&lt;Observerss&gt;();</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">Add</span>(<span class="params">Observerss observer</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        Observers.Add(observer);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">Remove</span>(<span class="params">Observerss observer</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        Observers.Remove(observer);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 重写 call 方法，遍历并通知所有的观察者</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">Call</span>()</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">foreach</span> (Observerss observer <span class="keyword">in</span> Observers)</span><br><span class="line">        &#123;</span><br><span class="line">            observer.Update();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 老鼠，观察者</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Mouse</span> : <span class="title">Observerss</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">Update</span>()</span></span><br><span class="line">    &#123;</span><br><span class="line">        Debug.Log(<span class="string">&quot;猫叫了，我得跑了&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 人，观察者</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Person</span> : <span class="title">Observerss</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">Update</span>()</span></span><br><span class="line">    &#123;</span><br><span class="line">        Debug.Log(<span class="string">&quot;猫叫了，应该是饿了&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="使用委托">使用委托</h4>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">using</span> System.Collections.Generic;</span><br><span class="line"><span class="keyword">using</span> UnityEngine;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">DelegateCat</span>:<span class="title">MonoBehaviour</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">Start</span>()</span></span><br><span class="line">    &#123;</span><br><span class="line">        DeCat deCat = <span class="keyword">new</span> DeCat();</span><br><span class="line">        DePerson person = <span class="keyword">new</span> DePerson();</span><br><span class="line">        DeMouse mouse = <span class="keyword">new</span> DeMouse();</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 将方法注册进委托中</span></span><br><span class="line">        deCat.call += person.Notify;</span><br><span class="line">        deCat.call += mouse.Run;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 委托发布，自动遍历注册的所有方法</span></span><br><span class="line">        deCat.call();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 声明委托类型：参数与返回值均为空的类型</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">delegate</span> <span class="keyword">void</span> <span class="title">CallEvent</span>()</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">DeCat</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 声明了一个 CallEvent 类型的委托</span></span><br><span class="line">    <span class="keyword">public</span> CallEvent call;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">DePerson</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Notify</span>()</span></span><br><span class="line">    &#123;</span><br><span class="line">        Debug.Log(<span class="string">&quot;猫叫了，应该是饿了&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">DeMouse</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Run</span>()</span></span><br><span class="line">    &#123;</span><br><span class="line">        Debug.Log(<span class="string">&quot;猫叫了，我得跑了!&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="对比">对比</h3>
+<p>做一下对比可以发现：</p>
+<p>1.实现同样的功能，使用委托非常的简洁，并且主题猫的类里没有任何观察者类成员，两者是完全独立的。而观察者模式双方并没有完全的独立，抽象主题通知时依然依赖于抽象观察者。</p>
+<p>2.观察者不需要继承观察者接口，它的通知方法名可以不同，比如说人的执行方法是 <code>Notify()</code>，猫的执行方法是 <code>Run()</code>，现实中本就是这样的，方法名本就不一定相同。</p>
+<p>也就是说观察者模式的缺陷为：</p>
+<p>1.抽象主题依旧依赖于抽象观察者。</p>
+<p>2.具体的观察者，通知方法被固定了。</p>
+<p><strong>观察者模式存在的意义就是解耦，它使观察者和被观察者的逻辑不再搅在一起。而是彼此独立，互不依赖。而使用委托则能使得观察者和主题完全解耦，甚至不需要知道对方的存在。</strong></p>
+<h3 id="事件-event">事件 ( event )</h3>
+<p><strong>一言以蔽之，事件就是被 <code>event</code> 关键字修饰过的委托类型</strong>。对委托的例子做一个小小的变动：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">DeCat</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">event</span> CallEvent call;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>没错我们给声明前面加个 <code>event</code> 就可以了，但是你突然发现，编译不过去，有报错。这也是事件与委托核心的区别。</p>
+<p>事件是类或对象向其他类或对象通知发生的一种特殊签名的委托。它的本意是对委托的封装，它在外部只能被订阅或取消订阅，但是不能发布。一句话总结：<strong>事件只能在外部被订阅，但是不能在外部被触发。只能通过内部的公开方法，在方法内部触发事件，这样可以使得程序更加的安全。</strong></p>
+<p>这里我通过的例子来说明：当使用委托变量时，客户端可以直接通过委托变量触发事件，也就是直接调用 <code>deCat.call()</code>；这将会影响到所有注册了该委托的变量，而事件的本意应该为在事件发布者在其本身的某个行为中触发。通过添加 <code>event</code> 关键字来发布事件，事件发布者的封装性会更好，事件仅仅是供其他类型订阅，而客户端不能直接触发事件（语句 <code>deCat.call()</code> 无法通过编译），事件只能通过事件发布者 <code>DeCat</code> 类的内部触发（比如在方法 <code>deCat.CallMethod()</code> 中）。换言之，就是 <code>call()</code> 语句只能在 <code>deCat</code> 内部被调用。这样才是事件的本意，事件发布者的封装才会更好。</p>
+<h2 id="Action-Func-Predicate">Action &amp; Func &amp; Predicate</h2>
+<p><s>写完 STL 现在看到 predicate 就 PTSD 了有木有。</s></p>
+<p>C# 内置了几种泛型的委托，使用起来非常方便，分别是 <code>Action</code>、<code>Func</code> 与 <code>Predicate</code>。</p>
+<h3 id="Action">Action</h3>
+<p><code>Action</code> 是无返回值的泛型委托，通过函数重载提供了 <code>0 ~ 16</code> 个参数不同类型的 <code>Action</code> 。</p>
+<ul>
+<li>Action 的定义</li>
+</ul>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">delegate</span> <span class="keyword">void</span> <span class="title">Action</span>()</span>;                               <span class="comment">// 无参数</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">delegate</span> <span class="keyword">void</span> <span class="title">Action</span>&lt;<span class="keyword">in</span> <span class="title">T</span>&gt;(<span class="params">T obj</span>)</span>;                    <span class="comment">// 1个参数</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">delegate</span> <span class="keyword">void</span> <span class="title">Action</span>&lt;<span class="keyword">in</span> <span class="title">T1</span>, <span class="keyword">in</span> <span class="title">T2</span>&gt;(<span class="params">T1 arg1, T2 arg2</span>)</span>; <span class="comment">// 2个参数</span></span><br><span class="line"><span class="comment">// ...... 最多16个参数</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>Action 的使用举例</li>
+</ul>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用举例</span></span><br><span class="line">Action action0 = () =&gt; &#123; &#125;;</span><br><span class="line">Action&lt;<span class="built_in">int</span>&gt; action1 = (a) =&gt; &#123; &#125;;</span><br><span class="line">Action&lt;<span class="built_in">int</span>, <span class="built_in">float</span>&gt; action2 = (a, b) =&gt; &#123; &#125;;</span><br><span class="line">Action&lt;<span class="built_in">int</span>, <span class="built_in">int</span>, <span class="built_in">double</span>&gt; action2 = (a, b, c) =&gt; &#123; &#125;;</span><br><span class="line"><span class="comment">// ......</span></span><br></pre></td></tr></table></figure>
+<h3 id="Func">Func</h3>
+<p><code>Func</code> 是有返回值的泛型委托，通过函数重载提供了 <code>0 ~ 16</code> 个参数不同类型的 <code>Func</code> 。</p>
+<ul>
+<li>Func 的定义</li>
+</ul>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">delegate</span> TResult <span class="title">Func</span>&lt;<span class="keyword">out</span> <span class="title">TResult</span>&gt;()</span>; <span class="comment">// 无参数</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">delegate</span> TResult <span class="title">Func</span>&lt;<span class="keyword">in</span> <span class="title">T</span>, <span class="keyword">out</span> <span class="title">TResult</span>&gt;(<span class="params">T arg</span>)</span>; <span class="comment">// 1个参数</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">delegate</span> TResult <span class="title">Func</span>&lt;<span class="keyword">in</span> <span class="title">T1</span>, <span class="keyword">in</span> <span class="title">T2</span>, <span class="keyword">out</span> <span class="title">TResult</span>&gt;(<span class="params">T1 arg1, T2 arg2</span>)</span>; <span class="comment">// 2个参数</span></span><br><span class="line"><span class="comment">// ...... 最多16个参数（不包括TResult）</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>Func 的使用举例</li>
+</ul>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用举例</span></span><br><span class="line">Func&lt;<span class="built_in">int</span>&gt; func0 = () =&gt; &#123; <span class="keyword">return</span> <span class="number">0</span>; &#125;;</span><br><span class="line">Func&lt;<span class="built_in">int</span>, <span class="built_in">int</span>&gt; func1 = (a) =&gt; &#123; <span class="keyword">return</span> a; &#125;;</span><br><span class="line">Func&lt;<span class="built_in">int</span>, <span class="built_in">int</span>, <span class="built_in">int</span>&gt; func2 = (a, b) =&gt; &#123; <span class="keyword">return</span> a + b; &#125;;</span><br><span class="line"><span class="comment">// ......</span></span><br></pre></td></tr></table></figure>
+<h3 id="Predicate">Predicate</h3>
+<p><code>Func</code> 是返回值类型为 <code>bool</code> 型的泛型委托，<strong>只能传递一个参数</strong>，因此没有其他的重载。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 只有一个泛型委托，没有多参数重载</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">delegate</span> <span class="built_in">bool</span> <span class="title">Predicate</span>&lt;<span class="keyword">in</span> <span class="title">T</span>&gt;(<span class="params">T obj</span>)</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用举例</span></span><br><span class="line">Predicate&lt;<span class="built_in">int</span>&gt; p = (a) =&gt; &#123; <span class="keyword">return</span> a &gt; <span class="number">0</span>; &#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="参考资料">参考资料</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://developer.unity.cn/projects/602603cbedbc2a0020405f83">帮你理清C#委托、事件、Action、Func</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/shahdza/p/12261784.html">【Unity|C#】基础篇(11)——内置的泛型委托（Action/Func/Predicate）</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/q493201681/article/details/82352616">Unity C#基础：委托与事件</a></li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2023/09/02/2023-9-2-1/">https://qlipphoth.github.io/2023/09/02/2023-9-2-1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity/">Unity</a><a class="post-meta__tags" href="/tags/C/">C#</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/09/01/2023-9-1-2/" title="从零开始的 STL 实现记录：Container-2.3"><img class="cover" src="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">从零开始的 STL 实现记录：Container-2.3</div></div></a></div><div class="next-post pull-right"><a href="/2023/09/03/2023-9-3-1/" title="从零开始的 STL 实现记录：Container-3.1"><img class="cover" src="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">从零开始的 STL 实现记录：Container-3.1</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2024/08/05/2024-8-5-1/" title="UGUI 源码解析"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-08-05</div><div class="title">UGUI 源码解析</div></div></a></div><div><a href="/2024/11/03/2024-11-3-1/" title="UGUI 番外之合批"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-11-03</div><div class="title">UGUI 番外之合批</div></div></a></div><div><a href="/2024/10/25/2024-10-25-2/" title="Unity 补完计划（四）：UGUI-16：Dropdown"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-25</div><div class="title">Unity 补完计划（四）：UGUI-16：Dropdown</div></div></a></div><div><a href="/2024/10/25/2024-10-25-1/" title="Unity 补完计划（四）：UGUI-15：ScrollBar &amp; ScrollRect"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-25</div><div class="title">Unity 补完计划（四）：UGUI-15：ScrollBar &amp; ScrollRect</div></div></a></div><div><a href="/2024/10/23/2024-10-23-1/" title="Unity 补完计划（四）：UGUI-14：InputField"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-23</div><div class="title">Unity 补完计划（四）：UGUI-14：InputField</div></div></a></div><div><a href="/2024/10/17/2024-10-17-1/" title="Unity 补完计划（四）：UGUI-13：Toggle &amp; ToggleGroup &amp; Slider"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-17</div><div class="title">Unity 补完计划（四）：UGUI-13：Toggle &amp; ToggleGroup &amp; Slider</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#C-%E4%B8%AD%E7%9A%84%E5%A7%94%E6%89%98%E4%B8%8E%E4%BA%8B%E4%BB%B6"><span class="toc-number">2.</span> <span class="toc-text">C# 中的委托与事件</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#C-%E5%A7%94%E6%89%98-delegate"><span class="toc-number">2.1.</span> <span class="toc-text">C# 委托 ( delegate )</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-C-%E4%BC%9A%E6%9C%89%E5%A7%94%E6%89%98"><span class="toc-number">2.2.</span> <span class="toc-text">为什么 C# 会有委托?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F%E7%9A%84%E7%BC%BA%E9%99%B7"><span class="toc-number">2.3.</span> <span class="toc-text">观察者模式的缺陷</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F"><span class="toc-number">2.3.1.</span> <span class="toc-text">使用观察者模式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%A7%94%E6%89%98"><span class="toc-number">2.3.2.</span> <span class="toc-text">使用委托</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%B9%E6%AF%94"><span class="toc-number">2.4.</span> <span class="toc-text">对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8B%E4%BB%B6-event"><span class="toc-number">2.5.</span> <span class="toc-text">事件 ( event )</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Action-Func-Predicate"><span class="toc-number">3.</span> <span class="toc-text">Action &amp; Func &amp; Predicate</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Action"><span class="toc-number">3.1.</span> <span class="toc-text">Action</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Func"><span class="toc-number">3.2.</span> <span class="toc-text">Func</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Predicate"><span class="toc-number">3.3.</span> <span class="toc-text">Predicate</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">4.</span> <span class="toc-text">参考资料</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

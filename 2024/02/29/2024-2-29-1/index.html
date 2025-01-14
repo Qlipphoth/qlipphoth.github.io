@@ -1,0 +1,614 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>UE4智能指针与STL智能指针对比分析 | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="概要 UE4的智能指针有很多种，大体分为两类，一类是专门为UObject设计的，比如TStrongObjectPtr，TWeakObjectPtr，一类是通用的智能指针，比如：TSharedPtr常用的共享智能指针，TSharedRef为UE原创非空共享引用，TWeakPtr弱指针，TSharedFromThis能共享自己的智能指针。文章主要从UE的C++设计与结构层面上分析，主要以UE为主，ST">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE4智能指针与STL智能指针对比分析">
+<meta property="og:url" content="https://qlipphoth.github.io/2024/02/29/2024-2-29-1/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="概要 UE4的智能指针有很多种，大体分为两类，一类是专门为UObject设计的，比如TStrongObjectPtr，TWeakObjectPtr，一类是通用的智能指针，比如：TSharedPtr常用的共享智能指针，TSharedRef为UE原创非空共享引用，TWeakPtr弱指针，TSharedFromThis能共享自己的智能指针。文章主要从UE的C++设计与结构层面上分析，主要以UE为主，ST">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg">
+<meta property="article:published_time" content="2024-02-29T14:29:48.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="Cpp">
+<meta property="article:tag" content="UE">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2024/02/29/2024-2-29-1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'UE4智能指针与STL智能指针对比分析',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">UE4智能指针与STL智能指针对比分析</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-02-29T14:29:48.000Z" title="Created 2024-02-29 14:29:48">2024-02-29</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/UE/">UE</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">7.4k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>25min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="UE4智能指针与STL智能指针对比分析"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1>概要</h1>
+<p>UE4的智能指针有很多种，大体分为两类，一类是专门为<code>UObject</code>设计的，比如<code>TStrongObjectPtr</code>，<code>TWeakObjectPtr</code>，一类是通用的智能指针，比如：<code>TSharedPtr</code>常用的共享智能指针，<code>TSharedRef</code>为UE原创非空共享引用，<code>TWeakPtr</code>弱指针，<code>TSharedFromThis</code>能共享自己的智能指针。文章主要从UE的C++设计与结构层面上分析，主要以UE为主，STL为辅，UE中关键细节设计在第二章节讨论。</p>
+<p>先看UE4的智能指针一些特性，当然这不是全部：</p>
+<ol>
+<li>结构设计良好，模块化，耦合度低（会分析）</li>
+<li>防止内存泄漏：就是自动销毁回收资源</li>
+<li>实现了弱引用：在资源销毁时，弱指针会进一步进行检查，能更加安全</li>
+<li>线程安全与否可以通过模板参数配置，非安全版速度更快，默认是非安全版（会分析）</li>
+<li>可消除循环引用，通过弱指针来实现</li>
+<li>开销小，支持const，很好的类型转换、占用空间小。（会分析）</li>
+<li>支持非空智能引用，就是UE原创的TSharedRef（会分析）</li>
+<li>支持自身智能指针，就是TSharedFromThis（会分析）</li>
+<li>和UE内部方法与命名一致</li>
+<li>没有异常处理，没有支持分配器</li>
+<li>对比stl暂不支持数组</li>
+</ol>
+<p>文中UE代码源文件：<code>SharedPointer.h</code>与<code>SharedPointerInternals.h</code>，属于UE的基础模板库代码，STL源码我用VS2022的版本，对应<code>\MSVC\14.30.30704\include\memory</code>文件下。四种智能指针除了<code>TSharedRef</code>为UE原创外，基它在STL标准库中均有对标的实现，关系如下：</p>
+<ul>
+<li><code>TSharedPtr</code>&lt;----&gt;<code>std::shared_ptr</code></li>
+<li><code>TWeakPt</code>r&lt;----&gt;<code>std::weak_ptr</code></li>
+<li><code>TSharedFromThis</code>&lt;----&gt;<code>std::enable_shared_from_this</code></li>
+<li><code>TUniquePtr</code>&lt;----&gt;<code>std::unique_ptr</code> 这次就不再单独讨论了</li>
+</ul>
+<h1>UE 设计结构与 STL 区别</h1>
+<h2 id="UE-智能指针总览">UE 智能指针总览</h2>
+<p>个人感觉UE这一点可能没有STL那么多版本迭代与兼容的包袱，也不用细节面面具到，个人感觉模块化与结构化都比较好。数据，操作，接口与继承都不错，部分可以自由的组合。先看一张整体结构图，可能字比较小，请点击放大查看原图</p>
+<p><img src="https://s2.loli.net/2024/02/29/NIU6K4RwvAqkXBS.png" alt="image.png"></p>
+<h2 id="计数基类-FReferenceControllerBase">计数基类 <code>FReferenceControllerBase</code></h2>
+<p>智能指针之所以智能，就是对托管的资源引入一个计数器，总体上当发生复制时计数器自动增加一，析构时自动减一;当计数减少到0就释放资源，否则不释放。所以只要把这个计数器管理好，就能做到用户无需显式的释放资源，相比原来手动释放资源更加智能，因此叫作智能指针。</p>
+<p>UE的计数器基类<code>FReferenceControllerBase</code>，可以看上面总览图，它处于最上层。它只是计数，里面有两个int32成员：<code>SharedReferenceCount</code>共享计数器与<code>WeakReferenceCount</code>弱指针引用计数器，并且构造时初始化都为1。这个类禁拷贝，并提供<code>DestroyObject</code>释放纯虚接口。</p>
+<p>STL中计数器基类是<code>_Ref_count_base</code>，两者设计基本没有区别，计数<code>_Uses</code>与<code>_Weaks</code>都是32位的，只是名称不同，同样初始化都为1。同样禁拷贝，只是stl引用delete关键字删除了拷贝相关函数，UE用原始private修饰禁用法。同样提供了destory纯虚接口。</p>
+<p><strong>不同之处：</strong> STL把计数器增加、减少，读取直接放到这个基类中，采用无锁Atomic原子化操作，这些操作强制支持多线程（注STL的数据读取并非支持多线程处理）；反观UE就把这块抽象出到后面要说的纯操作接口类中，显得更加模块化，并且是否多线程让用户用模板参数可选，从所周知，非多线程速度更快，另外STL直接也提供了<code>_Delete_this</code>释放自己纯虚接口。</p>
+<h2 id="多种计数派生类">多种计数派生类</h2>
+<p>继续看结构图，再向下面，UE提供了两种计数派生类<code>TReferenceControllerWithDeleter</code>和<code>TIntrusiveReferenceController</code>，分别表示带自定义释放器的引用计数器与内存块的引用计数器。而我这边STL看了提供了十个不同的派生类，是十个版本，毫无疑问UE中这两个STL必然能找到对应，STL主要多了无自定义删除器，自定义内存分配器及支持数组及这几种结构之间组合，如<code>_Ref_count_obj2</code>，<code>_Ref_count_unbounded_array_alloc</code>，所以复杂的多，毕竟他们是语言专家，供给所有人使用，这也正常。下面继续看UE的派生类。</p>
+<h3 id="TReferenceControllerWithDeleter"><code>TReferenceControllerWithDeleter</code></h3>
+<p>我们主要看UE的，更多的是最常用的 <code>TReferenceControllerWithDeleter</code>，STL版本对应 <code>_Ref_count_resource</code>，就不贴代码了，有兴趣自己跳转看一下。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> ObjectType, <span class="keyword">typename</span> DeleterType&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TReferenceControllerWithDeleter</span> : <span class="keyword">private</span> DeleterType, <span class="keyword">public</span> FReferenceControllerBase</span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">DestroyObject</span><span class="params">()</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        (*<span class="built_in">static_cast</span>&lt;DeleterType*&gt;(<span class="keyword">this</span>))(Object);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 省略其它代码</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    ObjectType* Object;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>TReferenceControllerWithDeleter</code>和前面的<code>FReferenceControllerBase</code>不同之处，多了两个模板参数：<code>ObjectType</code>表示数据类型，<code>DeleterType</code>表示删除器类型，删除器实质算是一个仿函数，内部重载了()用来自定义内存释放的处理。成员上多了一个<code>ObjectType*</code>类型指针对象<code>Object</code>，用来存智能指针所指的对象。同样和基类一样，都是要禁止拷贝的。</p>
+<p>设计结构上注意**私继承了<code>DeleteType</code>**与公有继承<code>FReferenceControllerBase</code>，构造函数传入的 <code>ObjectType</code> 指针与<code>DeleterType</code> 型对象并进行初始化;重点重写了 <code>DestroyObject</code> 虚函数，将<code>this</code>指针强转为<code>DeleterType</code>指针，并且调用释放器重载()函数，传入指针对象<code>Ojbect</code>，进行内存的释放。</p>
+<h3 id="对比STL设计，私有继承好还是组合好？">对比STL设计，私有继承好还是组合好？</h3>
+<p>反观STL中，设计总体差不多，没有私有继承 <code>DeleterType</code>，而是将其放到 <code>_Compressed_pair&lt;_Dx, _Resource&gt;</code> 使用了类组合结构代替了继承，同样也重写 <code>_Destroy</code>，同样也继续调用重载()，还过这里STL版本提供了重载 _<code>Delete_this()</code>，直接能释放自己，UE给还的更高层次才提供同功能。</p>
+<blockquote>
+<p>关于私有继承与组合是C++一个比较有争议的话题，个人理解UE这里使用私有继承才是高水平的体现，能进行空基类优化，还能阻止向基类参数转换时歧义，以及避免部分移动语意时资源交换的不完整性。但STL的这个pair组合可不是吃素的，内部也挺复杂，我这种菜鸟都能考虑到的点，他们早就能想到了，其内部也是私有继承，也支持空基类优化，有兴趣的可以看看源码。所以STL的也没问题，有问题的是我们自己简单写写组合！</p>
+</blockquote>
+<h3 id="TIntrusiveReferenceController"><code>TIntrusiveReferenceController</code></h3>
+<p>有了2.2.1，2.2.2 小节内容，这里就比较容易了。这里STL版本对应<code>_Ref_count_obj2</code>，就不贴STL代码，有兴趣自己跳转看一下</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> ObjectType&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TIntrusiveReferenceController</span> : <span class="keyword">public</span> FReferenceControllerBase</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span>... ArgTypes&gt;</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">TIntrusiveReferenceController</span><span class="params">(ArgTypes&amp;&amp;... Args)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">new</span> ((<span class="type">void</span>*)&amp;ObjectStorage) <span class="built_in">ObjectType</span>(<span class="built_in">Forward</span>&lt;ArgTypes&gt;(Args)...);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">DestroyObject</span><span class="params">()</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="built_in">DestructItem</span>((ObjectType*)&amp;ObjectStorage);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 省略其它代码</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">mutable</span> TTypeCompatibleBytes&lt;ObjectType&gt; ObjectStorage;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>TIntrusiveReferenceController</code>与<code>TReferenceControllerWithDeleter</code>除了保留相同的不可拷贝与复制及继承自<code>FReferenceControllerBase</code>，还是有较大的不同，首先只有一个模板参数，不再可以定制化删除器，走统一流程：模板函数<code>DestructItem</code>调用，函数内部借<code>if constexpr (!TIsTriviallyDestructible&lt;ElementType&gt;::Value)</code>，模板编译期判断类是否可以析构，如果可以调用其析构函数，容器中常用这招 。更大是结构上不同，这里没有保存指针，而是类保留<code>ObjectType</code>对象大小的内存块，这导致本<code>controller</code>类对象通常比较大。</p>
+<p>具体来说：成员对象<code>ObjectStorage</code>是个具体的对象而非指针，是UE封装的模板类<code>TTypeCompatibleBytes&lt;ObjectType&gt;</code>，跟踪模板代码实质上就是等同<code>int8[sizeof(ObjectType)]</code>大小的内存块，当然还有考虑对齐，后绪留给我们自己显式的对这块内存初始化。这里等同一份对象准备好了同等内存空间，只是这一步还没有初始化。</p>
+<p>构造函数：设计上我们已经有了一块对象大小的内存块，还没有初始化，<code>ObjectType</code>构造函数可能带多个参数或者不带参，设计上要用C++的可变参及万能引用及完美转发，由于我们已经有了内存块，设计上直接进行<code>new placement</code>重载加构造函数调用，看上面的代码也是和我们分析一致。</p>
+<blockquote>
+<p>对比STL一下，STL并非像UE在内部用模板转来转去显式的构造<code>sizeof(ObjectType)</code>大小内存块。MSVC的团队实现STL代码，不愧是大师级，整些<code>union &#123;_Wrap&lt;_Ty&gt; _Storage;&#125;</code>，经过wrap一下,他们宁愿 <code>#pragma warning(disable : 4624)</code> 压警告，也要采用简洁的炫技之流来代替，我只能说牛X。构造函数实质实一样的，但笔者开了C++20编译，他们也有点炫技吧，欣赏MSVC大佬的巧妙实现，建议有兴趣者读一读STL这里的代码。</p>
+</blockquote>
+<h2 id="操作接口类-FReferenceControllerOps">操作接口类 <code>FReferenceControllerOps</code></h2>
+<p>前面2.1小节提到STL版本对计数基类中的强/弱引用计数是直接放到基类<code>_Ref_count_base</code>中了，并且只提供了多线程安全版本。作为对比UE将其抽出，封装成模板类 <code>FReferenceControllerOps</code>，给定模板参数Mode进行特化。包括<code>FReferenceControllerOps&lt;ESPMode::ThreadSafe&gt;</code> 多线程安全版本与 <code>FReferenceControllerOps&lt;ESPMode::NotThreadSafe&gt;</code>非多线程安全版本。两者的实质区别就是读写计数器s数据是否经过原子化封装，比如 <code>AtomicRead</code>，<code>InterlockedIncrement</code>，<code>InterlockedCompareExchange</code>，肯定这种支持多线程安全版本会慢一些，但能换来计数的的安全。</p>
+<p>从设计来上说 <code>FReferenceControllerOps</code> 内部没有存储任何的成员，纯属功能接口类，实现都放到静态成员函数中了，这一点UE做的确不错，隔离的比较好，且支持配制，再略调整一点整个类都可以做为模板参数传入了。操作对象 <code>FReferenceControllerBase*</code> 都是函数传过来的基类指针。提供了6个函数：</p>
+<ul>
+<li>增加共享指针计数</li>
+<li>获取共享指针计数</li>
+<li>条件增加共享指针计数，条件是这个共享引用至少保留一次计数，如果已经失效的，不再增加</li>
+<li>增加弱引用指针计数</li>
+<li>释放共享指针对象，条件是共享计数器本次减到0，会调用计数类的 <code>DestroyObject()</code> 函数，释放托管的资源。同时尝试释放一次弱引用，如果弱引用计数刚好减到0，回收计数器<code>ReferenceController</code>本身的资源，同STL中2.2.2小节中的<code>_Delete_this()</code>。</li>
+<li>释放弱引用计数，如果弱引用计数刚好减到0，回收计数器<code>ReferenceController</code>本身的资源，同STL中2.2.2小节中的<code>_Delete_this()</code>，这些<code>ReferenceController</code>一定是在堆上分配的内存。</li>
+</ul>
+<h2 id="多种辅助模板类及模板函数">多种辅助模板类及模板函数</h2>
+<h3 id="生成计数类的模板函数">生成计数类的模板函数</h3>
+<p>主要借助模板函数能较好根据传入的参数，推断出参数的类型，无需显式的写出。在函数内部再对模板参进行再组合或变换，生成新的结构，这也是模板编程中常用的技术巧。UE提供了三个模板函数，用来动态生成2.2小节的 <code>TReferenceControllerWithDeleter</code> 与<code>TIntrusiveReferenceController</code> 对象,第二个函数删除器我们可以自己定义，第一人合用默认 <code>DefaultDeleter</code> 删除器。三个函数内部用 new 将对象生成堆内存上，这点非常重要，一般用于传给某些类的构造函数调用，只不过返回值类型擦除为基类。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> ObjectType&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> FReferenceControllerBase* <span class="title">NewDefaultReferenceController</span><span class="params">(ObjectType* Object)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> TReferenceControllerWithDeleter&lt;ObjectType, DefaultDeleter&lt;ObjectType&gt;&gt;(Object, <span class="built_in">DefaultDeleter</span>&lt;ObjectType&gt;());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> ObjectType, <span class="keyword">typename</span> DeleterType&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> FReferenceControllerBase* <span class="title">NewCustomReferenceController</span><span class="params">(ObjectType* Object, DeleterType&amp;&amp; Deleter)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> TReferenceControllerWithDeleter&lt;ObjectType, <span class="keyword">typename</span> TRemoveReference&lt;DeleterType&gt;::Type&gt;(Object, <span class="built_in">Forward</span>&lt;DeleterType&gt;(Deleter));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> ObjectType, <span class="keyword">typename</span>... ArgTypes&gt;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> TIntrusiveReferenceController&lt;ObjectType&gt;* <span class="title">NewIntrusiveReferenceController</span><span class="params">(ArgTypes&amp;&amp;... Args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">TIntrusiveReferenceController</span>&lt;ObjectType&gt;(<span class="built_in">Forward</span>&lt;ArgTypes&gt;(Args)...);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对比STL版本，他们提供了更多，部分直接放到智能指类的私有函数中直接new对象，有的经过模板转来转去，设计的比较复杂。</p>
+<h3 id="默认的删除器">默认的删除器</h3>
+<p>这个比较简单，就是重载一下()调用，内部转到系统<code>delete</code>调用。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Type&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">DefaultDeleter</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function">FORCEINLINE <span class="type">void</span> <span class="title">operator</span><span class="params">()</span><span class="params">(Type* Object)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">delete</span> Object;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>对比一下 STL 的也提供了名为<code>default_delete</code>默认删除器，核心实质相同，不同的是他们进行了特化，增加了对数组的特化处理<code>struct default_delete&lt;_Ty[]&gt;</code>，然后就是一些细节考虑的更多。</p>
+<h3 id="原生指针代理FRawPtrProxy">原生指针代理<code>FRawPtrProxy</code></h3>
+<p>这个比较简单，主要为了配套后面用<code>MakeShareable()</code>函数，隐式的将原生指针转换给UE的智能指针，实际上像<code>TSharedPtr</code>他们也提供了直接原生指针的构造函数重载，加这个重载可能防止有人就想传原生指针，这个好像STL没有完全直接人对应。</p>
+<p>实质这里我想到的意义就是一些C++深层次考虑，不知道他们是不是这样想的：当智能指针构造与函数调用连一起时，在编译器优化为先new内存，再调用后绪函数，最后才传到<code>std::shared_ptr</code>构造中，第二步函数发生了异常，可能造成非常隐藏的内存泄露，STL推荐使用<code>std::make_shared</code>，我个人感觉意思上差不多,其他大佬有什么见解也可以说一下。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt; <span class="keyword">class</span> <span class="title class_">ObjectType</span> &gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FRawPtrProxy</span></span><br><span class="line">&#123;</span><br><span class="line">    ObjectType* Object;</span><br><span class="line">    FReferenceControllerBase* ReferenceController;</span><br><span class="line"></span><br><span class="line">    <span class="function">FORCEINLINE <span class="title">FRawPtrProxy</span><span class="params">( ObjectType* InObject )</span></span></span><br><span class="line"><span class="function">        : Object             ( InObject )</span></span><br><span class="line"><span class="function">        , ReferenceController( NewDefaultReferenceController( InObject ) )&#123;</span>&#125;</span><br><span class="line">    <span class="function"><span class="keyword">template</span>&lt; <span class="keyword">class</span> Deleter &gt;</span></span><br><span class="line"><span class="function">    FORCEINLINE <span class="title">FRawPtrProxy</span><span class="params">( ObjectType* InObject, Deleter&amp;&amp; InDeleter )</span></span></span><br><span class="line"><span class="function">        : Object             ( InObject )</span></span><br><span class="line"><span class="function">        , ReferenceController( NewCustomReferenceController( InObject, Forward&lt; Deleter &gt;( InDeleter ) ) )&#123;</span>&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>实现上就是直接将原生指针保存起来，另外保存一个计数器类，使用实质是<code>TReferenceControllerWithDeleter</code>类型，都是放在构函数中。</p>
+<h3 id="辅助生成共享自身指针">辅助生成共享自身指针</h3>
+<p>UE提供了5个<code>EnableSharedFromThis</code>辅助函数尝试生成共享自己的指针，原理上主要借助模板函数的重载与隐式转换及<code>SFINAE</code>技术，两个是处理<code>TSharedRef</code>共享引用，两个是处理<code>TSharedPtr</code>共享指针，包括带不带const版本，形式差不多，只贴一个代码就行了。最后一个必然能够调到重载函数，什么也不做。</p>
+<p>先大致说一下，如果一个自身指针能支持转换到<code>TSharedFromThis</code>，那么通过<code>UpdateWeakReferenceInternal</code>从共享引用或共享指针条件的拷贝，生成弱指针引用，完成对自己的引用计数，更加安全。这里实际有点绕人，参见3.4.1小节一步一步具体阐述。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt; <span class="keyword">class</span> SharedRefType, <span class="keyword">class</span> ObjectType, <span class="keyword">class</span> OtherType, ESPMode Mode &gt;</span></span><br><span class="line"><span class="function">FORCEINLINE <span class="type">void</span> <span class="title">EnableSharedFromThis</span><span class="params">( TSharedRef&lt; SharedRefType, Mode &gt; <span class="type">const</span>* InSharedRef, ObjectType <span class="type">const</span>* InObject, TSharedFromThis&lt; OtherType, Mode &gt; <span class="type">const</span>* InShareable )</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>( InShareable != <span class="literal">nullptr</span> )</span><br><span class="line">    &#123;</span><br><span class="line">        InShareable-&gt;<span class="built_in">UpdateWeakReferenceInternal</span>( InSharedRef, <span class="built_in">const_cast</span>&lt; ObjectType* &gt;( InObject ) );</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">FORCEINLINE <span class="type">void</span> <span class="title">EnableSharedFromThis</span><span class="params">( ... )</span> </span>&#123; &#125;</span><br></pre></td></tr></table></figure>
+<h2 id="核心的-FSharedReferencer-与-FWeakReferencer">核心的 <code>FSharedReferencer</code> 与 <code>FWeakReferencer</code></h2>
+<p>这两个类实质是将<code>FReferenceControllerBase</code>与<code>FReferenceControllerOps</code>绑在一起就行了一层封装，前面说过<code>FReferenceControllerBase</code>只负责数据，<code>FReferenceControllerOps</code>只负责操作，这一小节的类就是将两者紧密的取系起来，形成切实有效的逻辑。从上面总体表格中也可以看到和直正智能指针的实现起着承上启下的作用。因为STL没有这样抽象，所以STL没有完全相似的，非要类比的话有个<code>_Ptr_base</code>类作为stl智能指针的基类，有那么一点点的接近，并不能等同。不过stl那边是更多是继承思想，这边是组合思想。</p>
+<h3 id="FSharedReferencer"><code>FSharedReferencer</code></h3>
+<p><code>FSharedReferencer&lt;Mode&gt;</code>用作<code>TSharedRef</code>与<code>TSharedPtr</code>的引用数据实现的根源，控制着托管资源的生命周期控制核心，本身作为成员放到了两个类中，UE这里使用了组合思想，本身模板参数Mode留给用户配置是多线程安全版还是普通快速版。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt; ESPMode Mode &gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">FSharedReferencer</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">typedef</span> FReferenceControllerOps&lt;Mode&gt; TOps;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">template</span>&lt; ESPMode OtherMode &gt; <span class="keyword">friend</span> <span class="keyword">class</span> <span class="title class_">FWeakReferencer</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    FReferenceControllerBase* ReferenceController;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>设计上：本身有个成员<code>FReferenceControllerBase* ReferenceController</code>; 想一下也知道，这里只是用基类指针来进行类型擦除后的存储，真正对象肯定是2.2小节的派生类。类内部有个操作重定义<code>typedef FReferenceControllerOps&lt;Mode&gt; TOps</code>;，这一步前面提到，再进一步更灵活的话，也可以作为模板参数提供。最后就是提供了友元<code>FWeakReferencer</code>，让其也能相到访问。</p>
+<p>功能上<strong>非常重要非常重要</strong>： 构造函数肯定提供多种，主要完成指针类型成员 <code>ReferenceController</code> 的赋值，析构时要尝试释放共享资源。如果没有拷贝时，直接赋值就可以了，但如果是<strong>拷贝就要特别小心处理，这一点是基础</strong>，举出他的几个例子：</p>
+<ol>
+<li><code>const ReferenceController&amp;</code> 左引用拷贝构造：直接指针赋值，如果指针不为空，直接 <code>TOps</code> 调用增加一次共享指针计数。</li>
+<li><code>FSharedReferencer&amp;&amp;</code> 右引用拷贝构造：直接指针赋值，不增加计数，并将右引用的指针 <code>ReferenceController</code> 清空，完成转移控制权。</li>
+<li><code>FWeakReferencer&lt; Mode &gt; const&amp;</code> 左引用拷贝构造：直接指针赋值，因为来自弱指针，要充分考虑共享引用。如果指针不为空，<code>TOps</code> 要尝试条件调用，只有引指针的共享引用不为空才增加一次共享指针计数，否则将赋值过的指针也置空，换句话说就是只要还有效的弱指针。</li>
+<li><code>FWeakReferencer&lt; Mode &gt;&amp;&amp; InWeakReference</code> 右引用拷贝构造：直接指针赋值，因为来自弱指针，要充分考虑共享引用。如果指针不为空，<code>TOps</code> 要尝试条件调用，只有引指针的共享引用不为空才增加一次共享指针计数，否则将赋值过的指针也置空，换句话说就是只要还有效的弱指针,处理完后 <code>TOps</code> 尝试将右引用 <code>ReleaseWeakReference</code> 释放（不一定能释放），并将右引用指针<code>ReferenceController</code> 清空，完成转移控制权。</li>
+<li><code>FSharedReferencer const&amp;</code> 左引用赋值构造：设计上首先排除是不是给自己赋值。功能上和拷贝一致，但注意一点，当自身的<code>ReferenceController</code> 计数器指针不为空，一定要调用 <code>ReleaseSharedReference</code> 释放一次资源，再进行赋值交换，增加计数，这点同拷贝不同。</li>
+<li><code>FSharedReferencer&amp;&amp;</code> 右引用赋值构造：设计上首先排除是不是给自己赋值。功能上和拷贝一致，也不增加计数，但注意一点，当自身的 <code>ReferenceController</code> 计数器指针不为空，一定要调用 <code>ReleaseSharedReference</code> 释放一次资源。</li>
+<li>析构函数：当<code>ReferenceController</code>指针不为空，<code>TOps</code>调用<code>ReleaseSharedReference</code>进行资源释放，不为零只是减少一次计数，非常重要。</li>
+<li>其它功能函数，<code>IsValid</code>通过指针是否为空判断是否有效; <code>GetSharedReferenceCount</code> 通过 <code>TOps</code> 获取共享计数，<code>IsUnique</code> 通过判断是否引用计数为1来判断是否只有一个共享引用。</li>
+</ol>
+<h3 id="FWeakReferencer"><code>FWeakReferencer</code></h3>
+<p><code>FWeakReferencer&lt;Mode&gt;</code> 用作 <code>TWeakPtr</code> 弱指针引用数据实现的根源，设计和功能上基本等同2.5.1小节的 <code>FSharedReferencer</code>，相同的部分就不再累述。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt; ESPMode Mode &gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">FWeakReferencer</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">typedef</span> FReferenceControllerOps&lt;Mode&gt; TOps;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">template</span>&lt; ESPMode OtherMode &gt; <span class="keyword">friend</span> <span class="keyword">class</span> <span class="title class_">FSharedReferencer</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    FReferenceControllerBase* ReferenceController;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>不同之处：</p>
+<ol>
+<li>友元为 <code>FSharedReferencer</code>，毕竞要相互访问</li>
+<li>拷贝构造函数略不同，大体相同，细节不同，拷贝左引用时增加弱引用计数，而非共享引用计数，右引用相同逻辑。</li>
+<li><code>FSharedReferencer&lt; Mode &gt; const&amp;</code> 左引用拷贝构造，直接指针赋值，如果指针不为空，直接 <code>TOps</code> 调用增加一次弱引用计数，同时不再提供右值引用版本，因为 <code>const T&amp;</code> 可以接受右值。</li>
+<li>赋值构造总体没有区别，同样设计上首先排除是不是给自己赋值，当自身的 <code>ReferenceController</code> 计数器指针不为空，一定要调用<code>ReleaseWeakReference</code> 释放一次资源，只是这点不同。左值的增加一次弱引用计数，否则不处理，再进行赋值交换。</li>
+<li>析构函数：当 <code>ReferenceController</code> 指针不为空，<code>TOps</code> 调用 <code>ReleaseWeakReference</code> 进行自身释放，不为零只是减少一次弱引用计数</li>
+<li>其它功能函数，<code>IsValid</code> 通过指针是否为空判断是否有效，还要加上共享指针计数是否大于0判断。</li>
+</ol>
+<p>对于<code>FSharedReferencer</code>与<code>FWeakReferencer</code>来说，通过C++析构时间，自己调用计数器的资源释放，这样UE真正智能指针<code>TSharedRef</code>与<code>TSharedPtr</code>等上层就无需处理析构函数，显得优雅一点，这是因为逻辑功能抽离的更彻底，放到这层了；相反STL的智能指针<code>std::shared_ptr</code>与<code>std::weak_ptr</code>都是在自己的析构函数，处理计数的减少及托管资源的释放，抽象与剥离这点UE还是不错的。</p>
+<p>至此设计结构都讲完了，如果认真理解，应用层不会有什么难度了。</p>
+<h1>UE 四种智能指针</h1>
+<p>这一部分是应用，我们讲的少一点，不然就重复了，背后原理请阅读第二章节，更多示例可以参考UE源文件：<code>SharedPointerTesting.ini</code></p>
+<h2 id="TSharedPtr"><code>TSharedPtr</code></h2>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt; <span class="keyword">class</span> <span class="title class_">ObjectType</span>, ESPMode Mode &gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TSharedPtr</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">template</span> &lt;</span><br><span class="line">        <span class="keyword">typename</span> OtherType,</span><br><span class="line">        <span class="keyword">typename</span> = <span class="keyword">decltype</span>(<span class="built_in">ImplicitConv</span>&lt;ObjectType*&gt;((OtherType*)<span class="literal">nullptr</span>))</span><br><span class="line">    &gt;</span><br><span class="line">    FORCEINLINE <span class="built_in">TSharedPtr</span>( TSharedPtr&lt; OtherType, Mode &gt; <span class="type">const</span>&amp; InSharedPtr )</span><br><span class="line">        : <span class="built_in">Object</span>( InSharedPtr.Object )</span><br><span class="line">        , <span class="built_in">SharedReferenceCount</span>( InSharedPtr.SharedReferenceCount )</span><br><span class="line">    &#123;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    ObjectType* Object;</span><br><span class="line">    SharedPointerInternals::FSharedReferencer&lt; Mode &gt; SharedReferenceCount;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>TSharedPtr</code>设计上：</p>
+<ol>
+<li>模板设计，第一个模板参<code>ObjectType</code>参数表示我们要传入类型智能指针对应的类型，第二个模板参数<code>Mode</code>控制是否多线程安全，参考2.3小节内容。</li>
+<li>采用了组合思想，成员上<code>Object</code>存指针数据，<code>SharedReferenceCount</code>成员对象存我们计数（实质在堆区）与操作接口类，<code>FSharedReferencer</code>在2.5小节我们重点讲了，是最核心，可以再阅读这一小节。</li>
+<li>相比STL是采用继承<code>_Ptr_base</code>，<code>std::shared_ptr</code>不存数据，真正功能都是最转到基类中了,不过STL的实现的确更复杂。</li>
+<li>UE接口与数据分离比较干净，比如引用计数，资源释放操作封装在<code>SharedReferenceCount</code>中，在<code>TSharedPtr</code>这一层没有内部实现细节，封装良好，应用使用时无需关心。前面说过析构函数这里UE这一层都不用单独处理，这一点是优点。</li>
+<li>支持多种构造函数。</li>
+<li>支持移动语意。</li>
+<li>支持良好的向上的类型转换。作为底层库基本上构造函数都采用模板参<code>OtherType</code>，利用编译期<code>SFINAE</code>技术，利用模板函数<code>ImplicitConv</code>结合<code>decltype</code>对隐式转换判断，体现库设计的严谨与通用性。</li>
+<li>支持原生指针及原生指针转换到<code>RawPtrProxy</code>。</li>
+<li>如果这个类派生自<code>TSharedFromThis</code>，对<code>TSharedFromThis</code>类型安全与自身类型安全检查，通过函数重载，支持返回自己的<code>TSharedPtr</code>，在3.4小节重点讲这个。</li>
+<li><code>ToSharedRef</code>支持向<code>TSharedRef</code>类型转换，内部使用<code>IsValid</code>保证非空。</li>
+<li>支持显示<code>bool</code>类型重载，即<code>explicit operator bool</code>。</li>
+<li>当使用<code>Get()</code>函数不进行获取目标时，不进行安全判断，当使用重载*或重载-&gt;时，都会利用<code>IsValid()</code>进行安全检查。</li>
+<li><code>Reset()</code>对本自己进行一次减少引用，并将新引用设为空指针对象。</li>
+</ol>
+<h2 id="TWeakPtr"><code>TWeakPtr</code></h2>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt; <span class="keyword">class</span> <span class="title class_">ObjectType</span>, ESPMode Mode &gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TWeakPtr</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">template</span> &lt;</span><br><span class="line">        <span class="keyword">typename</span> OtherType,</span><br><span class="line">        <span class="keyword">typename</span> = <span class="keyword">decltype</span>(<span class="built_in">ImplicitConv</span>&lt;ObjectType*&gt;((OtherType*)<span class="literal">nullptr</span>))</span><br><span class="line">    &gt;</span><br><span class="line">    FORCEINLINE <span class="built_in">TWeakPtr</span>( TSharedRef&lt; OtherType, Mode &gt; <span class="type">const</span>&amp; InSharedRef )</span><br><span class="line">        : <span class="built_in">Object</span>( InSharedRef.Object )</span><br><span class="line">        , <span class="built_in">WeakReferenceCount</span>( InSharedRef.SharedReferenceCount )</span><br><span class="line">    &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    FORCEINLINE TSharedPtr&lt; ObjectType, Mode &gt; <span class="built_in">Pin</span>() <span class="type">const</span>&amp;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">TSharedPtr</span>&lt; ObjectType, Mode &gt;( *<span class="keyword">this</span> );</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    ObjectType* Object;</span><br><span class="line">    SharedPointerInternals::FWeakReferencer&lt; Mode &gt; WeakReferenceCount;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>有了前面的<code>TSharedRef</code>与<code>TSharedPtr</code>作铺垫，<code>TWeakPtr</code>就经较简单了，结构上跟前面两者基本相同，除去<code>Object</code>指针相同，引用计数与控制换成了<code>FWeakReferencer&lt; Mode &gt;</code>型的<code>WeakReferenceCount</code>，其它结构上区别不是很大。</p>
+<p>当然构造函数原理差不多，只是有一定限制，弱指针不能单独使用，要配套<code>TSharedRef</code>，<code>TSharedPtr</code>使用，它的真正计数是计数类中的<code>WeakReferenceCount</code>。只支持从<code>TSharedRef</code>，<code>TSharedPtr</code>，<code>TWeakPtr</code>三种类型上构造，以及一个空的构造，同时也是支持向上类型转换，这和STL差不多。注意构造时用的<code>WeakReferenceCount</code>，UE这么一封装，要看细节就要回到2.5.2小节的<code>FWeakReferencer</code>，这里不再累述。</p>
+<p>注意这里的I<code>sValid()</code>除了指针判断为非空，还要判断其对应的共享计数是否大于0，都满足才有效，否则就是失效的。</p>
+<p><code>Reset()</code>函数，将自己指向空引用，并将原来自己减少一次弱引用，如果弱引用为0，释放原来的计数器。</p>
+<p><code>Pin()</code>函数，将弱引用转为<code>TSharedPtr</code>，因为弱引用不支持直接，-&gt;访问。这里注意一点，就是原来的共享引用为失效为空时，转换后的<code>TSharedPtr</code>是一个空指针，直接解引用，很可能就会崩溃，如果需要这样处理，请进行安全检测。这里实际由于UE的封装，将转换隐藏了，要*回到第二章节2.5.1，<code>FSharedReferencer</code>对传入的<code>FWeakReferencer</code>构造时，会进行共享引用计数判断，大于0才真正赋值。封装深的好处就是使用觉得容易，但想掌握原理还是比较麻烦。</p>
+<p><code>HasSameObject( const void* InOtherPtr )</code>这个函数直接提供了和<code>InOtherPtr</code>地址是否相等的判断</p>
+<h2 id="TSharedFromThis"><code>TSharedFromThis</code></h2>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt; <span class="keyword">class</span> <span class="title class_">ObjectType</span>, ESPMode Mode &gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TSharedFromThis</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function">TSharedRef&lt; ObjectType, Mode &gt; <span class="title">AsShared</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="function">TSharedPtr&lt; ObjectType, Mode &gt; <span class="title">SharedThis</span><span class="params">( WeakThis.Pin() )</span></span>;</span><br><span class="line">        <span class="built_in">check</span>( SharedThis.<span class="built_in">Get</span>() == <span class="keyword">this</span> );</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">MoveTemp</span>( SharedThis ).<span class="built_in">ToSharedRef</span>();</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">mutable</span> TWeakPtr&lt; ObjectType, Mode &gt; WeakThis;  </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>TSharedFromThis</code>是返回自己的共享引用的智能指针，实现与功能上基本等同STL的<code>enable_shared_from_this</code>，内部都持一个弱指针，写法上将我们的<code>ObjectType</code>类继承于<code>TSharedFromThis</code>就可以了。</p>
+<p>用法：上当我们在自己对象已经交给UE的智能指针托管，生命周期由智能指针控制。当我们的类成员函数处理异步调用时，如果将this指针传给某个回调函数，延迟一段时间后调用，这段时间内我们对象生命周期结束可能已经回收，调用时很可能就崩溃。所以注册这个回调时，如果用<code>AsShared()</code>函数能拿到自己的智能指针，那就安全了，这样我们有法保证我们对象有效性，这是一个典型的用法。</p>
+<h3 id="TSharedFromThis用法原理"><code>TSharedFromThis</code>用法原理</h3>
+<p>以这个简单代码 <code>FMyClass</code> 继承 <code>TSharedFromThis</code> 为例，<code>MyClass</code>假设在成员函数中的<code>this</code>指针，<code>MyClass-&gt;AsShared()</code>便得到共享指针，下面分析详细原理</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">FMyClass</span> : <span class="keyword">public</span> TSharedFromThis&lt; FMyClass&gt;&#123;&#125;;</span><br><span class="line"><span class="function">TSharedPtr&lt;FMyClass&gt; <span class="title">TheClassPtr1</span><span class="params">(<span class="keyword">new</span> FMyClass())</span></span>;</span><br><span class="line">&#123;</span><br><span class="line">    FMyClass* MyClass = TheClassPtr1.<span class="built_in">Get</span>();</span><br><span class="line">    <span class="function">TSharedRef&lt;FMyClass&gt; <span class="title">TheClassPtr2</span><span class="params">(MyClass-&gt;AsShared())</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol>
+<li>
+<p>当<code>new FMyClass()</code>从堆申请内存时，此时基类<code>TSharedFromThis&lt;FMyClass&gt;</code>并没有真正给其<code>WeakThis</code>赋值，假设结果为<code>pkRet</code></p>
+</li>
+<li>
+<p>当用<code>pkRet</code>构造<code>TSharedPtr&lt;FMyClass&gt;</code>对象时，进入<code>TSharedPtr( OtherType InObject )</code>构造函数调用,内部再进行赋值，并从堆内存上申请出产生<code>TReferenceControllerWithDeleter</code>计数器，此时<code>share与weak</code>计数器都为1</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;</span><br><span class="line">    <span class="keyword">typename</span> OtherType,</span><br><span class="line">    <span class="keyword">typename</span> = <span class="keyword">decltype</span>(<span class="built_in">ImplicitConv</span>&lt;ObjectType*&gt;((OtherType*)<span class="literal">nullptr</span>))</span><br><span class="line">&gt;</span><br><span class="line">FORCEINLINE <span class="keyword">explicit</span> <span class="built_in">TSharedPtr</span>( OtherType* InObject )</span><br><span class="line">    : <span class="built_in">Object</span>( InObject )</span><br><span class="line">    , <span class="built_in">SharedReferenceCount</span>( SharedPointerInternals::<span class="built_in">NewDefaultReferenceController</span>( InObject ) )</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">UE_TSHAREDPTR_STATIC_ASSERT_VALID_MODE</span>(ObjectType, Mode)</span><br><span class="line">    SharedPointerInternals::<span class="built_in">EnableSharedFromThis</span>( <span class="keyword">this</span>, InObject, InObject );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><code>UE_TSHAREDPTR_STATIC_ASSERT_VALID_MODE</code>宏，用模板编译期检查是否继承<code>TSharedFromThis</code>线程安全相反的版本，可以忽略</p>
+</li>
+<li>
+<p>关键的一步：<code>EnableSharedFromThis()</code>，这是第二章节提到的共有5个重载版本模板函数，我们这里因为继承<code>TSharedFromThis&lt;FMyClass&gt;</code>，所以<code>InObject</code>能转换成<code>TSharedFromThis&lt;FMyClass&gt;</code>类型指针，同时<code>this</code>指针就是<code>TSharedPtr&lt;FMyClass&gt;</code>,因此调用这个版本函数</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt; <span class="keyword">class</span> SharedPtrType, <span class="keyword">class</span> ObjectType, <span class="keyword">class</span> OtherType, ESPMode Mode &gt;</span></span><br><span class="line"><span class="function">FORCEINLINE <span class="type">void</span> <span class="title">EnableSharedFromThis</span><span class="params">( TSharedPtr&lt; SharedPtrType, Mode &gt;* InSharedPtr, ObjectType <span class="type">const</span>* InObject, TSharedFromThis&lt; OtherType, Mode &gt; <span class="type">const</span>* InShareable )</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>( InShareable != <span class="literal">nullptr</span> )</span><br><span class="line">    &#123;</span><br><span class="line">        InShareable-&gt;<span class="built_in">UpdateWeakReferenceInternal</span>( InSharedPtr, <span class="built_in">const_cast</span>&lt; ObjectType* &gt;( InObject ) );</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>显然进一步就到了下面<code>UpdateWeakReferenceInternal</code>调用，<code>WeakThis</code>这时还没初始化为真正有效值，<code>TSharedPtr</code>的临时构造了，此时<code>share</code>与<code>weak</code>计数器为2，1，再进入<code>WeakThis = TSharedPtr的</code>赋值构造函数</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt; <span class="keyword">class</span> SharedPtrType, <span class="keyword">class</span> OtherType &gt;</span></span><br><span class="line"><span class="function">FORCEINLINE <span class="type">void</span> <span class="title">UpdateWeakReferenceInternal</span><span class="params">( TSharedPtr&lt; SharedPtrType, Mode &gt; <span class="type">const</span>* InSharedPtr, OtherType* InObject )</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>( !WeakThis.<span class="built_in">IsValid</span>() )</span><br><span class="line">    &#123;</span><br><span class="line">        WeakThis = <span class="built_in">TSharedPtr</span>&lt; ObjectType, Mode &gt;( *InSharedPtr, InObject );</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>也就是<code>TWeakPtr</code>用<code>TSharePtr</code>赋值构造，进而触发：<code>FWeakReferencer</code>用<code>FSharedReferencer</code>的赋值构造，<code>AssignReferenceController</code>内部会增加一次<code>weak</code>计数，此时<code>share与weak</code>计数器为2，2，</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">FORCEINLINE FWeakReferencer&amp; <span class="keyword">operator</span>=( FSharedReferencer&lt; Mode &gt; <span class="type">const</span>&amp; InSharedReference )</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">AssignReferenceController</span>( InSharedReference.ReferenceController );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>都结束后，临时的<code>TSharePtr</code>析构，此时<code>share</code>与<code>weak</code>计数器为1，2</p>
+</li>
+<li>
+<p>最后<code>MyClass-&gt;AsShared()</code>，产生<code>TSharedRef</code>，此时<code>share</code>与<code>weak</code>计数器为2，2，增加了一次计数，就算异步调用，也保证了有效性。</p>
+</li>
+</ol>
+<h1>结语</h1>
+<p>到此我们已经全部分析完毕，第二章节是本文的核心，讲述了UE4智能指针内部设计的细节，并提出与C++ STL版本对比分析，我们能看出，UE4的版本虽然相对简单，但也有独特的魅力，设计很巧，数据与实现分离良好，有兴趣的可以对照UE与STL的源码具体跟进。第三章节算是对UE的四种智能指针实现介绍，属于使用层面的，请结合第二章节会更好的理解。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2024/02/29/2024-2-29-1/">https://qlipphoth.github.io/2024/02/29/2024-2-29-1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Cpp/">Cpp</a><a class="post-meta__tags" href="/tags/UE/">UE</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/02/18/2024-2-18-1/" title="UE 补完计划（三） Unreal的可靠传输RUDP原理剖析"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">UE 补完计划（三） Unreal的可靠传输RUDP原理剖析</div></div></a></div><div class="next-post pull-right"><a href="/2024/03/15/2024-3-15-1/" title="与延迟抗争，射击游戏如何做到更好的体验"><img class="cover" src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">与延迟抗争，射击游戏如何做到更好的体验</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2023/08/19/2023-8-19-1/" title="从零开始的 STL 实现记录"><img class="cover" src="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-08-19</div><div class="title">从零开始的 STL 实现记录</div></div></a></div><div><a href="/2024/08/23/2024-8-23-1/" title="C++ 补完计划（七）：RTTI"><img class="cover" src="https://s2.loli.net/2023/08/12/a6FceKmItYSsW7b.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-08-23</div><div class="title">C++ 补完计划（七）：RTTI</div></div></a></div><div><a href="/2024/07/29/2024-7-29-1/" title="内存管理杂谈"><img class="cover" src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-07-29</div><div class="title">内存管理杂谈</div></div></a></div><div><a href="/2024/07/27/2024-7-27-1/" title="C++ 补完计划（六）：C++ 编译过程"><img class="cover" src="https://s2.loli.net/2023/08/12/a6FceKmItYSsW7b.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-07-27</div><div class="title">C++ 补完计划（六）：C++ 编译过程</div></div></a></div><div><a href="/2024/03/22/2024-3-22-2/" title="C++ 补完计划（五）：C++ 设计模式"><img class="cover" src="https://s2.loli.net/2023/08/12/a6FceKmItYSsW7b.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-22</div><div class="title">C++ 补完计划（五）：C++ 设计模式</div></div></a></div><div><a href="/2023/12/14/2023-12-14-2/" title="C++ 补完计划（四）：C++ 中的一些关键字"><img class="cover" src="https://s2.loli.net/2023/08/12/a6FceKmItYSsW7b.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-14</div><div class="title">C++ 补完计划（四）：C++ 中的一些关键字</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">概要</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">UE 设计结构与 STL 区别</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#UE-%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88%E6%80%BB%E8%A7%88"><span class="toc-number">2.1.</span> <span class="toc-text">UE 智能指针总览</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A1%E6%95%B0%E5%9F%BA%E7%B1%BB-FReferenceControllerBase"><span class="toc-number">2.2.</span> <span class="toc-text">计数基类 FReferenceControllerBase</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E7%A7%8D%E8%AE%A1%E6%95%B0%E6%B4%BE%E7%94%9F%E7%B1%BB"><span class="toc-number">2.3.</span> <span class="toc-text">多种计数派生类</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#TReferenceControllerWithDeleter"><span class="toc-number">2.3.1.</span> <span class="toc-text">TReferenceControllerWithDeleter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%B9%E6%AF%94STL%E8%AE%BE%E8%AE%A1%EF%BC%8C%E7%A7%81%E6%9C%89%E7%BB%A7%E6%89%BF%E5%A5%BD%E8%BF%98%E6%98%AF%E7%BB%84%E5%90%88%E5%A5%BD%EF%BC%9F"><span class="toc-number">2.3.2.</span> <span class="toc-text">对比STL设计，私有继承好还是组合好？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#TIntrusiveReferenceController"><span class="toc-number">2.3.3.</span> <span class="toc-text">TIntrusiveReferenceController</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%93%8D%E4%BD%9C%E6%8E%A5%E5%8F%A3%E7%B1%BB-FReferenceControllerOps"><span class="toc-number">2.4.</span> <span class="toc-text">操作接口类 FReferenceControllerOps</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E7%A7%8D%E8%BE%85%E5%8A%A9%E6%A8%A1%E6%9D%BF%E7%B1%BB%E5%8F%8A%E6%A8%A1%E6%9D%BF%E5%87%BD%E6%95%B0"><span class="toc-number">2.5.</span> <span class="toc-text">多种辅助模板类及模板函数</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%9F%E6%88%90%E8%AE%A1%E6%95%B0%E7%B1%BB%E7%9A%84%E6%A8%A1%E6%9D%BF%E5%87%BD%E6%95%B0"><span class="toc-number">2.5.1.</span> <span class="toc-text">生成计数类的模板函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%BB%98%E8%AE%A4%E7%9A%84%E5%88%A0%E9%99%A4%E5%99%A8"><span class="toc-number">2.5.2.</span> <span class="toc-text">默认的删除器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%9F%E7%94%9F%E6%8C%87%E9%92%88%E4%BB%A3%E7%90%86FRawPtrProxy"><span class="toc-number">2.5.3.</span> <span class="toc-text">原生指针代理FRawPtrProxy</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BE%85%E5%8A%A9%E7%94%9F%E6%88%90%E5%85%B1%E4%BA%AB%E8%87%AA%E8%BA%AB%E6%8C%87%E9%92%88"><span class="toc-number">2.5.4.</span> <span class="toc-text">辅助生成共享自身指针</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%9A%84-FSharedReferencer-%E4%B8%8E-FWeakReferencer"><span class="toc-number">2.6.</span> <span class="toc-text">核心的 FSharedReferencer 与 FWeakReferencer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#FSharedReferencer"><span class="toc-number">2.6.1.</span> <span class="toc-text">FSharedReferencer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#FWeakReferencer"><span class="toc-number">2.6.2.</span> <span class="toc-text">FWeakReferencer</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">3.</span> <span class="toc-text">UE 四种智能指针</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TSharedPtr"><span class="toc-number">3.1.</span> <span class="toc-text">TSharedPtr</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TWeakPtr"><span class="toc-number">3.2.</span> <span class="toc-text">TWeakPtr</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TSharedFromThis"><span class="toc-number">3.3.</span> <span class="toc-text">TSharedFromThis</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#TSharedFromThis%E7%94%A8%E6%B3%95%E5%8E%9F%E7%90%86"><span class="toc-number">3.3.1.</span> <span class="toc-text">TSharedFromThis用法原理</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">4.</span> <span class="toc-text">结语</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

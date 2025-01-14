@@ -1,0 +1,497 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>从零开始的 STL 实现记录：Container-2.3 | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="前言  相较于 vector 的连续线性空间，list 就显得复杂许多、它的好处是每次插人或删除一个元素，就配置或释放一个元素空间。因此，1ist 对于空间的运用有绝对的精准，一点也不浪费。而且，对于任何位置的元素插入或元素移除，list 永远是常数时间。 ———— 《STL源码剖析》侯捷  本篇博客将会分析 STL 中 list 的 sort。值得注意的是，在原始的 MyTinySTL 仓库中，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从零开始的 STL 实现记录：Container-2.3">
+<meta property="og:url" content="https://qlipphoth.github.io/2023/09/01/2023-9-1-2/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="前言  相较于 vector 的连续线性空间，list 就显得复杂许多、它的好处是每次插人或删除一个元素，就配置或释放一个元素空间。因此，1ist 对于空间的运用有绝对的精准，一点也不浪费。而且，对于任何位置的元素插入或元素移除，list 永远是常数时间。 ———— 《STL源码剖析》侯捷  本篇博客将会分析 STL 中 list 的 sort。值得注意的是，在原始的 MyTinySTL 仓库中，">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg">
+<meta property="article:published_time" content="2023-09-01T17:22:12.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="Cpp">
+<meta property="article:tag" content="STL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2023/09/01/2023-9-1-2/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '从零开始的 STL 实现记录：Container-2.3',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">从零开始的 STL 实现记录：Container-2.3</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2023-09-01T17:22:12.000Z" title="Created 2023-09-01 17:22:12">2023-09-01</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Cpp/">Cpp</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Cpp/STL/">STL</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">3.4k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>12min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="从零开始的 STL 实现记录：Container-2.3"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="前言">前言</h2>
+<blockquote>
+<p>相较于 vector 的连续线性空间，list 就显得复杂许多、它的好处是每次插人或删除一个元素，就配置或释放一个元素空间。因此，1ist 对于空间的运用有绝对的精准，一点也不浪费。而且，对于任何位置的元素插入或元素移除，list 永远是常数时间。<br>
+———— 《STL源码剖析》侯捷</p>
+</blockquote>
+<p>本篇博客将会分析 STL 中 <code>list</code> 的 <code>sort</code>。值得注意的是，在原始的 <code>MyTinySTL</code> 仓库中，作者 list 部分的实现方式是有些怪异的，包括但不限于：使用了本该出现在 SGI-STL 的 slist 中的 <code>base_ptr</code> 与 <code>node_ptr</code> 来代表 list 的指针、没有实现 <code>transfer</code> 函数、<code>sort</code> 的实现也很繁杂；保险起见，下面的解析均以 SGI-STL 中的实现为准。</p>
+<h2 id="sort">sort</h2>
+<p>在分析 list 的 <code>sort</code> 之前，需要弄清楚一件事情：为什么 list 不能使用 STL 算法中的 <code>sort</code> 函数而是需要在内部设计一个自己的 <code>sort</code> 函数？</p>
+<p>很多人以及博客会说：因为 list 维护的并不是一个连续的空间，因此不能使用 STL 的 <code>sort</code>。但实际上，<code>deque</code> 内部也不是连续空间，而是分段式的空间，但 <code>deque</code> 依然可以使用 STL 的 <code>sort</code>。根本原因在于：<strong>STL 的 <code>sort</code> 算法只接受 <code>RandomAccessIterator</code>，而 list 的 iterator 为 <code>bidirectionalIterator</code></strong>。因此，list 的排序需要类内部单独实现。</p>
+<p>为了实现 <code>sort</code>，需要事先介绍几个 list 中的特殊函数。</p>
+<h3 id="transfer-splice-reverse-merge">transfer &amp; splice &amp; reverse &amp; merge</h3>
+<p>list 内部提供一个所谓的迁移操作 ( transfer )：将某连续范围的元素迁移到某个特定位置之前。技术上很简单，节点间的指针移动而已，这个操作为其它的复杂操作如 <code>splice</code>， <code>sort</code>，<code>merge</code> 等奠定良好的基础。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">transfer</span><span class="params">(iterator pos, iterator first, iterator last)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (pos != last) &#123;</span><br><span class="line">        last.node_-&gt;prev-&gt;next = pos.node_;        <span class="comment">// (1) 将 last 之前的节点与 pos 连接</span></span><br><span class="line">        first.node_-&gt;prev-&gt;next = last.node_;      <span class="comment">// (2) 将 first 之前的节点与 last 连接</span></span><br><span class="line">        pos.node_-&gt;prev-&gt;next = first.node_;       <span class="comment">// (3) 将 pos 之前的节点与 first 连接</span></span><br><span class="line">        <span class="keyword">auto</span> tmp = pos.node_-&gt;prev;                <span class="comment">// (4) 存储 pos 之前的节点</span></span><br><span class="line">        pos.node_-&gt;prev = last.node_-&gt;prev;        <span class="comment">// (5) 将 pos 之前的节点与 last 之前的节点连接</span></span><br><span class="line">        last.node_-&gt;prev = first.node_-&gt;prev;      <span class="comment">// (6) 将 last 之前的节点与 first 之前的节点连接</span></span><br><span class="line">        first.node_-&gt;prev = tmp;                   <span class="comment">// (7) 将 first 之前的节点与 pos 之前的节点连接</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以上每一步的操作示意如下图所示：</p>
+<p><a href="https://sm.ms/image/bHSomxv3ycLsfgw" target="_blank"><img src="https://s2.loli.net/2023/09/01/bHSomxv3ycLsfgw.png" /></a></p>
+<p>上述的 <code>transfer</code> 并非公开接口，list 公开提供的是所谓的接合操作 ( splice )；将某连续范围的元素从一个 list 移动到另一个（或同一个）list 的某个定点。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>, <span class="keyword">class</span> <span class="title class_">Alloc</span> = alloc&gt;</span><br><span class="line"><span class="keyword">class</span> list </span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 将 x 接合于 position 之前，x 必须不同于 *this</span></span><br><span class="line">    <span class="type">void</span> <span class="built_in">splice</span>(iterator position, list&amp; x) &#123;</span><br><span class="line">      <span class="keyword">if</span> (!x.<span class="built_in">empty</span>()) </span><br><span class="line">        <span class="built_in">transfer</span>(position, x.<span class="built_in">begin</span>(), x.<span class="built_in">end</span>());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 将 i 所指元素接合于 position 所指位置之前，position 和 i 可指向同一个 list</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">splice</span><span class="params">(iterator position, list&amp;, iterator i)</span> </span>&#123;</span><br><span class="line">      iterator j = i;</span><br><span class="line">      ++j;</span><br><span class="line">      <span class="keyword">if</span> (position == i || position == j) <span class="keyword">return</span>;</span><br><span class="line">      <span class="built_in">transfer</span>(position, i, j);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 将 [first, last) 内的所有元素接合于 position 所指位置之前</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">splice</span><span class="params">(iterator position, list&amp;, iterator first, iterator last)</span> </span>&#123;</span><br><span class="line">      <span class="keyword">if</span> (first != last) </span><br><span class="line">        <span class="built_in">transfer</span>(position, first, last);</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>可以看出，<code>splice</code> 提供了多个版本的接口，且内部均调用了 <code>transfer</code>。</p>
+<p><strong><code>merge</code>函数是将传入的<code>list</code>链表x与原链表按从小到大合并到原链表中(前提是两个链表都是已经从小到大排序了)</strong>。这里 <code>merge</code>的核心就是 <code>transfer</code> 函数。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>, <span class="keyword">class</span> <span class="title class_">Alloc</span>&gt;</span><br><span class="line"><span class="type">void</span> list&lt;T, Alloc&gt;::<span class="built_in">merge</span>(list&lt;T, Alloc&gt;&amp; x) &#123;</span><br><span class="line">    iterator first1 = <span class="built_in">begin</span>();</span><br><span class="line">    iterator last1 = <span class="built_in">end</span>();</span><br><span class="line">    iterator first2 = x.<span class="built_in">begin</span>();</span><br><span class="line">    iterator last2 = x.<span class="built_in">end</span>();</span><br><span class="line">    <span class="keyword">while</span> (first1 != last1 &amp;&amp; first2 != last2) &#123;</span><br><span class="line">        <span class="keyword">if</span> (*first2 &lt; *first1) &#123;</span><br><span class="line">        iterator next = first2;</span><br><span class="line">        <span class="comment">// 将first2到first+1的左闭右开区间插入到first1的前面</span></span><br><span class="line">        <span class="comment">// 这就是将first2合并到first1链表中</span></span><br><span class="line">        <span class="built_in">transfer</span>(first1, first2, ++next);</span><br><span class="line">        first2 = next;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span>++first1;</span><br><span class="line">    &#125;    </span><br><span class="line">    <span class="comment">// 如果链表x还有元素则全部插入到first1链表的尾部</span></span><br><span class="line">    <span class="keyword">if</span> (first2 != last2) <span class="built_in">transfer</span>(last1, first2, last2);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong><code>reverse</code>函数是实现将链表翻转的功能.</strong> ，将每一个元素一个个插入到<code>begin</code>之前，内部也是利用了 <code>transfer</code>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>, <span class="keyword">class</span> <span class="title class_">Alloc</span>&gt;</span><br><span class="line"><span class="type">void</span> list&lt;T, Alloc&gt;::<span class="built_in">reverse</span>() </span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">if</span> (node-&gt;next == node || <span class="built_in">link_type</span>(node-&gt;next)-&gt;next == node) </span><br><span class="line">  	<span class="keyword">return</span>;</span><br><span class="line">  iterator first = <span class="built_in">begin</span>();</span><br><span class="line">  ++first;</span><br><span class="line">  <span class="keyword">while</span> (first != <span class="built_in">end</span>()) &#123;</span><br><span class="line">    iterator old = first;</span><br><span class="line">    ++first;</span><br><span class="line">      <span class="comment">// 将元素插入到begin()之前</span></span><br><span class="line">    <span class="built_in">transfer</span>(<span class="built_in">begin</span>(), old, first);</span><br><span class="line">  &#125;</span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+<h3 id="sort-他来了">sort 他来了</h3>
+<p>在实现 list 的过程中原本以为这个 <code>sort</code> 函数就是一个简单的归并排序，就直接复制粘贴了。直到今天写博客才发现，居然看不懂它的实现，一番分析之后顿时惊为天人！不得不感叹 stl 的魅力，仅用十几行的代码就完成了 <strong>链表非递归方式的归并排序</strong>。趁我还能看懂，赶紧分析一下这个的实现。</p>
+<p>在分析之前，需要讲清楚一些函数的作用：</p>
+<ol>
+<li><code>splice</code> : <code>splice</code> 函数上面已经分析过，将一个链表中的一部分移动到另一个链表的指定位置之前，这里需要注意的是，被移动的部分确确实实的与原始链表断开了连接，并且插入在了新的链表中。</li>
+<li><code>merge</code> : 这个函数上面也进行了分析，将两个<strong>有序链表</strong>进行合并，由于内部调用的是 <code>transfer</code>，与 <code>splice</code> 相同，如 <code>l1.merge(l2)</code>，那么合并之后 <strong>l2 为空，节点全部被合并至 l1</strong>。</li>
+<li><code>swap</code> : 这个函数我们没有分析，但不难想象，由于 list <strong>仅有一个成员变量 node</strong>（有的版本会有 <code>size</code>），因此只需交换两个链表的对应 <code>node</code> 迭代器就行，<code>l1.swap(l2)</code>相当于将 l1 的全部节点都交给 l2，l2 的全部节点都交给 l1。</li>
+</ol>
+<p>下面开始分析这惊为天人的代码。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">Compare</span>&gt;</span><br><span class="line"><span class="type">void</span> list&lt;T&gt;::<span class="built_in">list_sort</span>(Compare comp) &#123;</span><br><span class="line">    <span class="keyword">if</span> (node_-&gt;next == node_ || node_-&gt;next-&gt;next == node_) <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 一些新的 lists 用于存储分割后的 lists</span></span><br><span class="line">    list&lt;T&gt; carry;</span><br><span class="line">    list&lt;T&gt; counter[<span class="number">64</span>];  <span class="comment">// 缓存表，第 i 层 list 存储长度为 2^i</span></span><br><span class="line">    <span class="type">int</span> fill = <span class="number">0</span>;         <span class="comment">// 记录最深层数，counter[fill] 为空</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (!<span class="built_in">empty</span>()) &#123;</span><br><span class="line">        <span class="comment">// 运行到此处 carry 必然为空，因此一定可以处理下一个元素</span></span><br><span class="line">        <span class="comment">// 1. 将当前 list 的头部元素取出，放入 carry 中</span></span><br><span class="line">        carry.<span class="built_in">splice</span>(carry.<span class="built_in">begin</span>(), *<span class="keyword">this</span>, <span class="built_in">begin</span>());</span><br><span class="line">        <span class="type">int</span> i = <span class="number">0</span>;  <span class="comment">// 记录经过的层数</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 2. 从小往大不断合并非空层直至遇到空层或者到达当前最大归并层次</span></span><br><span class="line">        <span class="comment">// 出这个循环，无论 i 是否超过最大层，counter[i] 必然是空的</span></span><br><span class="line">        <span class="comment">// !counter[i].empty() 决定了 counter[i] 中存放的 list 的长度为 2^i</span></span><br><span class="line">        <span class="keyword">while</span> (i &lt; fill &amp;&amp; !counter[i].<span class="built_in">empty</span>()) &#123;</span><br><span class="line">            <span class="comment">// 将 carry 的元素与 counter[i] 的元素按顺序合并</span></span><br><span class="line">            counter[i].<span class="built_in">merge</span>(carry, comp);</span><br><span class="line">            <span class="comment">// 将合并后的结果放入 carry 中，i + 1，继续下一层的合并</span></span><br><span class="line">            <span class="comment">// 这里使用了一些小技巧，实际上相当于：</span></span><br><span class="line">            <span class="comment">// carry.swap(counter[i]);</span></span><br><span class="line">            <span class="comment">// ++i;</span></span><br><span class="line">            carry.<span class="built_in">swap</span>(counter[i++]);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 3. 将合并出的结果放入下一层中</span></span><br><span class="line">        <span class="comment">// 根据上面循环的退出条件，count[i]必然是空的，</span></span><br><span class="line">        <span class="comment">// 这里相当于将 carry 中归并的结果放入下一层，由于经过了 swap，因此 carry 必然为空</span></span><br><span class="line">        carry.<span class="built_in">swap</span>(counter[i]);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果 i == fill，说明当前层是最大层，需要增加一层</span></span><br><span class="line">        <span class="keyword">if</span> (i == fill) ++fill;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将每一层的 list 依次合并，每一层保证有序</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt; fill; ++i) &#123;</span><br><span class="line">        counter[i].<span class="built_in">merge</span>(counter[i - <span class="number">1</span>], comp);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将最终的结果交换到当前 list 中</span></span><br><span class="line">    <span class="built_in">swap</span>(counter[fill - <span class="number">1</span>]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先，如果元素个数小于等于 1，直接返回，这里做特殊处理，没什么好分析的。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (node_-&gt;next == node_ || node_-&gt;next-&gt;next == node_) <span class="keyword">return</span>;</span><br></pre></td></tr></table></figure>
+<p>接着定义了一些用于归并排序的变量。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 一些新的 lists 用于存储分割后的 lists</span></span><br><span class="line">list&lt;T&gt; carry;        <span class="comment">// 中转站，用于在 counter 之间搬运节点以及从 list 上取下节点</span></span><br><span class="line">list&lt;T&gt; counter[<span class="number">64</span>];  <span class="comment">// 缓存表，第 i 层 list 存储长度为 2^i</span></span><br><span class="line"><span class="type">int</span> fill = <span class="number">0</span>;         <span class="comment">// 记录最深层数，counter[fill] 为空</span></span><br></pre></td></tr></table></figure>
+<p>其中，<code>carry</code> 负责每次从待排序的 list （以下简称 list）上取下一个节点，并且负责在归并的过程中，在各个 <code>counter</code> 之间搬运节点；<code>counter</code> 为节点的缓存表，用于存放从 list 中取下的节点，缓存表共有 64 层，每一层存放的元素个数符合二进制关系，因此 <code>sort</code> <strong>最多可以处理 <code>2 ^ 64 - 1</code></strong> 个元素；<code>fill</code> 负责维护目前抵达的最深层次，<code>counter[fill]</code> 为空。</p>
+<p>下面是一个 <code>while</code> 循环，从条件就可以看出，该算法的做法为每次从 list 上取下一个节点，直到 list 为空即完成了排序。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (!<span class="built_in">empty</span>())</span><br></pre></td></tr></table></figure>
+<p>每次循环都要做三件事<s>公平！公平！还是TMD公平！</s>：</p>
+<ol>
+<li>开始一次归并的流程，从 list 中取出一个点放进 <code>carry</code>，此时 <code>carry</code> 必然为空。同时用变量 <code>i</code> 记录本次归并到达的层数，以用于更新 <code>fill</code> 与跳出循环。</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 运行到此处 carry 必然为空，因此一定可以处理下一个元素</span></span><br><span class="line"><span class="comment">// 1. 将当前 list 的头部元素取出，放入 carry 中</span></span><br><span class="line">carry.<span class="built_in">splice</span>(carry.<span class="built_in">begin</span>(), *<span class="keyword">this</span>, <span class="built_in">begin</span>());</span><br><span class="line"><span class="type">int</span> i = <span class="number">0</span>;  <span class="comment">// 记录经过的层数</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>从第 0 层（<code>i</code> 维护的层数）开始，逐层进行归并。如果当前遍历到的缓存表中（<code>counter[i]</code>）有元素，那么就将 <code>counter[i]</code>中的元素与 <code>carry</code> 合并（由于使用的是 <code>merge</code>，保证了有序性），将这一结果交换（<code>swap</code>）给 <code>carry</code>，并继续处理下一层。</li>
+</ol>
+<blockquote>
+<p>这里一定要注意：正是 <code>!counter[i].empty()</code> 这样的判断条件设计，决定了每一层的 <code>counter</code> 中元素个数均为 <code>2 ^ i</code>，因为如果当前的缓存表 <code>counter[i]</code> 不为空，那么一定是上一轮的归并将元素移到了当前的缓存表中，这一次直接将其与 <code>carry</code> 合并，并放入 <code>counter[i+1]</code>，这不正是二进制的进位操作吗！因此，这样操作下来，<code>counter[i]</code> 中的节点个数必然为 <code>2 ^ i</code>。<br>
+同样道理，如果你想设计一个三进制的 <code>counter</code>，只需要将每一层的判断改为 “是否在此之前已经归并了两次” 即可，但是由于二进制的判断最为简单（每个缓存表只有 “空（<code>0</code>）” 与 “满（<code>1</code>）” 两种状态），并且 <code>empty</code> 很容易判断，因此设计成二进制是最合理的。</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 2. 从小往大不断合并非空层直至遇到空层或者到达当前最大归并层次</span></span><br><span class="line"><span class="comment">// 出这个循环，无论 i 是否超过最大层，counter[i] 必然是空的</span></span><br><span class="line"><span class="comment">// !counter[i].empty() 决定了 counter[i] 中存放的 list 的长度为 2^i</span></span><br><span class="line"><span class="keyword">while</span> (i &lt; fill &amp;&amp; !counter[i].<span class="built_in">empty</span>()) &#123;</span><br><span class="line">    <span class="comment">// 将 carry 的元素与 counter[i] 的元素按顺序合并</span></span><br><span class="line">    counter[i].<span class="built_in">merge</span>(carry);</span><br><span class="line">    <span class="comment">// 将合并后的结果放入 carry 中，i + 1，继续下一层的合并</span></span><br><span class="line">    carry.<span class="built_in">swap</span>(counter[i++]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>结合上述循环跳出的条件，当前遍历到的缓存表 <code>counter[i]</code> 必然是空的，因此需要把 <code>carry</code> 中携带的所有节点均放进当前的缓存表中（相当于二进制中将这一位置为 <code>1</code>）。如果下次依然遍历到了这个表，那么就需要进位了。同时，如果当前已经遍历到了最大层，那么就要更新 <code>fill</code>。</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 3. 将合并出的结果放入下一层中</span></span><br><span class="line"><span class="comment">// 根据上面循环的退出条件，count[i]必然是空的，</span></span><br><span class="line"><span class="comment">// 这里相当于将 carry 中归并的结果放入下一层，由于经过了 swap，因此 carry 必然为空</span></span><br><span class="line">carry.<span class="built_in">swap</span>(counter[i]);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 如果 i == fill，说明当前层是最大层，需要增加一层</span></span><br><span class="line"><span class="keyword">if</span> (i == fill) ++fill;</span><br></pre></td></tr></table></figure>
+<p>跳出了这个外层的循环，就意味着我们已经将链表的节点全部有序地储存在了 <code>counter</code> 中，下面只需要对 <code>counter[0 : fill]</code> 遍历使用 <code>merge</code> 即可完成排序，这里也就不难理解 <code>fill</code> 的设计了，为了方便下面的遍历，并且也满足了 “前闭后开” 的原则。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 将每一层的 list 依次合并，每一层保证有序</span></span><br><span class="line"><span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt; fill; ++i) &#123;</span><br><span class="line">    counter[i].<span class="built_in">merge</span>(counter[i - <span class="number">1</span>], comp);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将最终的结果交换到当前 list 中</span></span><br><span class="line"><span class="built_in">swap</span>(counter[fill - <span class="number">1</span>]);</span><br></pre></td></tr></table></figure>
+<p>最后的 <code>swap(counter[fill - 1]);</code>，是将归并完的结果交换至 list 中，也就完成了排序。</p>
+<h2 id="总结">总结</h2>
+<p>SGI-STL 中的 list 为双向环状链表，只需一个节点便可以遍历整个链表，并且可以轻松维护各种信息（如 <code>begin()</code>, <code>end()</code>, <code>empty()</code> 等）。</p>
+<p>相较于 vector，list 的好处是对于任意位置的元素插入与删除，均是常数时间复杂度，且对于空间的使用非常精准，不用像 vector 一样提前分配多余的空间；同时，list 的迭代器也始终有效，不会出现 vector 中的失效情况。但常数时间插入删除元素的代价就是对于任意元素的访问是 <code>O(n)</code> 复杂度。</p>
+<p>list 的迭代器为双向迭代器，不支持随机访问，因此也不能使用 STL 中的排序算法对 list 进行排序。为此，list 内部实现了一种十分巧妙的归并排序方法，使用 <code>merge</code> 与 <code>swap</code> 等内部的函数，同时利用了缓存表，实现了时间复杂度 <code>O(nlogn)</code>，空间复杂度 <code>O(n)</code> 的归并排序。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2023/09/01/2023-9-1-2/">https://qlipphoth.github.io/2023/09/01/2023-9-1-2/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Cpp/">Cpp</a><a class="post-meta__tags" href="/tags/STL/">STL</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/09/01/2023-9-1-1/" title="从零开始的 STL 实现记录：Container-2.2"><img class="cover" src="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">从零开始的 STL 实现记录：Container-2.2</div></div></a></div><div class="next-post pull-right"><a href="/2023/09/02/2023-9-2-1/" title="Unity 中的委托与事件"><img class="cover" src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">Unity 中的委托与事件</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2023/08/19/2023-8-19-1/" title="从零开始的 STL 实现记录"><img class="cover" src="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-08-19</div><div class="title">从零开始的 STL 实现记录</div></div></a></div><div><a href="/2023/10/30/2023-10-30-1/" title="从零开始的 STL 实现记录：Adapter-2"><img class="cover" src="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-10-30</div><div class="title">从零开始的 STL 实现记录：Adapter-2</div></div></a></div><div><a href="/2023/10/29/2023-10-29-1/" title="从零开始的 STL 实现记录：Adapter-1"><img class="cover" src="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-10-29</div><div class="title">从零开始的 STL 实现记录：Adapter-1</div></div></a></div><div><a href="/2023/10/25/2023-10-25-1/" title="从零开始的 STL 实现记录：Functor"><img class="cover" src="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-10-25</div><div class="title">从零开始的 STL 实现记录：Functor</div></div></a></div><div><a href="/2023/10/23/2023-10-23-1/" title="从零开始的 STL 实现记录：Algorithm-4.5"><img class="cover" src="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-10-23</div><div class="title">从零开始的 STL 实现记录：Algorithm-4.5</div></div></a></div><div><a href="/2023/10/22/2023-10-22-1/" title="从零开始的 STL 实现记录：Algorithm-4.4"><img class="cover" src="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-10-22</div><div class="title">从零开始的 STL 实现记录：Algorithm-4.4</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#sort"><span class="toc-number">2.</span> <span class="toc-text">sort</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#transfer-splice-reverse-merge"><span class="toc-number">2.1.</span> <span class="toc-text">transfer &amp; splice &amp; reverse &amp; merge</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#sort-%E4%BB%96%E6%9D%A5%E4%BA%86"><span class="toc-number">2.2.</span> <span class="toc-text">sort 他来了</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

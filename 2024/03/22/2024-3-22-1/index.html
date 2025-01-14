@@ -1,0 +1,612 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>UE 补完计划（五） UE中的STL-2 | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="引言 这是个系列文章，会通过分析源码，从数据结构层面来分析UE4&#x2F;UE5中的几种基本容器：TArray、TSparseArray、TBitArray、TSet、TMap、TMultiMap，并与传统实现方案进行比较。 本文基于的源码版本是UE5 release 5.0.0。不过源码与UE4对比过基本一致，可通用。 本文作为系列文章的第二篇，会分析TSet、TMap、TMultiMap的实现。 数据">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE 补完计划（五） UE中的STL-2">
+<meta property="og:url" content="https://qlipphoth.github.io/2024/03/22/2024-3-22-1/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="引言 这是个系列文章，会通过分析源码，从数据结构层面来分析UE4&#x2F;UE5中的几种基本容器：TArray、TSparseArray、TBitArray、TSet、TMap、TMultiMap，并与传统实现方案进行比较。 本文基于的源码版本是UE5 release 5.0.0。不过源码与UE4对比过基本一致，可通用。 本文作为系列文章的第二篇，会分析TSet、TMap、TMultiMap的实现。 数据">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg">
+<meta property="article:published_time" content="2024-03-22T12:47:48.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="UE">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2024/03/22/2024-3-22-1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'UE 补完计划（五） UE中的STL-2',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">UE 补完计划（五） UE中的STL-2</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-03-22T12:47:48.000Z" title="Created 2024-03-22 12:47:48">2024-03-22</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/NERV/">NERV</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/NERV/UE/">UE</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">4.9k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>18min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="UE 补完计划（五） UE中的STL-2"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1>引言</h1>
+<p>这是个系列文章，会通过分析源码，从数据结构层面来分析UE4/UE5中的几种基本容器：<code>TArray</code>、<code>TSparseArray</code>、<code>TBitArray</code>、<code>TSet</code>、<code>TMap</code>、<code>TMultiMap</code>，并与传统实现方案进行比较。</p>
+<p>本文基于的源码版本是UE5 release 5.0.0。不过源码与UE4对比过基本一致，可通用。</p>
+<p>本文作为系列文章的第二篇，会分析<code>TSet</code>、<code>TMap</code>、<code>TMultiMap</code>的实现。</p>
+<p>数据结构是程序员的基本功，因此本文不会赘述教科书上人尽皆知的概念，只会从UE4/UE5的基本容器的特色机制出发来分析其具体实现。</p>
+<h1>TSet</h1>
+<p>上一篇文章中，详细分析了<code>TSparseArray</code>的机制。<code>TSparseArray</code>在UE5的哈希结构（<code>TSet</code>、<code>TMap</code>）中，有着重要的应用，也是<code>TSet</code>的底层容器。</p>
+<p><code>TSet</code>的功能与<code>std::set</code>类似，用于查询某个元素是否已经位于<code>set</code>容器中。<code>std::set</code>使用红黑树来进行查询，并且由于红黑树的性质可以天然保证遍历的有序性。<code>std::unordered_set</code>则使用哈希表来实现，无法保证有序性。</p>
+<p>而UE的<code>TSet</code>容器，不仅仅使用哈希表来进行查询来保证的查询效率，还能支持排序并且按顺序遍历！！这在很大程度上，也要归功于<code>TSet</code>使用的特殊设计。</p>
+<h2 id="TSet内部成员结构">TSet内部成员结构</h2>
+<p>我们先来看<code>TSet</code>内部的成员变量：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 为了方便注释，调整了一下声明顺序</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 实际存储的元素内容，由于使用了SparseArray，因此可以认为是在连续内存上。</span></span><br><span class="line"><span class="keyword">typedef</span> TSparseArray&lt;SetElementType,<span class="keyword">typename</span> Allocator::SparseArrayAllocator&gt;     ElementArrayType;</span><br><span class="line">ElementArrayType Elements;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 存储每个哈希值在Elements上的索引。</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">typename</span> Allocator::HashAllocator::<span class="keyword">template</span> ForElementType&lt;FSetElementId&gt; HashType;</span><br><span class="line"><span class="keyword">mutable</span> HashType Hash;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 当前hash部分的总大小。需要保证是2的幂次方，用于快速取模</span></span><br><span class="line"><span class="keyword">mutable</span> int32    HashSize;</span><br></pre></td></tr></table></figure>
+<p><code>Elements</code>是一个数组，存储添加进哈希表的元素。这个数组存储的元素类型为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> InElementType, <span class="type">bool</span> bTypeLayout&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TSetElementBase</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">typedef</span> InElementType ElementType;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// ... 默认构造函数声明</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/** The element&#x27;s value. */</span></span><br><span class="line">    ElementType Value;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果发生哈希冲突，链表上的下一个HashId</span></span><br><span class="line">    <span class="comment">/** The id of the next element in the same hash bucket. */</span></span><br><span class="line">    <span class="keyword">mutable</span> FSetElementId HashNextId;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 当前元素对应在Hash部分的索引</span></span><br><span class="line">    <span class="comment">/** The hash bucket that the element is currently linked to. */</span></span><br><span class="line">    <span class="keyword">mutable</span> int32 HashIndex;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>而<code>Hash</code>也是一个数组，存储了每个元素的<code>KeyHash</code>所对应的在<code>Elements</code>数组中的索引。其核心数据类型如下（其实就一个<code>Index</code>）：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">FSetElementId</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ... 各种函数定义</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 存储在Elements数组中的索引</span></span><br><span class="line">    <span class="comment">/** The index of the element in the set&#x27;s element array. */</span></span><br><span class="line">    int32 Index;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从<code>TSet</code>的内部成员变量的结构可以分析出，<strong>其与传统的哈希表的结构有一个较大的不同，不是直接用哈希值查找元素，而是先查找索引，再根据索引来查找元素</strong>。</p>
+<h2 id="Find元素">Find元素</h2>
+<p>其查找流程先用一个简要流程图来描述：</p>
+<p><img src="https://s2.loli.net/2024/03/22/zUr65uJOVMEGCDK.png" alt="image.png"></p>
+<p>其核心流程全部在<code>FindId()</code>函数中。有一点需要注意的是：</p>
+<p><strong><code>Hash</code>数组并不管哈希冲突。实际哈希冲突的处理放在<code>Elements</code>数组的元素中</strong>。</p>
+<p>总体查找流程与传统的哈希表相似，计算哈希 -&gt; 在哈希桶中找到元素 -&gt; 遍历比较 -&gt; 返回结果。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">FORCEINLINE FSetElementId&amp;amp; <span class="built_in">GetTypedHash</span>(int32 HashIndex) <span class="type">const</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// HashSize永远是2的幂次方。因此这里相当于快速取模</span></span><br><span class="line">    <span class="comment">// 这里直接通过对HashIndex取模得到ElementId索引，哈希冲突留到外部解决</span></span><br><span class="line">    <span class="keyword">return</span> ((FSetElementId*)Hash.<span class="built_in">GetAllocation</span>())[HashIndex &amp;amp; (HashSize - <span class="number">1</span>)];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Finds an element with the given key in the set.</span></span><br><span class="line"><span class="comment"> * @param Key - The key to search for.</span></span><br><span class="line"><span class="comment"> * @return The id of the set element matching the given key, or the NULL id if none matches.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function">FSetElementId <span class="title">FindId</span><span class="params">(KeyInitType Key)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (Elements.<span class="built_in">Num</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 这里KeyFuncs::GetKeyHash(Key)会将传入的元素类型通过哈希函数转换为一个int32</span></span><br><span class="line">        <span class="comment">// GetTypedHash只负责找到Elements数组中的位置，不负责哈希冲突处理</span></span><br><span class="line">        <span class="keyword">for</span>(FSetElementId ElementId = <span class="built_in">GetTypedHash</span>(KeyFuncs::<span class="built_in">GetKeyHash</span>(Key));</span><br><span class="line">            ElementId.<span class="built_in">IsValidId</span>();</span><br><span class="line">            ElementId = Elements[ElementId].HashNextId)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 遍历HashBucket中的元素，如果找到则返回，否则继续比较桶中的下一个元素</span></span><br><span class="line">            <span class="keyword">if</span>(KeyFuncs::<span class="built_in">Matches</span>(KeyFuncs::<span class="built_in">GetSetKey</span>(Elements[ElementId].Value),Key))</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="comment">// Return the first match, regardless of whether the set has multiple matches for the key or not.</span></span><br><span class="line">                <span class="keyword">return</span> ElementId;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">FSetElementId</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Add元素">Add元素</h2>
+<p>添加元素会存在不同的情况：</p>
+<ol>
+<li>
+<p>如果元素已存在，那么替换元素</p>
+</li>
+<li>
+<p>如果元素不存在，那么创建元素添加到<code>Elements</code>中，并且将<code>ElementId</code>与<code>HashKey</code>进行连接存储到<code>Hash</code>中。</p>
+</li>
+</ol>
+<p>用简要流程图来描述如下：</p>
+<p><img src="https://s2.loli.net/2024/03/22/5kcajNtixUJDgyX.png" alt="image.png"></p>
+<p>这里有两点可以注意：</p>
+<ol>
+<li>
+<p>入参使用了万能引用，意味着内部构造新对象时，可能使用拷贝构造，也可能使用移动构造。</p>
+</li>
+<li>
+<p>内部实现即使是替换元素的分支，也会走先构造，再移动，再移除的逻辑。这个过程中，会走<code>Memmove</code>的操作。</p>
+</li>
+</ol>
+<p>其核心流程在<code>Emplace</code>函数中：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> ArgsType&gt;</span><br><span class="line"><span class="function">FSetElementId <span class="title">Emplace</span><span class="params">(ArgsType&amp;amp;&amp;amp; Args, <span class="type">bool</span>* bIsAlreadyInSetPtr = <span class="literal">nullptr</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 直接使用传入的元素构造一个新的Element，可能使用拷贝构造或者移动构造</span></span><br><span class="line">    <span class="comment">// 这里会直接在Elements数组中构造一个新元素</span></span><br><span class="line">    <span class="comment">// Create a new element.</span></span><br><span class="line">    FSparseArrayAllocationInfo ElementAllocation = Elements.<span class="built_in">AddUninitialized</span>();</span><br><span class="line">    SetElementType&amp;amp; Element = *<span class="built_in">new</span> (ElementAllocation) <span class="built_in">SetElementType</span>(<span class="built_in">Forward</span>&lt;ArgsType&gt;(Args));</span><br><span class="line">    FSetElementId ElementId = ElementAllocation.Index;</span><br><span class="line"></span><br><span class="line">    uint32 KeyHash = KeyFuncs::<span class="built_in">GetKeyHash</span>(KeyFuncs::<span class="built_in">GetSetKey</span>(Element.Value));</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">TryReplaceExisting</span>(KeyHash, Element, ElementId, bIsAlreadyInSetPtr))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">RehashOrLink</span>(KeyHash, Element, ElementId);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ElementId;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意在上面的<code>Emplace</code>函数中，会直接在<code>Elements</code>数组中添加一个位置，并构造一个新元素。而如果走到了替换元素的分支，再走<code>Move</code>和删除的逻辑。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">TryReplaceExisting</span><span class="params">(uint32 KeyHash, SetElementType&amp;amp; Element, FSetElementId&amp;amp; InOutElementId, <span class="type">bool</span>* bIsAlreadyInSetPtr)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ... 一系列判断，替换核心逻辑如下</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 对于Set中的一般情况，MoveByRelocate内部逻辑，会先执行Elements[ExistingId].Value的析构函数，再进行Memmove</span></span><br><span class="line">    <span class="comment">// If there&#x27;s an existing element with the same key as the new element, replace the existing element with the new element.</span></span><br><span class="line">    <span class="built_in">MoveByRelocate</span>(Elements[ExistingId].Value, Element.Value);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 上一步已经执行了Memmove，因此直接将Elements中新创建的已经无效的Element移除</span></span><br><span class="line">    <span class="comment">// Then remove the new element.</span></span><br><span class="line">    Elements.<span class="built_in">RemoveAtUninitialized</span>(InOutElementId);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Then point the return value at the replaced element.</span></span><br><span class="line">    InOutElementId = ExistingId;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>笔者在这里是有一些疑惑，理论上先<code>FindExistingId</code>，再根据其是否有效来决定是直接在原有地址上构造，还是构造新节点，这样是可以省去<code>Memmove</code>的开销的。可能考虑到代码复用的原因？</p>
+<p>如果走到元素不存在的分支，那么代码很简单，就是将元素添加到<code>HashBucket</code>链表表头。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">FORCEINLINE <span class="type">void</span> <span class="title">LinkElement</span><span class="params">(FSetElementId ElementId, <span class="type">const</span> SetElementType&amp;amp; Element, uint32 KeyHash)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Compute the hash bucket the element goes in.</span></span><br><span class="line">    Element.HashIndex = KeyHash &amp;amp; (HashSize - <span class="number">1</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Link the element into the hash bucket.</span></span><br><span class="line">    Element.HashNextId = <span class="built_in">GetTypedHash</span>(Element.HashIndex);</span><br><span class="line">    <span class="built_in">GetTypedHash</span>(Element.HashIndex) = ElementId;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="如何处理Hash冲突？">如何处理Hash冲突？</h3>
+<p>虽然<code>TSet</code>的哈希表结构使用了连续内存，但本质上还是一个开链法的哈希表。我们可以对传统开链法哈希表中的各实现做如下的转换：</p>
+<table>
+<thead>
+<tr>
+<th>传统开链法哈希表</th>
+<th>TSet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>堆</td>
+<td>Elements分配器</td>
+</tr>
+<tr>
+<td>桶数组</td>
+<td>Hash数组</td>
+</tr>
+<tr>
+<td>链表节点</td>
+<td>Elements内部元素</td>
+</tr>
+<tr>
+<td>链表节点记录地址</td>
+<td>链表节点记录索引</td>
+</tr>
+</tbody>
+</table>
+<p>这样转换之后，我们会发现其实现依然是一个开链法的哈希表！</p>
+<p>因此，其处理哈希冲突的方法也和传统开链法一致，如果发现哈希冲突，构造一个节点，并添加到链表表头即可。</p>
+<h2 id="Remove元素">Remove元素</h2>
+<p>由于使用了开链法，删除元素的处理就比开放定址法简单很多。只需要将节点从链表中移除即可。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">Remove</span><span class="params">(FSetElementId ElementId)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (Elements.<span class="built_in">Num</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">const</span> <span class="keyword">auto</span>&amp;amp; ElementBeingRemoved = Elements[ElementId];</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 由于只记录了HashNextId，因此需要从链表头开始遍历查找</span></span><br><span class="line">        <span class="comment">// Remove the element from the hash.</span></span><br><span class="line">        <span class="keyword">for</span>(FSetElementId* NextElementId = &amp;amp;<span class="built_in">GetTypedHash</span>(ElementBeingRemoved.HashIndex);</span><br><span class="line">            NextElementId-&gt;<span class="built_in">IsValidId</span>();</span><br><span class="line">            NextElementId = &amp;amp;Elements[*NextElementId].HashNextId)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 找到元素后，从链表中移除</span></span><br><span class="line">            <span class="keyword">if</span>(*NextElementId == ElementId)</span><br><span class="line">            &#123;</span><br><span class="line">                *NextElementId = ElementBeingRemoved.HashNextId;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 从Elements移除。由于是TSparseArray，因此是O(1)的时间复杂度</span></span><br><span class="line">    <span class="comment">// Remove the element from the elements array.</span></span><br><span class="line">    Elements.<span class="built_in">RemoveAt</span>(ElementId);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Rehash">Rehash</h2>
+<p>任何哈希表的<code>Rehash</code>操作都是开销比较高的，<code>TSet</code>也不例外。<code>Rehash</code>流程需要清除<code>Hash</code>桶，并遍历所有的<code>Elements</code>，依次重新计算哈希，映射到<code>Hash</code>桶中。</p>
+<p><code>Rehash</code>目前只会在5种情况下调用：</p>
+<ol>
+<li>
+<p>添加元素时，需要的<code>HashSize</code>比当前<code>HashSize</code>大</p>
+</li>
+<li>
+<p>执行<code>Compact</code>、<code>Reserve</code>等操作重新分配空间时。</p>
+</li>
+<li>
+<p>排序之后。</p>
+</li>
+<li>
+<p>当前空间过大，自动释放空间时</p>
+</li>
+<li>
+<p>序列化之后，进行<code>TSet</code>的初始化</p>
+</li>
+</ol>
+<p>其源码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** Resizes the hash. */</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Rehash</span><span class="params">()</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Free the old hash.</span></span><br><span class="line">    Hash.<span class="built_in">ResizeAllocation</span>(<span class="number">0</span>,<span class="number">0</span>,<span class="built_in">sizeof</span>(FSetElementId));</span><br><span class="line"></span><br><span class="line">    int32 LocalHashSize = HashSize;</span><br><span class="line">    <span class="keyword">if</span> (LocalHashSize)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 重新分配合适大小的HashBucket数组</span></span><br><span class="line">        <span class="comment">// Allocate the new hash.</span></span><br><span class="line">        <span class="built_in">checkSlow</span>(FMath::<span class="built_in">IsPowerOfTwo</span>(HashSize));</span><br><span class="line">        Hash.<span class="built_in">ResizeAllocation</span>(<span class="number">0</span>, LocalHashSize, <span class="built_in">sizeof</span>(FSetElementId));</span><br><span class="line">        <span class="keyword">for</span> (int32 HashIndex = <span class="number">0</span>; HashIndex &lt; LocalHashSize; ++HashIndex)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">GetTypedHash</span>(HashIndex) = <span class="built_in">FSetElementId</span>();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 遍历Elements所有元素，依次重新HashElement</span></span><br><span class="line">        <span class="comment">// Add the existing elements to the new hash.</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">typename</span> ElementArrayType::TConstIterator <span class="built_in">ElementIt</span>(Elements);ElementIt;++ElementIt)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// ElementIt.GetIndex()返回当前Element在Elements数组中的下标。由于Rehash目的是重建Hash与Elements之间的关系，不需要改变Element的顺序</span></span><br><span class="line">            <span class="comment">// 只需要将Element.HashIndex重新设为正确的Hash桶索引，且重建链表关系即可</span></span><br><span class="line">            <span class="built_in">HashElement</span>(<span class="built_in">FSetElementId</span>(ElementIt.<span class="built_in">GetIndex</span>()),*ElementIt);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="TSet的遍历">TSet的遍历</h2>
+<p>前文已经分析过<code>TSparseArray</code>的遍历。<code>TSet</code>的遍历则直接包装了<code>Elements</code>数组的遍历，与<code>HashBuckets</code>没有关系。</p>
+<p><code>TSet</code>的迭代器内引用了一个<code>TSparseArray</code>的迭代器，迭代器的自增函数也仅仅是调用<code>TSparseArray</code>迭代器的自增，再返回<code>TSparseArray</code>迭代器的解引用所得值。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">FORCEINLINE TBaseIterator&amp;amp; <span class="keyword">operator</span>++()</span><br><span class="line">&#123;</span><br><span class="line">    ++ElementIt;</span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">FORCEINLINE ItElementType&amp;amp; <span class="keyword">operator</span>*() <span class="type">const</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> ElementIt-&gt;Value;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="TSet能保证Add的顺序与遍历顺序一致吗？">TSet能保证Add的顺序与遍历顺序一致吗？</h3>
+<p>不能。本质上是因为<code>TSparseArray</code>由于有空闲链表，每次<code>Add</code>之后都会返回一个索引，而遍历时是根据下标从小到大遍历，自身就无法保证<code>Add</code>的顺序与其遍历顺序一致。</p>
+<p>但是有一种特殊情况。由于<code>TSparseArray</code>的<code>Reserve</code>函数实现方式，在分配控件之后，空闲链表的可用索引是从下标0开始依次往后递增的。因此对于一个新的<code>TSet</code>，可以保证在没有触发<code>Rehash</code>之前，其遍历顺序与<code>Add</code>顺序一致。</p>
+<h2 id="TSet的排序">TSet的排序</h2>
+<p>可能很多同学熟悉传统的哈希表之后，会对<code>TSet</code>表示惊奇，TSet居然可以排序？？<code>std::unordered_set</code>也是哈希表，不都说是无序的吗？</p>
+<p>实际上，传统哈希表无法进行排序的原因，是因为HashBuckets数组是由元素的哈希值来决定存放顺序的，元素有序并不意味着哈希值有序。如果想要排序的话怎么办呢？那就需要额外记录有序的元素的哈希值的顺序，遍历时读取这个有序哈希值数组，通过哈希值访问Value去进行遍历。</p>
+<p>而你会发现，对于<code>TSet</code>的<code>Elements</code>与<code>Hash</code>分离的结构而言，天生就支持有序遍历！如果我们想要有序遍历<code>TSet</code>，只需要对<code>Elements</code>进行排序，然后进行一次<code>Rehash</code>，即可将“有序的元素的哈希值的顺序”记录在<code>Element</code>中。我们遍历时甚至不需要再通过哈希值去访问<code>Value</code>，而是直接遍历<code>Elements</code>数组即可。这样通过哈希值查找元素时，由于经历过<code>Rehash</code>，也不会影响添加、查找、删除等任何流程。</p>
+<p>换种思路来说，传统哈希表无法进行有序遍历是因为在堆上申请内存是无序的。但是<code>TSet</code>的“堆”——<code>Elements</code>数组可以做到有序，这样就可以直接在“堆”上有序遍历元素。</p>
+<p>排序代码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> PREDICATE_CLASS&gt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Sort</span><span class="params">( <span class="type">const</span> PREDICATE_CLASS&amp;amp; Predicate )</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Sort the elements according to the provided comparison class.</span></span><br><span class="line">    Elements.<span class="built_in">Sort</span>( <span class="built_in">FElementCompareClass</span>&lt; PREDICATE_CLASS &gt;( Predicate ) );</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Rehash.</span></span><br><span class="line">    <span class="built_in">Rehash</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="分析TSet的性能和内存优势">分析TSet的性能和内存优势</h2>
+<p>由于底层使用的是数组，且并未使用开链法，因此<code>TSet</code>的<code>Elements</code>排列非常紧密，能取得很高的内存占用率。另外排列紧密的另一个好处是对于缓存非常友好，能降低<code>CacheMiss</code>概率。使用链表法相比开放定址法，也降低了添加操作的耗时。另外，由于使用了<code>TSparseArray</code>，在<code>TSet</code>遍历时能取得较高的效率。</p>
+<h1>TMap</h1>
+<p><code>TMap</code>作为UE5的字典结构，与<code>TSet</code>有着类似的功能，例如快速查找，添加、删除、更新健值对等。</p>
+<h2 id="利用TSet进行扩展">利用TSet进行扩展</h2>
+<p>常见的使用<code>set</code>的结构来实现<code>map</code>的思想，就是将<code>map</code>的健值对组装成一个<code>struct</code>，这个<code>struct</code>使用其<code>key</code>来计算哈希，然后直接塞进<code>set</code>容器中即可。</p>
+<p>例如一个简单的<code>MapElement</code>的实现如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">FMapElement</span></span><br><span class="line">&#123;</span><br><span class="line">    KeyType Key;</span><br><span class="line">    ValueType Value;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">inline</span> uint32 <span class="title">GetTypeHash</span><span class="params">(<span class="type">const</span> FMapElement&amp;amp; Item)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">GetTypeHash</span>(Item.Key);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>TMap</code>也采用了类似的思想，不过其使用了一个更通用的模板类：<code>TTuple</code>。</p>
+<p><code>TTuple</code>是UE自己实现的类似于<code>std::tuple</code>的模板类，用于承载UE自己的元祖相关的代码。<code>TMap</code>便采用了<code>TTuple</code>作为其<code>MapElement</code>类型。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> KeyType, <span class="keyword">typename</span> ValueType&gt;</span><br><span class="line"><span class="keyword">using</span> TPair = TTuple&lt;KeyType, ValueType&gt;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> KeyType, <span class="keyword">typename</span> ValueType, <span class="keyword">typename</span> SetAllocator, <span class="keyword">typename</span> KeyFuncs&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TMapBase</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">typedef</span> TPair&lt;KeyType, ValueType&gt; ElementType;</span><br><span class="line">    </span><br><span class="line"><span class="keyword">protected</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">typedef</span> TSet&lt;ElementType, KeyFuncs, SetAllocator&gt; ElementSetType;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/** A set of the key-value pairs in the map. */</span></span><br><span class="line">    ElementSetType Pairs;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="TTuple实现逻辑">TTuple实现逻辑</h2>
+<p><code>TTuple</code>是笔者在UE源码中见过的最复杂的模板元编程代码，没有之一。。这里尝试简单分析一下其实现原理和模板展开过程：</p>
+<p>首先看<code>TTuple</code>类定义：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span>... Types&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">TTuple</span> : UE::Core::Private::Tuple::TTupleBase&lt;TMakeIntegerSequence&lt;uint32, <span class="keyword">sizeof</span>...(Types)&gt;, Types...&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里上来就使用了<code>TMakeIntegerSequence</code>类。这是UE自己包装的<code>IntegerSequence</code>功能，底层也是直接桥接了编译器内置的<code>__make_integer_seq</code>。其作用是接收一个类型模板参数和一个数字<code>N</code>，会在编译期自动将<code>N...</code>转为生成<code>0, 1, ..., N-1</code>的模板代码。（可以参考<code>C++14</code>的<code>std::make_integer_sequence</code>功能）</p>
+<p>例如这里我们传入的定义是：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> KeyType, <span class="keyword">typename</span> ValueType&gt;</span><br><span class="line"><span class="keyword">using</span> TPair = TTuple&lt;KeyType, ValueType&gt;;</span><br></pre></td></tr></table></figure>
+<p>因此这里<code>sizeof...(Types)</code>就是2，因此<code>TTupleBase&lt;TMakeIntegerSequence&lt;uint32, sizeof...(Types)&gt;, Types...&gt;</code>这行代码，会自动展开生成：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TTupleBase&lt;TMakeIntegerSequence&lt;uint32, <span class="number">2</span>&gt;, KeyType, ValueType&gt;</span><br></pre></td></tr></table></figure>
+<p>我们可以找到<code>TTupleBase</code>的定义为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;uint32... Indices, <span class="keyword">typename</span>... Types&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">TTupleBase</span>&lt;TIntegerSequence&lt;uint32, Indices...&gt;, Types...&gt; : TTupleBaseElement&lt;Types, Indices, <span class="keyword">sizeof</span>...(Types)&gt;...</span><br></pre></td></tr></table></figure>
+<p>这里<code>TIntegerSequence&lt;uint32, Indices...&gt;</code>会接收<code>TMakeIntegerSequence&lt;uint32, 2&gt;</code>的参数，会展开为0和1来生成两份代码。注意这里变长模板形参展开在<code>TTupleBaseElement&lt;Types, Indices, sizeof...(Types)&gt;</code>外部，因此这里会进行多继承，并将每一个展开的类都作为自己的父类。因此这里会展开为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">TTupleBase</span>&lt;TIntegerSequence&lt;uint32, Indices...&gt;<span class="comment">/* 只是为了展开 */</span>, KeyType, ValueType&gt; : TTupleBaseElement&lt;KeyType, <span class="number">0</span>, <span class="number">2</span>&gt;, TTupleBaseElement&lt;ValueType, <span class="number">1</span>, <span class="number">2</span>&gt;`</span><br></pre></td></tr></table></figure>
+<p>由于该<code>struct</code>并不包含虚函数，自身也没有数据，因此多继承的两个父类内部的数据会默认平铺的方式包含在该<code>TTuple</code>中。</p>
+<p>而<code>TTupleBaseElement</code>只有两种实现：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, uint32 Index, uint32 TupleSize&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">TTupleBaseElement</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    T Value;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">TTupleBaseElement</span>&lt;T, <span class="number">0</span>, <span class="number">2</span>&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    T Key;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>即<code>TTuple&lt;KeyType, ValueType&gt;</code>和我们实现的<code>FMapElement</code>结构体在内存结构和用法上都是一样的！</p>
+<h2 id="根据TTuple获取KeyHash">根据TTuple获取KeyHash</h2>
+<p>这部分实现在类<code>TDefaultMapKeyFuncs</code>中。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** Defines how the map&#x27;s pairs are hashed. */</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> KeyType, <span class="keyword">typename</span> ValueType, <span class="type">bool</span> bInAllowDuplicateKeys&gt;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">TDefaultMapKeyFuncs</span> : BaseKeyFuncs&lt;TPair&lt;KeyType, ValueType&gt;, KeyType, bInAllowDuplicateKeys&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">typedef</span> <span class="keyword">typename</span> TTypeTraits&lt;KeyType&gt;::ConstPointerType KeyInitType;</span><br><span class="line">    <span class="keyword">typedef</span> <span class="type">const</span> TPairInitializer&lt;<span class="keyword">typename</span> TTypeTraits&lt;KeyType&gt;::ConstInitType, <span class="keyword">typename</span> TTypeTraits&lt;ValueType&gt;::ConstInitType&gt;&amp;amp; ElementInitType;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 外部会通过KeyFuncs::GetSetKey来获取参与哈希计算的元素，这里直接返回Element.Key，表示使用TTuple.Key来进行哈希运算</span></span><br><span class="line">    <span class="function"><span class="type">static</span> FORCEINLINE KeyInitType <span class="title">GetSetKey</span><span class="params">(ElementInitType Element)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> Element.Key;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 外部会通过KeyFuncs::GetKeyHash来计算哈希值。</span></span><br><span class="line">    <span class="function"><span class="type">static</span> FORCEINLINE uint32 <span class="title">GetKeyHash</span><span class="params">(KeyInitType Key)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">GetTypeHash</span>(Key);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// ... 其它函数</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>既然<code>TMap</code>底层也使用了<code>TSet</code>，<code>TSet</code>拥有的功能<code>TMap</code>也都有，并且也能支持<code>KeySort</code>和<code>ValueSort</code>、按顺序遍历等操作。</p>
+<h2 id="分析TMap的性能和内存占用优势">分析TMap的性能和内存占用优势</h2>
+<p>性能方面，<code>TMap</code>由于组合使用了<code>TSet</code>，因此具有<code>TSet</code>的一切优点。除此之外，<code>TPair</code>类型的使用，使得<code>Key</code>和<code>Value</code>在内存上排列在一起，而<code>TMap</code>通过<code>Key</code>查找<code>Value</code>，或者遍历，都是非常常见的操作，<code>Key</code>和<code>Value</code>内存上紧密排列能大大提高缓存命中率，进而提升性能。</p>
+<h1>TMultiMap</h1>
+<p><code>TMap</code>只支持一对一的查询，但是实际使用中往往需要一对多的查询（例如<code>ObjectHash</code>中使用了大量的<code>MultiMap</code>，来支持通过某个<code>UClass</code>查询其所有的<code>UObject</code>的龚梦）。这种情况要怎么办呢？</p>
+<p>可能很容易想到的一种方案是嵌套，<code>Key</code>依然是<code>Key</code>，<code>Value</code>使用一个数组，类似于：<code>TMap&lt;KeyType, TArray&lt;ValueType&gt;&gt;</code>。这样功能确实没问题，但是会存在非常严重的性能开销和内存浪费。那UE直接实现了这种容器，它是怎么做的呢？</p>
+<p>其实<code>TMultiMap</code>和<code>TMap</code>在定义上的差别，只有在<code>ContainersFwd.h</code>中定义时的差别：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> InKeyType, <span class="keyword">typename</span> InValueType, <span class="keyword">typename</span> SetAllocator = FDefaultSetAllocator, <span class="keyword">typename</span> KeyFuncs = TDefaultMapHashableKeyFuncs&lt;InKeyType, InValueType, <span class="literal">false</span>&gt; &gt; <span class="keyword">class</span> TMap;</span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> KeyType, <span class="keyword">typename</span> ValueType, <span class="keyword">typename</span> SetAllocator = FDefaultSetAllocator, <span class="keyword">typename</span> KeyFuncs = TDefaultMapHashableKeyFuncs&lt;KeyType, ValueType, <span class="literal">true</span> &gt; &gt; <span class="keyword">class</span> TMultiMap;</span><br></pre></td></tr></table></figure>
+<p>注意，只有最后一个参数的<code>true</code>和<code>false</code>的差别！！</p>
+<h2 id="TMultiMap与TMap的差别">TMultiMap与TMap的差别</h2>
+<p><code>TDefaultMapHashableKeyFuncs</code>在模板参数中有一个<code>bInAllowDuplicateKeys</code>，直接决定当前<code>Map</code>和<code>Set</code>是否允许重复的<code>Key</code>。这个参数的影响，其实只有三处会有差别：</p>
+<ol>
+<li>
+<p>在<code>TryReplacingExisting</code>时，如果允许重复<code>Key</code>的话，即如果是<code>MultiMap</code>的话，将永远不会去替换已存在的元素，而是构造新元素添加至<code>Bucket</code>链表中。</p>
+</li>
+<li>
+<p>在<code>RemoveImpl()</code>实现中，如果不允许重复<code>Key</code>，那么在移除一个之后就会<code>break</code>，否则会重复移除所有匹配的元素。</p>
+</li>
+<li>
+<p>在<code>TMapBase::GetKeys()</code>中，如果不允许重复<code>Key</code>，会预先使用<code>Reserve</code>分配返回数组大小，否则不会预分配（因为无法知道<code>Key</code>的数量）。</p>
+</li>
+</ol>
+<p><code>TMultiMap</code>类为自己专门提供了<code>MultiFind</code>的接口，使用这个接口可以获取所有与<code>Key</code>匹配的<code>Values</code>作为数组通过引用形参返回。</p>
+<p>其实现则再简单不过，根据<code>Key</code>，遍历<code>HashBucket</code>中的所有元素，只要<code>Key</code>匹配成功，就塞到返回数组中即可。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Allocator&gt; <span class="type">void</span> <span class="title">MultiFind</span><span class="params">(KeyInitType Key, TArray&lt;ValueType, Allocator&gt;&amp;amp; OutValues, <span class="type">bool</span> bMaintainOrder = <span class="literal">false</span>)</span> <span class="type">const</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">typename</span> Super::ElementSetType::TConstKeyIterator <span class="built_in">It</span>(Super::Pairs, Key); It; ++It)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="comment">// 遍历到所有Key匹配的元素，都添加到OutValues中</span></span><br><span class="line">		<span class="keyword">new</span>(OutValues) <span class="built_in">ValueType</span>(It-&gt;Value);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 迭代器的代码如下：</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">bool</span> bConst&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TBaseKeyIterator</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">	</span><br><span class="line">	<span class="comment">/** Advances the iterator to the next element. */</span></span><br><span class="line">	FORCEINLINE TBaseKeyIterator&amp;amp; <span class="keyword">operator</span>++()</span><br><span class="line">	&#123;</span><br><span class="line">		Id = NextId;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">while</span>(Id.<span class="built_in">IsValidId</span>())</span><br><span class="line">		&#123;</span><br><span class="line">			NextId = Set.<span class="built_in">GetInternalElement</span>(Id).HashNextId;</span><br><span class="line">			<span class="built_in">checkSlow</span>(Id != NextId);</span><br><span class="line">			<span class="keyword">if</span>(KeyFuncs::<span class="built_in">Matches</span>(KeyFuncs::<span class="built_in">GetSetKey</span>(Set[Id]),Key))</span><br><span class="line">			&#123;</span><br><span class="line">				<span class="comment">// 只有当匹配成功，才会停止循环。能让迭代器每次返回都能找到正确的值</span></span><br><span class="line">				<span class="keyword">break</span>;</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			Id = NextId;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1>总结</h1>
+<p>本文通过分析源码，简单介绍了<code>TSet</code>、<code>TMap</code>、<code>TMultiMap</code>几种UE常用容器的关键技术和实现原理。其实现既融合了传统数据结构的思想，并进行了优化，又融合了<code>C++</code>模板元编程的若干技巧。 至此，UE4/UE5的哈希表关联结构的容器就介绍完毕了。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2024/03/22/2024-3-22-1/">https://qlipphoth.github.io/2024/03/22/2024-3-22-1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/UE/">UE</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/03/18/2024-3-18-4/" title="UE 补完计划（五） UE中的STL-1"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">UE 补完计划（五） UE中的STL-1</div></div></a></div><div class="next-post pull-right"><a href="/2024/03/22/2024-3-22-2/" title="C++ 补完计划（五）：C++ 设计模式"><img class="cover" src="https://s2.loli.net/2023/08/12/a6FceKmItYSsW7b.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">C++ 补完计划（五）：C++ 设计模式</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2024/03/18/2024-3-18-4/" title="UE 补完计划（五） UE中的STL-1"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（五） UE中的STL-1</div></div></a></div><div><a href="/2024/03/18/2024-3-18-3/" title="UE 补完计划（四） 导航系统-5"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（四） 导航系统-5</div></div></a></div><div><a href="/2024/03/18/2024-3-18-2/" title="UE 补完计划（四） 导航系统-4"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（四） 导航系统-4</div></div></a></div><div><a href="/2024/03/18/2024-3-18-1/" title="UE 补完计划（四） 导航系统-3"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（四） 导航系统-3</div></div></a></div><div><a href="/2024/03/15/2024-3-15-3/" title="UE 补完计划（四） 导航系统-2"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-15</div><div class="title">UE 补完计划（四） 导航系统-2</div></div></a></div><div><a href="/2024/03/15/2024-3-15-2/" title="UE 补完计划（四） 导航系统-1"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-15</div><div class="title">UE 补完计划（四） 导航系统-1</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">引言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">TSet</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TSet%E5%86%85%E9%83%A8%E6%88%90%E5%91%98%E7%BB%93%E6%9E%84"><span class="toc-number">2.1.</span> <span class="toc-text">TSet内部成员结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Find%E5%85%83%E7%B4%A0"><span class="toc-number">2.2.</span> <span class="toc-text">Find元素</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Add%E5%85%83%E7%B4%A0"><span class="toc-number">2.3.</span> <span class="toc-text">Add元素</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%A4%84%E7%90%86Hash%E5%86%B2%E7%AA%81%EF%BC%9F"><span class="toc-number">2.3.1.</span> <span class="toc-text">如何处理Hash冲突？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Remove%E5%85%83%E7%B4%A0"><span class="toc-number">2.4.</span> <span class="toc-text">Remove元素</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Rehash"><span class="toc-number">2.5.</span> <span class="toc-text">Rehash</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TSet%E7%9A%84%E9%81%8D%E5%8E%86"><span class="toc-number">2.6.</span> <span class="toc-text">TSet的遍历</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#TSet%E8%83%BD%E4%BF%9D%E8%AF%81Add%E7%9A%84%E9%A1%BA%E5%BA%8F%E4%B8%8E%E9%81%8D%E5%8E%86%E9%A1%BA%E5%BA%8F%E4%B8%80%E8%87%B4%E5%90%97%EF%BC%9F"><span class="toc-number">2.6.1.</span> <span class="toc-text">TSet能保证Add的顺序与遍历顺序一致吗？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TSet%E7%9A%84%E6%8E%92%E5%BA%8F"><span class="toc-number">2.7.</span> <span class="toc-text">TSet的排序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E6%9E%90TSet%E7%9A%84%E6%80%A7%E8%83%BD%E5%92%8C%E5%86%85%E5%AD%98%E4%BC%98%E5%8A%BF"><span class="toc-number">2.8.</span> <span class="toc-text">分析TSet的性能和内存优势</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">3.</span> <span class="toc-text">TMap</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%A9%E7%94%A8TSet%E8%BF%9B%E8%A1%8C%E6%89%A9%E5%B1%95"><span class="toc-number">3.1.</span> <span class="toc-text">利用TSet进行扩展</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TTuple%E5%AE%9E%E7%8E%B0%E9%80%BB%E8%BE%91"><span class="toc-number">3.2.</span> <span class="toc-text">TTuple实现逻辑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B9%E6%8D%AETTuple%E8%8E%B7%E5%8F%96KeyHash"><span class="toc-number">3.3.</span> <span class="toc-text">根据TTuple获取KeyHash</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E6%9E%90TMap%E7%9A%84%E6%80%A7%E8%83%BD%E5%92%8C%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8%E4%BC%98%E5%8A%BF"><span class="toc-number">3.4.</span> <span class="toc-text">分析TMap的性能和内存占用优势</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">4.</span> <span class="toc-text">TMultiMap</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TMultiMap%E4%B8%8ETMap%E7%9A%84%E5%B7%AE%E5%88%AB"><span class="toc-number">4.1.</span> <span class="toc-text">TMultiMap与TMap的差别</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

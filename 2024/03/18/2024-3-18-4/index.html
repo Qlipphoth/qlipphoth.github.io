@@ -1,0 +1,855 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>UE 补完计划（五） UE中的STL-1 | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="引言 这是个系列文章，会通过分析源码，从数据结构层面来分析UE4&#x2F;UE5中的几种数据结构基本容器：TArray、TSparseArray、TBitArray、TSet、TMap、TMultiMap，并与传统实现方案进行比较。 本文基于的源码版本是UE5 release 5.0.0。不过源码与UE4对比过基本一致，可通用。 本文作为系列文章的第一篇，会分析TArray、TSparseArray、TB">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE 补完计划（五） UE中的STL-1">
+<meta property="og:url" content="https://qlipphoth.github.io/2024/03/18/2024-3-18-4/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="引言 这是个系列文章，会通过分析源码，从数据结构层面来分析UE4&#x2F;UE5中的几种数据结构基本容器：TArray、TSparseArray、TBitArray、TSet、TMap、TMultiMap，并与传统实现方案进行比较。 本文基于的源码版本是UE5 release 5.0.0。不过源码与UE4对比过基本一致，可通用。 本文作为系列文章的第一篇，会分析TArray、TSparseArray、TB">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg">
+<meta property="article:published_time" content="2024-03-18T18:47:48.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="UE">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2024/03/18/2024-3-18-4/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'UE 补完计划（五） UE中的STL-1',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">UE 补完计划（五） UE中的STL-1</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-03-18T18:47:48.000Z" title="Created 2024-03-18 18:47:48">2024-03-18</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/NERV/">NERV</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/NERV/UE/">UE</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">4.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>17min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="UE 补完计划（五） UE中的STL-1"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1>引言</h1>
+<p>这是个系列文章，会通过分析源码，从数据结构层面来分析UE4/UE5中的几种数据结构基本容器：TArray、TSparseArray、TBitArray、TSet、TMap、TMultiMap，并与传统实现方案进行比较。</p>
+<p>本文基于的源码版本是UE5 release 5.0.0。不过源码与UE4对比过基本一致，可通用。</p>
+<p>本文作为系列文章的第一篇，会分析TArray、TSparseArray、TBitArray的实现。</p>
+<p>数据结构是程序员的基本功，因此本文不会赘述教科书上人尽皆知的概念，只会从UE4/UE5的数据结构基本容器的特色机制出发来分析其具体实现。</p>
+<h1>TArray</h1>
+<p>TArray就是动态数组，类似stl中的<code>std::vector</code>。其功能也与传统的动态数组类似，支持元素增删查改、遍历等常见操作。</p>
+<h2 id="TArray的结构">TArray的结构</h2>
+<p>这是一个模板类，需要外部指定使用的内存分配器。我们也可以在<code>ContainerFwd.h</code>里面找到其默认分配器是<code>TSizedHeapAllocator</code>：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ContainerAllocationPolicies.h</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="type">int</span> IndexSize&gt; <span class="keyword">class</span> <span class="title class_">TSizedDefaultAllocator</span> : <span class="keyword">public</span> TSizedHeapAllocator&lt;IndexSize&gt; &#123; <span class="keyword">public</span>: <span class="keyword">typedef</span> TSizedHeapAllocator&lt;IndexSize&gt; Typedef; &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ContainerFwd.h</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="type">int</span> IndexSize&gt; <span class="keyword">class</span> <span class="title class_">TSizedDefaultAllocator</span>;</span><br><span class="line"><span class="keyword">using</span> FDefaultAllocator = TSizedDefaultAllocator&lt;<span class="number">32</span>&gt;;</span><br><span class="line"><span class="keyword">using</span> FDefaultAllocator64 = TSizedDefaultAllocator&lt;<span class="number">64</span>&gt;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span> Allocator = FDefaultAllocator&gt; <span class="keyword">class</span> TArray;</span><br></pre></td></tr></table></figure>
+<p>每个TArray内部都会维护一个分配器对象，用于管理其动态分配的内存。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> InElementType, <span class="keyword">typename</span> InAllocatorType&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TArray</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"><span class="keyword">protected</span>:</span><br><span class="line">    <span class="comment">// 内存分配器实例，用于管理当前TArray申请的内存</span></span><br><span class="line">    ElementAllocatorType AllocatorInstance;</span><br><span class="line">    <span class="comment">// 当前数组长度，相当于vector的size</span></span><br><span class="line">    SizeType             ArrayNum;</span><br><span class="line">    <span class="comment">// 当前数组容量，相当于vector的capacity</span></span><br><span class="line">    SizeType             ArrayMax;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样，当传入不同的分配器类型后，即可使用不同的分配策略，而TArray自己不用关心内存相关的逻辑。</p>
+<h2 id="动态分配策略">动态分配策略</h2>
+<p>我们都还记得，vector内部扩容策略是两倍扩容，当容量不足时，会扩容至原来的两倍。而java的ArrayList扩容则是1.5倍。那么UE是怎样的策略呢？</p>
+<p>UE的TArray的扩容策略与分配器相关，在使用默认分配器<code>TSizedHeapAllocator</code>的情况下，其扩容策略没有vector那么激进。先说结论：每次会扩容到比<code>1.375</code>倍略多的数量。实际扩容公式为：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>N</mi><mi>e</mi><mi>w</mi><mi>A</mi><mi>r</mi><mi>r</mi><mi>a</mi><mi>y</mi><mi>M</mi><mi>a</mi><mi>x</mi><mo>=</mo><mi>A</mi><mi>r</mi><mi>r</mi><mi>a</mi><mi>y</mi><mi>N</mi><mi>u</mi><mi>m</mi><mo>×</mo><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><mfrac><mn>3</mn><mn>8</mn></mfrac><mo stretchy="false">)</mo><mo>+</mo><mn>4</mn></mrow><annotation encoding="application/x-tex">NewArrayMax = ArrayNum \times (1 + \frac{3}{8}) + 4
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="mord mathnormal">A</span><span class="mord mathnormal" style="margin-right:0.02778em;">rr</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mord mathnormal">a</span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">A</span><span class="mord mathnormal" style="margin-right:0.02778em;">rr</span><span class="mord mathnormal">a</span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mord mathnormal">u</span><span class="mord mathnormal">m</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:2.0074em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3214em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">8</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">4</span></span></span></span></span></p>
+<p>具体代码分析：每次向数组中添加元素时，最终都会调用到<code>AddUninitialized()</code>函数中：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">FORCEINLINE SizeType <span class="title">AddUninitialized</span><span class="params">(SizeType Count = <span class="number">1</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">CheckInvariants</span>();</span><br><span class="line">    <span class="built_in">checkSlow</span>(Count &gt;= <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="type">const</span> SizeType OldNum = ArrayNum;</span><br><span class="line">    <span class="comment">// 注意！！！这里是+=，在这之后ArrayNum就是需要的数量，已经比ArrayMax要大了。</span></span><br><span class="line">    <span class="keyword">if</span> ((ArrayNum += Count) &gt; ArrayMax)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 容量不足时，使用ResizeGrow函数来实际进行扩容</span></span><br><span class="line">        <span class="built_in">ResizeGrow</span>(OldNum);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> OldNum;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">FORCENOINLINE <span class="type">void</span> <span class="title">ResizeGrow</span><span class="params">(SizeType OldNum)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 计算出需要扩容到的大小</span></span><br><span class="line">    ArrayMax = <span class="built_in">AllocatorCalculateSlackGrow</span>(ArrayNum, ArrayMax);</span><br><span class="line">    <span class="comment">// 直接调用Malloc进行内存分配扩容操作</span></span><br><span class="line">    <span class="built_in">AllocatorResizeAllocation</span>(OldNum, ArrayMax);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>具体的扩容逻辑在<code>DefaultCalculateSlackGrow</code>函数中。核心代码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// NumElements是当前的ArrayNum，表示需要的大小，NumAllocatedElements是当前的ArrayMax</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> SizeType&gt;</span><br><span class="line"><span class="function">FORCEINLINE SizeType <span class="title">DefaultCalculateSlackGrow</span><span class="params">(SizeType NumElements, SizeType NumAllocatedElements, SIZE_T BytesPerElement, <span class="type">bool</span> bAllowQuantize, uint32 Alignment = DEFAULT_ALIGNMENT)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">const</span> SIZE_T FirstGrow = <span class="number">4</span>;</span><br><span class="line">    <span class="type">const</span> SIZE_T ConstantGrow = <span class="number">16</span>;</span><br><span class="line">    </span><br><span class="line">    SIZE_T Grow = FirstGrow; <span class="comment">// this is the amount for the first alloc</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">if</span> (NumAllocatedElements)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 当前的ArrayMax有值，表示已经分配过内存，将容量扩展为原始容量的1.375倍加上固定大小。</span></span><br><span class="line">        <span class="comment">// Allocate slack for the array proportional to its size.</span></span><br><span class="line">        Grow = <span class="built_in">SIZE_T</span>(NumElements) + <span class="number">3</span> * <span class="built_in">SIZE_T</span>(NumElements) / <span class="number">8</span> + ConstantGrow;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (<span class="built_in">SIZE_T</span>(NumElements) &gt; Grow)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 如果未分配过内存，那么容量设为需要的数量。</span></span><br><span class="line">        Grow = <span class="built_in">SIZE_T</span>(NumElements);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> RetVal;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>实际添加元素的代码在函数Emplace中。使用了C++11的几个新特性：万能引用、变长参数模板、placement new。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 参数使用了万能饮用和变长参数模板，完美支持了左值引用、右值引用、普通形参等多种情况</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span>... ArgsType&gt;</span><br><span class="line"><span class="function">FORCEINLINE SizeType <span class="title">Emplace</span><span class="params">(ArgsType&amp;amp;&amp;amp;... Args)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">const</span> SizeType Index = <span class="built_in">AddUninitialized</span>(<span class="number">1</span>);</span><br><span class="line">    <span class="comment">// 这里使用了placement new，直接在已经分配的空间上构造对象</span></span><br><span class="line">    <span class="keyword">new</span>(<span class="built_in">GetData</span>() + Index) <span class="built_in">ElementType</span>(<span class="built_in">Forward</span>&lt;ArgsType&gt;(Args)...);</span><br><span class="line">    <span class="keyword">return</span> Index;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="优化-Remove">优化 Remove</h2>
+<p>传统的动态数组，Remove 元素的复杂度都是 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span> ，因为需要将删除元素之后的部分依次往前挪。即使使用 <code>Memmove</code> 也无法改变其时间复杂度。</p>
+<p>但是对于一个无序，且不关心元素顺序的数组，有一种很巧妙的方法，移除元素之后，将数组最后一个位置上的元素填充到被删除的部分，并且<code>ArrayNum</code>减一即可。</p>
+<p>由于数组在需求上便不关心顺序，因此也不会影响原有逻辑。这样可以将Remove的时间复杂度由 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span> 降低为 &amp;O(1)&amp; 。</p>
+<p>在TArray的实现中，也实现了这种删除方式，使用<code>RemoveAtSwap</code>即可实现这种方式。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">RemoveAtSwapImpl</span><span class="params">(SizeType Index, SizeType Count = <span class="number">1</span>, <span class="type">bool</span> bAllowShrinking = <span class="literal">true</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (Count)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">CheckInvariants</span>();</span><br><span class="line">        <span class="built_in">checkSlow</span>((Count &gt;= <span class="number">0</span>) &amp;amp; (Index &gt;= <span class="number">0</span>) &amp;amp; (Index + Count &lt;= ArrayNum));</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 调用析构函数</span></span><br><span class="line">        <span class="built_in">DestructItems</span>(<span class="built_in">GetData</span>() + Index, Count);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 将数组末尾的部分memcpy到已删除的部分。</span></span><br><span class="line">        <span class="comment">// Replace the elements in the hole created by the removal with elements from the end of the array, so the range of indices used by the array is contiguous.</span></span><br><span class="line">        <span class="type">const</span> SizeType NumElementsInHole = Count;</span><br><span class="line">        <span class="type">const</span> SizeType NumElementsAfterHole = ArrayNum - (Index + Count);</span><br><span class="line">        <span class="type">const</span> SizeType NumElementsToMoveIntoHole = FPlatformMath::<span class="built_in">Min</span>(NumElementsInHole, NumElementsAfterHole);</span><br><span class="line">        <span class="keyword">if</span> (NumElementsToMoveIntoHole)</span><br><span class="line">        &#123;</span><br><span class="line">            FMemory::<span class="built_in">Memcpy</span>(</span><br><span class="line">                (uint8*)AllocatorInstance.<span class="built_in">GetAllocation</span>() + (Index)* <span class="built_in">sizeof</span>(ElementType),</span><br><span class="line">                (uint8*)AllocatorInstance.<span class="built_in">GetAllocation</span>() + (ArrayNum - NumElementsToMoveIntoHole) * <span class="built_in">sizeof</span>(ElementType),</span><br><span class="line">                NumElementsToMoveIntoHole * <span class="built_in">sizeof</span>(ElementType)</span><br><span class="line">                );</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 数组长度直接减去Count</span></span><br><span class="line">        ArrayNum -= Count;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (bAllowShrinking)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">ResizeShrink</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="作为栈使用">作为栈使用</h2>
+<p>一个动态数组的结构与栈非常类似。TArray更是直接提供了Push、Pop、Top等栈专有的函数，可以直接作为栈使用。</p>
+<h2 id="作为二叉堆使用">作为二叉堆使用</h2>
+<p>传统的二叉堆也是使用数组实现的，TArray也直接实现了二叉堆的功能。其内部提供了<code>Heapify</code>、<code>HeapPush</code>、<code>HeapPop</code>、<code>HeapRemoveAt</code>等二叉堆专用函数，具体实现与传统二叉堆实现是一致的，则不再赘述。</p>
+<h1>TSparseArray</h1>
+<p>TArray是连续数组，但是如果要用来存储稀疏元素的话，会存在较大的空间和时间浪费。因此，UE5专门提供了一种稀疏数组容器，用于承载稀疏数组的功能。</p>
+<p>另外，这里专门介绍稀疏数组，还有一个非常重要的原因，是因为TSet和TMap的功能的实现，底层数据结构也使用到了<code>TSparseArray</code>。</p>
+<p>有一点需要注意的是，UE5提供的<code>TSparseArray</code>，并不会节约内存，其最大的目的是优化TArray插入删除的速度，以及提升遍历的效率。</p>
+<h2 id="TSparseArray的结构">TSparseArray的结构</h2>
+<p>我们先来看一下TSparseArray的内部成员变量。其内部只有这四个变量：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用TArray来实际存储数据，数据类型是FElementOrFreeListLink</span></span><br><span class="line"><span class="keyword">typedef</span> TArray&lt;FElementOrFreeListLink,<span class="keyword">typename</span> Allocator::ElementAllocator&gt; DataType;</span><br><span class="line">DataType Data;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用bit数组来记录当前已分配的数据的索引。其长度与Data数组保持一致</span></span><br><span class="line"><span class="keyword">typedef</span> TBitArray&lt;<span class="keyword">typename</span> Allocator::BitArrayAllocator&gt; AllocationBitArrayType;</span><br><span class="line">AllocationBitArrayType AllocationFlags;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 记录稀疏数组中的空闲索引。</span></span><br><span class="line"><span class="comment">/** The index of an unallocated element in the array that currently contains the head of the linked list of free elements. */</span></span><br><span class="line">int32 FirstFreeIndex;</span><br><span class="line"></span><br><span class="line"><span class="comment">/** The number of elements in the free list. */</span></span><br><span class="line">int32 NumFreeIndices;</span><br></pre></td></tr></table></figure>
+<p>我们再来看一下关键的<code>FElementOrFreeListLink</code>类型的定义：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 为了这里为了避免在申请空间时直接运行数组元素的构造函数，使用了一个包装类，只用来分配空间</span></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * The element type stored is only indirectly related to the element type requested, to avoid instantiating TArray redundantly for</span></span><br><span class="line"><span class="comment"> * compatible types.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">typedef</span> TSparseArrayElementOrFreeListLink&lt;</span><br><span class="line">    TAlignedBytes&lt;<span class="built_in">sizeof</span>(ElementType), <span class="built_in">alignof</span>(ElementType)&gt;</span><br><span class="line">    &gt; FElementOrFreeListLink;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 实际分配空间所使用的对象，注意是一个union！！</span></span><br><span class="line"><span class="comment">/** Allocated elements are overlapped with free element info in the element list. */</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ElementType&gt;</span><br><span class="line"><span class="keyword">union</span> <span class="title class_">TSparseArrayElementOrFreeListLink</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 如果有数据，那么直接存储元素数据本身</span></span><br><span class="line">    <span class="comment">/** If the element is allocated, its value is stored here. */</span></span><br><span class="line">    ElementType ElementData;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果没有数据，那么存储两个索引，指向前一个和下一个空闲位置。整体组成了一个空闲链表</span></span><br><span class="line">    <span class="keyword">struct</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">/** If the element isn&#x27;t allocated, this is a link to the previous element in the array&#x27;s free list. */</span></span><br><span class="line">        int32 PrevFreeIndex;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/** If the element isn&#x27;t allocated, this is a link to the next element in the array&#x27;s free list. */</span></span><br><span class="line">        int32 NextFreeIndex;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这个空闲链表非常关键，理解了它就理解了整个<code>TSparseArray</code>的工作方式。</p>
+<p>对于稀疏数组而言，主要有三种操作。</p>
+<ol>
+<li>
+<p>添加元素</p>
+</li>
+<li>
+<p>指定位置插入元素</p>
+</li>
+<li>
+<p>删除元素</p>
+</li>
+</ol>
+<p>这三种操作都是需要操作空闲链表。由于都是一些基本的链表操作，笔者不再帖源码赘述，只是简单描述其策略，并结合实例来具体说明。</p>
+<h2 id="空闲链表操作">空闲链表操作</h2>
+<p>假设我们自定义一个类型：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">MyData</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 任意数据</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现用一个稀疏数组来存储，并依次执行以下操作：</p>
+<ol>
+<li>
+<p>预分配大小：<code>Reserve(6)</code></p>
+</li>
+<li>
+<p>在指定位置插入元素：<code>EmplaceAt(3, MyData1)</code></p>
+</li>
+<li>
+<p>添加元素：<code>Add(MyData2)</code></p>
+</li>
+<li>
+<p>指定位置移除元素：<code>RemoveAt(3)</code></p>
+</li>
+</ol>
+<h3 id="预分配大小">预分配大小</h3>
+<p>预分配大小或许是最复杂的步骤。需要将所有新位置加入空闲链表，并正确设置每个空闲位置的<code>PrevFreeIndex</code>和<code>NextFreeIndex</code>。</p>
+<p>在调用<code>Reserve(6)</code>之后，其<code>FirstFreeIndex</code>为0，其内存分布表示为：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>0(当前头结点)</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prev</td>
+<td>-1</td>
+<td>0</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Next</td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>4</td>
+<td>5</td>
+<td>-1</td>
+</tr>
+</tbody>
+</table>
+<h3 id="指定位置插入元素">指定位置插入元素</h3>
+<p>指定位置插入元素相当于空闲链表的节点删除操作。当然也需要判断当前位置是否是头结点或者尾结点。</p>
+<p>在调用<code>EmplaceAt(3, MyData1)</code>之后，其<code>FirstFreeIndex</code>依然为0，其内存分布表示为：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>0</th>
+<th>1</th>
+<th>2</th>
+<th>3(设置新数据)</th>
+<th>4</th>
+<th>5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prev</td>
+<td>-1</td>
+<td>0</td>
+<td>1</td>
+<td>2</td>
+<td>4</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Next</td>
+<td>1</td>
+<td>2</td>
+<td>4</td>
+<td>MyData1</td>
+<td>5</td>
+<td>-1</td>
+</tr>
+</tbody>
+</table>
+<h3 id="添加元素">添加元素</h3>
+<p>添加元素非常简单，从空闲链表中删除头结点，并将头结点后移，在已删除的空闲节点地址上进行构造及返回。</p>
+<p>在调用<code>Add(MyData2)</code>之后，其<code>FirstFreeIndex</code>变为1，其内存分布表示为：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>0(设置新数据)</th>
+<th>1(变为头结点)</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prev</td>
+<td>MyData2</td>
+<td>-1</td>
+<td>1</td>
+<td>2</td>
+<td>4</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Next</td>
+<td>2</td>
+<td>4</td>
+<td>MyData1</td>
+<td>5</td>
+<td>-1</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h3 id="指定位置删除元素">指定位置删除元素</h3>
+<p>删除元素的逻辑与插入元素相反，是将元素析构之后，将对应位置重新添加至空闲链表即可。这一步也会改变空闲链表的头结点。</p>
+<p>在调用<code>RemoveAt(3)</code>之后，其<code>FirstFreeIndex</code>变为3， 内存分布表示为：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>0</th>
+<th>1</th>
+<th>2</th>
+<th>3(变为头结点)</th>
+<th>4</th>
+<th>5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prev</td>
+<td>MyData2</td>
+<td>3</td>
+<td>1</td>
+<td>-1</td>
+<td>2</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Next</td>
+<td>2</td>
+<td>4</td>
+<td>1</td>
+<td>MyData1</td>
+<td>5</td>
+<td>-1</td>
+</tr>
+</tbody>
+</table>
+<h1>TBitArray</h1>
+<p><code>TSparseArray</code>内部包含了一个<code>BitArray</code>，而<code>BitArray</code>在<code>TSparseArray</code>内部承载了非常多的功能，尤其是遍历。分析其遍历之前，我们先看一下<code>TBitArray</code>的结构。</p>
+<h2 id="TBitArray的结构">TBitArray的结构</h2>
+<p><code>TBitArray</code>的结构与<code>TArray</code>类似，同样包含了数量、容量、分配器。如下所示：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Allocator <span class="comment">/*= FDefaultBitArrayAllocator*/</span>&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TBitArray</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    AllocatorType AllocatorInstance;</span><br><span class="line">    int32         NumBits;</span><br><span class="line">    int32         MaxBits;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>区别是添加元素、删除元素的时候，需要使用位运算来辅助计算。</p>
+<p>以添加元素为例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">int32 <span class="title">AddUninitialized</span><span class="params">(int32 NumBitsToAdd)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">check</span>(NumBitsToAdd &gt;= <span class="number">0</span>);</span><br><span class="line">    int32 AddedIndex = NumBits;</span><br><span class="line">    <span class="keyword">if</span> (NumBitsToAdd &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 计算当前word是否足够添加。是否需要新的word</span></span><br><span class="line">        int32 OldLastWordIndex = NumBits == <span class="number">0</span> ? <span class="number">-1</span> : (NumBits - <span class="number">1</span>) / NumBitsPerDWORD;</span><br><span class="line">        int32 NewLastWordIndex = (NumBits + NumBitsToAdd - <span class="number">1</span>) / NumBitsPerDWORD;</span><br><span class="line">        <span class="keyword">if</span> (NewLastWordIndex == OldLastWordIndex)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 当前word已经足够添加新的bits</span></span><br><span class="line">            <span class="comment">// We&#x27;re not extending into a new word, so we don&#x27;t need to reserve more memory and we don&#x27;t need to clear the unused bits on the final word</span></span><br><span class="line">            NumBits += NumBitsToAdd;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 当前word空间不足，需要申请新的word空间</span></span><br><span class="line">            <span class="built_in">Reserve</span>(NumBits + NumBitsToAdd);</span><br><span class="line">            NumBits += NumBitsToAdd;</span><br><span class="line">            <span class="comment">// 将最后一个word的未使用到的高位清零</span></span><br><span class="line">            <span class="built_in">ClearPartialSlackBits</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> AddedIndex;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="TBitArray的遍历（TSparseArray的遍历）">TBitArray的遍历（TSparseArray的遍历）</h2>
+<p>普通的<code>Array</code>，在遍历的时候一般是从低下标向高下标进行遍历。稀疏数组会有一些特殊，因为其中会有不少空元素，这些空元素肯定是不应该遍历到的。</p>
+<p>实现这种迭代器，有一种简单的实现，在迭代器的自增函数中，使用循环来判断当前是否有元素，没有元素的话继续自增下标，直到有元素为止才返回。然而，这种实现对于稀疏数组可以说是比较浪费的，因为稀疏数组大概率会存在较多的空元素，会有较多无效遍历。</p>
+<p><code>TSparseArray</code>利用它的位结构字段<code>AllocationFlags</code>，完美解决了这个问题。</p>
+<p>我们知道，<code>AllocationFlags</code>是一个<code>TBitArray</code>。要如何高效遍历<code>TBitArray</code>呢？</p>
+<p><code>TBitArray</code>实现了许多不同场合下的迭代器类。这里我们直接看<code>TSparseArray</code>使用到的迭代器类：<code>TConstSetBitIterator</code>。</p>
+<p><code>TConstSetBitIterator</code>核心思想是将<code>BitArray</code>以<code>DWORD(32bit)</code>为单位划分为不同小块，记录当前遍历到的<code>WordIndex</code>，这样处理遍历时就可以利用位运算函数只处理当前<code>WORD</code>内部的遍历操作。</p>
+<h3 id="TConstSetBitIterator的成员变量结构">TConstSetBitIterator的成员变量结构</h3>
+<p>我们首先来看<code>TConstSetBitIterator</code>有哪些成员变量。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Allocator&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TConstSetBitIterator</span> : <span class="keyword">public</span> FRelativeBitReference</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// 引用，用于引用外部传入的需要遍历的BitArray</span></span><br><span class="line">    <span class="type">const</span> TBitArray&lt;Allocator&gt;&amp;amp; Array;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 当前Word内还未访问过的bit，例如当前BitIndex=100，那么Mask就是0xffff&lt;&lt;(100%32) = 0xffff&lt;&lt;4</span></span><br><span class="line">    uint32 UnvisitedBitMask;</span><br><span class="line">    <span class="comment">// 记录当前遍历到的BitIndex</span></span><br><span class="line">    int32 CurrentBitIndex;</span><br><span class="line">    <span class="comment">// 记录当前BitIndex除了当前WORD之外的值，用于迭代器自增最后计算CurrentBitIndex，例如当前BitIndex=100，那么BaseBitIndex=32*(floor(100/32))=96</span></span><br><span class="line">    int32 BaseBitIndex;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 以下为基类FRelativeBitReference的成员</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">FRelativeBitReference</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 记录当前的WordIndex，例如如果当前遍历到了100，那么WordIndex就是floor(100/32) = 3</span></span><br><span class="line">    int32  WordIndex;</span><br><span class="line">    <span class="comment">// 当前Word处理时内部的mask。例如当前的BitIndex=100，那么Mask就是1&lt;&lt;(100%32) = 1&lt;&lt;4</span></span><br><span class="line">    uint32 Mask;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="TConstSetBitIterator自增函数">TConstSetBitIterator自增函数</h3>
+<p>在迭代器的自增函数中，用了若干巧妙的位运算，使得同一<code>WORD</code>内的<code>bit</code>遍历达到<code>O(1)</code>的复杂度。</p>
+<p>其自增函数实现为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** Forwards iteration operator. */</span></span><br><span class="line">FORCEINLINE TConstSetBitIterator&amp;amp; <span class="keyword">operator</span>++()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 通过与取反位运算（可以看做直接相减），将当前Mask的有效位标记为已访问。实质就是将UnvisitedBitMask最低有效位置为0</span></span><br><span class="line">    <span class="comment">// Mark the current bit as visited.</span></span><br><span class="line">    UnvisitedBitMask &amp;amp;= ~<span class="keyword">this</span>-&gt;Mask;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Find the first set bit that hasn&#x27;t been visited yet.</span></span><br><span class="line">    <span class="built_in">FindFirstSetBit</span>();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里的核心函数在<code>FindFirstSetBit()</code>，通过巧妙的位运算直接在复杂度<code>O(1)</code>内实现了同一<code>Word</code>下的<code>bit</code>遍历。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** Find the first set bit starting with the current bit, inclusive. */</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FindFirstSetBit</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">const</span> uint32* ArrayData      = Array.<span class="built_in">GetData</span>();</span><br><span class="line">    <span class="type">const</span> int32   ArrayNum       = Array.<span class="built_in">Num</span>();</span><br><span class="line">    <span class="type">const</span> int32   LastWordIndex = (ArrayNum - <span class="number">1</span>) / NumBitsPerDWORD;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 为方便描述和想象，将低位称为右侧，高位称为左侧</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 表示当前Word左侧是否还有未访问的值为1的数据。如果有，那么RemainingBitMask必不为1</span></span><br><span class="line">    <span class="comment">// Advance to the next non-zero uint32.</span></span><br><span class="line">    uint32 RemainingBitMask = ArrayData[<span class="keyword">this</span>-&gt;WordIndex] &amp;amp; UnvisitedBitMask;</span><br><span class="line">    <span class="keyword">while</span> (!RemainingBitMask)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 如果当前Word左侧已没有数据，通过遍历来找到下一个有数据的Word</span></span><br><span class="line">        ++<span class="keyword">this</span>-&gt;WordIndex;</span><br><span class="line">        BaseBitIndex += NumBitsPerDWORD;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span>-&gt;WordIndex &gt; LastWordIndex)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// We&#x27;ve advanced past the end of the array.</span></span><br><span class="line">            CurrentBitIndex = ArrayNum;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 如果新的Word内没有1，那么其全部为0，继续循环查找</span></span><br><span class="line">        RemainingBitMask = ArrayData[<span class="keyword">this</span>-&gt;WordIndex];</span><br><span class="line">        UnvisitedBitMask = ~<span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// RemainingBitMask &amp;amp; (RemainingBitMask - 1)是一个常用的消除最低有效位的1的方法，可以将最低有效位的1变为0</span></span><br><span class="line">    <span class="comment">// 如果当前Word存在还未访问的为1的数据，将RemainingBitMask最右侧的1变为0</span></span><br><span class="line">    <span class="comment">// This operation has the effect of unsetting the lowest set bit of BitMask</span></span><br><span class="line">    <span class="type">const</span> uint32 NewRemainingBitMask = RemainingBitMask &amp;amp; (RemainingBitMask - <span class="number">1</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 异或即可快速提取出当前RemainingBitMask的最低有效位的1</span></span><br><span class="line">    <span class="comment">// This operation XORs the above mask with the original mask, which has the effect</span></span><br><span class="line">    <span class="comment">// of returning only the bits which differ; specifically, the lowest bit</span></span><br><span class="line">    <span class="keyword">this</span>-&gt;Mask = NewRemainingBitMask ^ RemainingBitMask;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// FMath::CountLeadingZeros(this-&gt;Mask)计算当前有效位的左侧有多少个0。这是一个指令级别的函数，由硬件支持计算。</span></span><br><span class="line">    <span class="comment">// NumBitsPerDWORD - 1 - FMath::CountLeadingZeros(this-&gt;Mask)即表示当前有效位的右侧有多少个0，也即当前WORD遍历过程中内部的index</span></span><br><span class="line">    <span class="comment">// CurrentBitIndex = BaseBitIndex + 当前WORD内部index</span></span><br><span class="line">    <span class="comment">// If the Nth bit was the lowest set bit of BitMask, then this gives us N</span></span><br><span class="line">    CurrentBitIndex = BaseBitIndex + NumBitsPerDWORD - <span class="number">1</span> - FMath::<span class="built_in">CountLeadingZeros</span>(<span class="keyword">this</span>-&gt;Mask);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// If we&#x27;ve accidentally iterated off the end of an array but still within the same Word</span></span><br><span class="line">    <span class="comment">// then set the index to the last index of the array</span></span><br><span class="line">    <span class="keyword">if</span> (CurrentBitIndex &gt; ArrayNum)</span><br><span class="line">    &#123;</span><br><span class="line">        CurrentBitIndex = ArrayNum;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们通过一个实例来演示一下遍历的过程。</p>
+<h3 id="实例分析遍历过程">实例分析遍历过程</h3>
+<p>假设有一个<code>BitArray</code>，其长度为50，其中0~9为1，10~19为0，20~29为1，30~39为，40~49为1，如下所示：</p>
+<p><code>11111111 11000000 00001111 11111100 00000000 11111111 11</code></p>
+<p>我们目前已经遍历到30，那么当前迭代器内各成员变量数据为：</p>
+<table>
+<thead>
+<tr>
+<th>成员变量字段</th>
+<th>数据</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>当前Word数据</td>
+<td>11111111 11000000 00001111 11111100</td>
+<td></td>
+</tr>
+<tr>
+<td>UnvisitedBitMask</td>
+<td>11000000 00000000 00000000 00000000</td>
+<td>迭代器自增之后，会将其与Mask相减</td>
+</tr>
+<tr>
+<td>Mask</td>
+<td>01000000 00000000 00000000 00000000</td>
+<td></td>
+</tr>
+<tr>
+<td>CurrentBitIndex</td>
+<td>30</td>
+<td></td>
+</tr>
+<tr>
+<td>BaseBitIndex</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td>WordIndex</td>
+<td>0</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>迭代器通过<code>operator*()</code>函数返回出去的值为0。</p>
+<p>执行一次迭代器的自增之后：</p>
+<table>
+<thead>
+<tr>
+<th>成员变量字段</th>
+<th>数据</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>当前Word数据</td>
+<td>11111111 11000000 00001111 11111100</td>
+<td></td>
+</tr>
+<tr>
+<td>UnvisitedBitMask</td>
+<td>10000000 00000000 00000000 00000000</td>
+<td>旧值与Mask相减所得 (实际是执行&amp;= ~Mask)</td>
+</tr>
+<tr>
+<td>Mask</td>
+<td>10000000 00000000 00000000 00000000</td>
+<td>提取出的UnvisitiedBitMask的最低有效位</td>
+</tr>
+<tr>
+<td>CurrentBitIndex</td>
+<td>31</td>
+<td></td>
+</tr>
+<tr>
+<td>BaseBitIndex</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td>WordIndex</td>
+<td>0</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>再执行一次自增之后，将遍历下一个Word。此时迭代器数据变为：</p>
+<table>
+<thead>
+<tr>
+<th>成员变量字段</th>
+<th>数据</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>当前Word数据</td>
+<td>00000000 00000000 00000011 11111111</td>
+<td>当前数量已不足，从高位开始补0</td>
+</tr>
+<tr>
+<td>UnvisitedBitMask</td>
+<td>11111111 11111111 11111111 11111111</td>
+<td>切换Word时，UnvisitedBitMask会置为全1</td>
+</tr>
+<tr>
+<td>Mask</td>
+<td>00000000 00000000 00000000 00000001</td>
+<td>提取出的UnvisitiedBitMask的最低有效位</td>
+</tr>
+<tr>
+<td>CurrentBitIndex</td>
+<td>32</td>
+<td></td>
+</tr>
+<tr>
+<td>BaseBitIndex</td>
+<td>32</td>
+<td>直接在原基础上加32</td>
+</tr>
+<tr>
+<td>WordIndex</td>
+<td>1</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>继续执行自增的话：</p>
+<table>
+<thead>
+<tr>
+<th>成员变量字段</th>
+<th>数据</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>当前Word数据</td>
+<td>00000000 00000000 00000011 11111111</td>
+<td></td>
+</tr>
+<tr>
+<td>UnvisitedBitMask</td>
+<td>11111111 11111111 11111111 11111110</td>
+<td></td>
+</tr>
+<tr>
+<td>Mask</td>
+<td>00000000 00000000 00000000 00000010</td>
+<td>提取出的UnvisitiedBitMask的最低有效位</td>
+</tr>
+<tr>
+<td>CurrentBitIndex</td>
+<td>33</td>
+<td></td>
+</tr>
+<tr>
+<td>BaseBitIndex</td>
+<td>32</td>
+<td></td>
+</tr>
+<tr>
+<td>WordIndex</td>
+<td>1</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>以此类推，不再赘述。</p>
+<p>从上面的分析可以看出：</p>
+<p><code>TSparseArray</code>遍历依然是从<code>Elements</code>的起始下标开始，快速找到已分配元素的下标，到最大下标为止。</p>
+<h1>总结</h1>
+<p>本文通过分析源码，简单介绍了<code>TArray</code>、<code>TSparseArray</code>、<code>TBitArray</code>几种UE常用容器的关键技术和实现原理。其实现既融合了传统数据结构的思想，并进行了优化，又融合了C++模板元编程的若干技巧。</p>
+<p>下一篇文章，会基于<code>TSparseArray</code>的机制，详细分析<code>TSet</code>、<code>TMap</code>和<code>TMultiMap</code>的实现。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2024/03/18/2024-3-18-4/">https://qlipphoth.github.io/2024/03/18/2024-3-18-4/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/UE/">UE</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/03/18/2024-3-18-3/" title="UE 补完计划（四） 导航系统-5"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">UE 补完计划（四） 导航系统-5</div></div></a></div><div class="next-post pull-right"><a href="/2024/03/22/2024-3-22-1/" title="UE 补完计划（五） UE中的STL-2"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">UE 补完计划（五） UE中的STL-2</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2024/03/22/2024-3-22-1/" title="UE 补完计划（五） UE中的STL-2"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-22</div><div class="title">UE 补完计划（五） UE中的STL-2</div></div></a></div><div><a href="/2024/03/18/2024-3-18-3/" title="UE 补完计划（四） 导航系统-5"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（四） 导航系统-5</div></div></a></div><div><a href="/2024/03/18/2024-3-18-2/" title="UE 补完计划（四） 导航系统-4"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（四） 导航系统-4</div></div></a></div><div><a href="/2024/03/18/2024-3-18-1/" title="UE 补完计划（四） 导航系统-3"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（四） 导航系统-3</div></div></a></div><div><a href="/2024/03/15/2024-3-15-3/" title="UE 补完计划（四） 导航系统-2"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-15</div><div class="title">UE 补完计划（四） 导航系统-2</div></div></a></div><div><a href="/2024/03/15/2024-3-15-2/" title="UE 补完计划（四） 导航系统-1"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-15</div><div class="title">UE 补完计划（四） 导航系统-1</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">引言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">TArray</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TArray%E7%9A%84%E7%BB%93%E6%9E%84"><span class="toc-number">2.1.</span> <span class="toc-text">TArray的结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E5%88%86%E9%85%8D%E7%AD%96%E7%95%A5"><span class="toc-number">2.2.</span> <span class="toc-text">动态分配策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BC%98%E5%8C%96-Remove"><span class="toc-number">2.3.</span> <span class="toc-text">优化 Remove</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%9C%E4%B8%BA%E6%A0%88%E4%BD%BF%E7%94%A8"><span class="toc-number">2.4.</span> <span class="toc-text">作为栈使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%9C%E4%B8%BA%E4%BA%8C%E5%8F%89%E5%A0%86%E4%BD%BF%E7%94%A8"><span class="toc-number">2.5.</span> <span class="toc-text">作为二叉堆使用</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">3.</span> <span class="toc-text">TSparseArray</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TSparseArray%E7%9A%84%E7%BB%93%E6%9E%84"><span class="toc-number">3.1.</span> <span class="toc-text">TSparseArray的结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A9%BA%E9%97%B2%E9%93%BE%E8%A1%A8%E6%93%8D%E4%BD%9C"><span class="toc-number">3.2.</span> <span class="toc-text">空闲链表操作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A2%84%E5%88%86%E9%85%8D%E5%A4%A7%E5%B0%8F"><span class="toc-number">3.2.1.</span> <span class="toc-text">预分配大小</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8C%87%E5%AE%9A%E4%BD%8D%E7%BD%AE%E6%8F%92%E5%85%A5%E5%85%83%E7%B4%A0"><span class="toc-number">3.2.2.</span> <span class="toc-text">指定位置插入元素</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B7%BB%E5%8A%A0%E5%85%83%E7%B4%A0"><span class="toc-number">3.2.3.</span> <span class="toc-text">添加元素</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8C%87%E5%AE%9A%E4%BD%8D%E7%BD%AE%E5%88%A0%E9%99%A4%E5%85%83%E7%B4%A0"><span class="toc-number">3.2.4.</span> <span class="toc-text">指定位置删除元素</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">4.</span> <span class="toc-text">TBitArray</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TBitArray%E7%9A%84%E7%BB%93%E6%9E%84"><span class="toc-number">4.1.</span> <span class="toc-text">TBitArray的结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TBitArray%E7%9A%84%E9%81%8D%E5%8E%86%EF%BC%88TSparseArray%E7%9A%84%E9%81%8D%E5%8E%86%EF%BC%89"><span class="toc-number">4.2.</span> <span class="toc-text">TBitArray的遍历（TSparseArray的遍历）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#TConstSetBitIterator%E7%9A%84%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F%E7%BB%93%E6%9E%84"><span class="toc-number">4.2.1.</span> <span class="toc-text">TConstSetBitIterator的成员变量结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#TConstSetBitIterator%E8%87%AA%E5%A2%9E%E5%87%BD%E6%95%B0"><span class="toc-number">4.2.2.</span> <span class="toc-text">TConstSetBitIterator自增函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E4%BE%8B%E5%88%86%E6%9E%90%E9%81%8D%E5%8E%86%E8%BF%87%E7%A8%8B"><span class="toc-number">4.2.3.</span> <span class="toc-text">实例分析遍历过程</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

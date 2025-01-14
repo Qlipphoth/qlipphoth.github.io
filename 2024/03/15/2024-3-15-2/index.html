@@ -1,0 +1,525 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>UE 补完计划（四） 导航系统-1 | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="前言：基于Tile的导航系统 UE4的导航使用的是RecastDetour组件，这是一个开源组件，主要支持3D场景的导航网格导出和寻路，或者有一个更流行的名字叫做NavMesh。不管是Unity还是UE都使用了这一套组件。 Github上有更为详细的源码、Demo和说明：https:&#x2F;&#x2F;github.com&#x2F;recastnavigation&#x2F;recastnavigation 本文使用的UE4源码版">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE 补完计划（四） 导航系统-1">
+<meta property="og:url" content="https://qlipphoth.github.io/2024/03/15/2024-3-15-2/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="前言：基于Tile的导航系统 UE4的导航使用的是RecastDetour组件，这是一个开源组件，主要支持3D场景的导航网格导出和寻路，或者有一个更流行的名字叫做NavMesh。不管是Unity还是UE都使用了这一套组件。 Github上有更为详细的源码、Demo和说明：https:&#x2F;&#x2F;github.com&#x2F;recastnavigation&#x2F;recastnavigation 本文使用的UE4源码版">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg">
+<meta property="article:published_time" content="2024-03-15T13:29:48.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="UE">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2024/03/15/2024-3-15-2/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'UE 补完计划（四） 导航系统-1',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">UE 补完计划（四） 导航系统-1</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-03-15T13:29:48.000Z" title="Created 2024-03-15 13:29:48">2024-03-15</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/NERV/">NERV</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/NERV/UE/">UE</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">2.4k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>9min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="UE 补完计划（四） 导航系统-1"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1>前言：基于Tile的导航系统</h1>
+<p>UE4的导航使用的是<code>RecastDetour</code>组件，这是一个开源组件，主要支持3D场景的导航网格导出和寻路，或者有一个更流行的名字叫做NavMesh。不管是Unity还是UE都使用了这一套组件。</p>
+<p>Github上有更为详细的源码、Demo和说明：<a target="_blank" rel="noopener" href="https://github.com/recastnavigation/recastnavigation">https://github.com/recastnavigation/recastnavigation</a></p>
+<p>本文使用的UE4源码版本为4.26.1，2021年2月2日的版本。</p>
+<p>这一篇是第一篇，会阐述UE4是如何划分Tile，并基于Tile构建导航数据的。在后续的文章中，会详细介绍每个Tile如何构建导航数据。</p>
+<h1>Tile 的概念</h1>
+<p>Tile的概念，就是一个正方形的格子。每个Tile中有自己独立的导航网格数据。在我看来，Tile的作用有三点：</p>
+<ol>
+<li>
+<p>更加友好地支持多线程构建导航网格数据。</p>
+</li>
+<li>
+<p>通过标记每个Tile是否需要重新生成（Dirty属性），就能在runtime动态更新单独一个Tile的导航网格</p>
+</li>
+<li>
+<p>使用Static方式的导航网格时，可以以Tile为粒度来加载导航网格</p>
+</li>
+</ol>
+<p>在UE4中，所有的导航网格数据都是基于Tile的。每个Tile有自己独自的FRecastTileGenerator，会对当前的Tile从体素化开始，完整执行一遍导航数据构建过程。</p>
+<p>这里简单介绍一下每个Tile在构建导航数据时会经历的步骤：</p>
+<ol>
+<li>
+<p>体素化。</p>
+</li>
+<li>
+<p>根据体素中存储的信息，构造连续区域。</p>
+</li>
+<li>
+<p>计算每个cell与周围cell的连通性</p>
+</li>
+<li>
+<p>根据配置的agentRadius裁剪可行走区域</p>
+</li>
+<li>
+<p>划分区域</p>
+</li>
+<li>
+<p>在竖直方向分层并进行合并</p>
+</li>
+<li>
+<p>将所有数据写入到<code>rcHeightfieldLayer</code>类中，供detour寻路使用</p>
+</li>
+</ol>
+<p>上述步骤都会在后续的文章中详细说明，本文只会讲述基于Tile的导航数据构建。</p>
+<p>下面这个Uml类图，包含了NavigationSystem和NavMesh模块一些常用的类以及介绍。可以对NavigationSystem有一个初步了解</p>
+<p><img src="https://s2.loli.net/2024/03/15/N4ydWk9QTOfMhli.png" alt="image.png"></p>
+<h1>NavigationSystem的八叉树</h1>
+<h2 id="八叉树如何更新">八叉树如何更新</h2>
+<p>在UE4中，所有的导航依赖的物理数据，都是其自身通过一颗八叉树来维护的。八叉树底层直接使用了UE4的<code>TOctree2</code>模板类，并提供了一个<code>FNavigationOctreeController</code>控制类来更新八叉树。</p>
+<p>NavigationSystem提供了非常多的静态函数，供会影响导航网格的事件发生时调用。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UpdateActorData</span><span class="params">(AActor&amp; Actor)</span> </span>&#123; Delegates.UpdateActorData.<span class="built_in">Execute</span>(Actor); &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UpdateComponentData</span><span class="params">(UActorComponent&amp; Comp)</span> </span>&#123; Delegates.UpdateComponentData.<span class="built_in">Execute</span>(Comp); &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UpdateActorAndComponentData</span><span class="params">(AActor&amp; Actor, <span class="type">bool</span> bUpdateAttachedActors)</span> </span>&#123; Delegates.UpdateActorAndComponentData.<span class="built_in">Execute</span>(Actor, bUpdateAttachedActors); &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UpdateComponentDataAfterMove</span><span class="params">(USceneComponent&amp; Comp)</span> </span>&#123; Delegates.UpdateComponentDataAfterMove.<span class="built_in">Execute</span>(Comp); &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">OnActorBoundsChanged</span><span class="params">(AActor&amp; Actor)</span> </span>&#123; Delegates.OnActorBoundsChanged.<span class="built_in">Execute</span>(Actor); &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">OnPostEditActorMove</span><span class="params">(AActor&amp; Actor)</span> </span>&#123; Delegates.OnPostEditActorMove.<span class="built_in">Execute</span>(Actor); &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">OnComponentBoundsChanged</span><span class="params">(UActorComponent&amp; Comp, <span class="type">const</span> FBox&amp; NewBounds, <span class="type">const</span> FBox&amp; DirtyArea)</span> </span>&#123; Delegates.OnComponentBoundsChanged.<span class="built_in">Execute</span>(Comp, NewBounds, DirtyArea); &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">OnComponentTransformChanged</span><span class="params">(USceneComponent&amp; Comp)</span> </span>&#123; Delegates.OnComponentTransformChanged.<span class="built_in">Execute</span>(Comp); &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">OnActorRegistered</span><span class="params">(AActor&amp; Actor)</span> </span>&#123; Delegates.OnActorRegistered.<span class="built_in">Execute</span>(Actor); &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">OnActorUnregistered</span><span class="params">(AActor&amp; Actor)</span> </span>&#123; Delegates.OnActorUnregistered.<span class="built_in">Execute</span>(Actor); &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">OnComponentRegistered</span><span class="params">(UActorComponent&amp; Comp)</span> </span>&#123; Delegates.OnComponentRegistered.<span class="built_in">Execute</span>(Comp); &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">OnComponentUnregistered</span><span class="params">(UActorComponent&amp; Comp)</span> </span>&#123; Delegates.OnComponentUnregistered.<span class="built_in">Execute</span>(Comp); &#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">RemoveActorData</span><span class="params">(AActor&amp; Actor)</span> </span>&#123; Delegates.RemoveActorData.<span class="built_in">Execute</span>(Actor); &#125;</span><br></pre></td></tr></table></figure>
+<p>上述情况非常多，不过主要就是会影响导航网格的Actor或者Component在添加、删除、Transform变化时来主动调用。</p>
+<p>我们在这里用一个例子来举例，详细讲一下<strong>当一个物体的Transform发生变化</strong>时，导航系统是如何进行更新的。</p>
+<p>在每个SceneComponent的Transform发生变化时，都会执行：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">USceneComponent::InternalSetWorldLocationAndRotation</span><span class="params">(FVector NewLocation, <span class="type">const</span> FQuat&amp; RotationQuat, <span class="type">bool</span> bNoPhysics, ETeleportType Teleport)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="comment">// we need to call this even if this component itself is not navigation relevant</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">IsRegistered</span>() &amp;&amp; bCanEverAffectNavigation)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">PostUpdateNavigationData</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">USceneComponent::PostUpdateNavigationData</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">SCOPE_CYCLE_COUNTER</span>(STAT_ComponentPostUpdateNavData);</span><br><span class="line">    FNavigationSystem::<span class="built_in">OnComponentTransformChanged</span>(*<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而在<code>UNavigationSystemV1</code>的构造函数中，会进行所有<code>Delegate</code>的绑定</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">UNavigationSystemBase::<span class="built_in">OnComponentTransformChangedDelegate</span>().<span class="built_in">BindLambda</span>([](USceneComponent&amp; Comp) &#123;</span><br><span class="line">    <span class="keyword">if</span> (UNavigationSystemV1::<span class="built_in">ShouldUpdateNavOctreeOnComponentChange</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        UWorld* World = Comp.<span class="built_in">GetWorld</span>();</span><br><span class="line">        UNavigationSystemV1* NavSys = FNavigationSystem::<span class="built_in">GetCurrent</span>&lt;UNavigationSystemV1&gt;(World);</span><br><span class="line">        <span class="keyword">if</span> (NavSys != <span class="literal">nullptr</span></span><br><span class="line">            &amp;&amp; (NavSys-&gt;<span class="built_in">ShouldAllowClientSideNavigation</span>() || !World-&gt;<span class="built_in">IsNetMode</span>(ENetMode::NM_Client)))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// use propagated component&#x27;s transform update in editor OR server game with additional navsys check</span></span><br><span class="line">            UNavigationSystemV1::<span class="built_in">UpdateNavOctreeAfterMove</span>(&amp;Comp);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>因此，当<code>Delegate</code>触发时，会直接调用<code>NavigationSystem</code>的接口，直接调用八叉树的更新接口：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">FNavigationDataHandler::UpdateNavOctreeElement</span><span class="params">(UObject&amp; ElementOwner, INavRelevantInterface&amp; ElementInterface, int32 UpdateFlags)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 整个更新的实质，其实是先删除原节点，再注册新节点</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    </span><br><span class="line">    <span class="type">const</span> <span class="type">bool</span> bAlreadyExists = OctreeController.<span class="built_in">GetNavOctreeElementData</span>(ElementOwner, CurrentFlags, CurrentBounds);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// don&#x27;t invalidate pending requests</span></span><br><span class="line">    UpdateFlags |= FNavigationOctreeController::OctreeUpdate_Refresh;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// always try to unregister, even if element owner doesn&#x27;t exists in octree (parent nodes)</span></span><br><span class="line">    <span class="built_in">UnregisterNavOctreeElement</span>(ElementOwner, ElementInterface, UpdateFlags);</span><br><span class="line"></span><br><span class="line">    <span class="type">const</span> FSetElementId RequestId = <span class="built_in">RegisterNavOctreeElement</span>(ElementOwner, ElementInterface, UpdateFlags);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 依次向上更新所有父节点</span></span><br><span class="line">    <span class="built_in">UpdateNavOctreeParentChain</span>(ElementOwner, <span class="comment">/*bSkipElementOwnerUpdate=*/</span> <span class="literal">true</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同时，在八叉树的接口中，也会去标记<code>NavigationSystem</code>的<code>DirtyAreas</code>，来驱动<code>FRecastNavMeshGenerator</code>的<code>Tick</code>逻辑去更新对应的<code>Tile</code>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">FNavigationDataHandler::RemoveNavOctreeElementId</span><span class="params">(<span class="type">const</span> FOctreeElementId2&amp; ElementId, int32 UpdateFlags)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">ensure</span>(OctreeController.<span class="built_in">IsValidElement</span>(ElementId)))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">const</span> FNavigationOctreeElement&amp; ElementData = OctreeController.NavOctree-&gt;<span class="built_in">GetElementById</span>(ElementId);</span><br><span class="line">        <span class="type">const</span> int32 DirtyFlag = <span class="built_in">GetDirtyFlagHelper</span>(UpdateFlags, ElementData.Data-&gt;<span class="built_in">GetDirtyFlag</span>());</span><br><span class="line">        <span class="comment">// 在这里会对变化的Area进行标记</span></span><br><span class="line">        DirtyAreasController.<span class="built_in">AddArea</span>(ElementData.Bounds.<span class="built_in">GetBox</span>(), DirtyFlag, [&amp;ElementData] &#123; <span class="keyword">return</span> ElementData.Data-&gt;SourceObject.<span class="built_in">Get</span>(); &#125;);</span><br><span class="line">        OctreeController.NavOctree-&gt;<span class="built_in">RemoveNode</span>(ElementId);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1>NavigationSystem分块构建过程</h1>
+<p>理论上，每个Tile的构建都是自洽的，都是与其它Tile可以完全独立进行。在八叉树更新对某个Area进行标记之后，<code>FRecastNavMeshGenerator</code>的Tick都会去对每个<code>PendingDirtyArea</code>来进行更新。</p>
+<p>为了比较直观，我们在这里分析其全量Build的整个流程。从<code>UNavigationSystemV1::Build()</code>入手。</p>
+<p>流程并不复杂：</p>
+<ol>
+<li>
+<p><strong>收集场景中所有的<code>ANavMeshBoundsVolume</code>包围盒</strong>，核心代码在<code>GatherNavigationBounds()</code>中，很简单就是遍历World中的类。</p>
+</li>
+<li>
+<p><strong>对每个包围盒的区域，使用配置的TileSize和CellSize，划分Tile</strong>。每个Tile依然是AABB的，直接对坐标进行除法来划分Tile。每个Tile的大小就是配置的TileSize * CellSize。核心代码在<code>MarkDirtyTiles()</code>函数中：</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 这个构造函数用来计算一个包围盒换算成recast坐标的最大值和最小值</span></span><br><span class="line"><span class="built_in">FRcTileBox</span>(<span class="type">const</span> FBox&amp; UnrealBounds, <span class="type">const</span> FVector&amp; RcNavMeshOrigin, <span class="type">const</span> <span class="type">float</span> TileSizeInWorldUnits)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">check</span>(TileSizeInWorldUnits &gt; <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 在这里直接通过TileSize和cs来计算每个tile的大小，在这里直接划分。以(0,0)点为中心划分</span></span><br><span class="line">    <span class="type">const</span> FBox RcAreaBounds = <span class="built_in">Unreal2RecastBox</span>(UnrealBounds);</span><br><span class="line">    XMin = FMath::<span class="built_in">FloorToInt</span>((RcAreaBounds.Min.X - RcNavMeshOrigin.X) / TileSizeInWorldUnits);</span><br><span class="line">    XMax = FMath::<span class="built_in">FloorToInt</span>((RcAreaBounds.Max.X - RcNavMeshOrigin.X) / TileSizeInWorldUnits);</span><br><span class="line">    YMin = FMath::<span class="built_in">FloorToInt</span>((RcAreaBounds.Min.Z - RcNavMeshOrigin.Z) / TileSizeInWorldUnits);</span><br><span class="line">    YMax = FMath::<span class="built_in">FloorToInt</span>((RcAreaBounds.Max.Z - RcNavMeshOrigin.Z) / TileSizeInWorldUnits);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 将外部传入的包围盒，换算成tile坐标，并对其标记为dirty</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">FRecastNavMeshGenerator::MarkDirtyTiles</span><span class="params">(<span class="type">const</span> TArray&lt;FNavigationDirtyArea&gt;&amp; DirtyAreas)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    </span><br><span class="line">    TSet&lt;FPendingTileElement&gt; DirtyTiles;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">const</span> FNavigationDirtyArea&amp; DirtyArea : DirtyAreas)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获取到当前DirtyArea的包围盒</span></span><br><span class="line">        FBox AdjustedAreaBounds = DirtyArea.Bounds;</span><br><span class="line">        <span class="function"><span class="type">const</span> FRcTileBox <span class="title">TileBox</span><span class="params">(AdjustedAreaBounds, RcNavMeshOrigin, TileSizeInWorldUnits)</span></span>;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 这个包围盒内部的坐标都是一个tile</span></span><br><span class="line">        <span class="keyword">for</span> (int32 TileY = TileBox.YMin; TileY &lt;= TileBox.YMax; ++TileY)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">for</span> (int32 TileX = TileBox.XMin; TileX &lt;= TileBox.XMax; ++TileX)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="comment">// ...</span></span><br><span class="line">                </span><br><span class="line">                <span class="comment">// 记录当前tile坐标</span></span><br><span class="line">                FPendingTileElement Element;</span><br><span class="line">                Element.Coord = <span class="built_in">FIntPoint</span>(TileX, TileY);</span><br><span class="line">                </span><br><span class="line">                <span class="comment">// ...</span></span><br><span class="line">                DirtyTiles.<span class="built_in">Add</span>(Element);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Dump results into array</span></span><br><span class="line">    PendingDirtyTiles.<span class="built_in">Empty</span>(DirtyTiles.<span class="built_in">Num</span>());</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">const</span> FPendingTileElement&amp; Element : DirtyTiles)</span><br><span class="line">    &#123;</span><br><span class="line">        PendingDirtyTiles.<span class="built_in">Add</span>(Element);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 这里将所有tile按照距离主角的距离的远近进行排序</span></span><br><span class="line">    <span class="keyword">if</span> (NumTilesMarked &gt; <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">SortPendingBuildTiles</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>在Build时使用多线程来生成导航数据</strong>。每个Tile由一个Task负责。这部分逻辑核心代码在<code>FRecastNavMeshGenerator::ProcessTileTasks()</code>中。如果在Rebuild过程中，这个过程会由<code>FRecastNavMeshGenerator::EnsureBuildCompletion()</code>来驱动。</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">FRecastNavMeshGenerator::EnsureBuildCompletion</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">do</span> </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">const</span> int32 NumTasksToProcess = (bDoAsyncDataGathering ? <span class="number">1</span> : MaxTileGeneratorTasks) - RunningDirtyTiles.<span class="built_in">Num</span>();</span><br><span class="line">        <span class="built_in">ProcessTileTasks</span>(NumTasksToProcess);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// Block until tasks are finished</span></span><br><span class="line">        <span class="keyword">for</span> (FRunningTileElement&amp; Element : RunningDirtyTiles)</span><br><span class="line">        &#123;</span><br><span class="line">            Element.AsyncTask-&gt;<span class="built_in">EnsureCompletion</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> (<span class="built_in">GetNumRemaningBuildTasks</span>() &gt; <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>而每个Task负责的内容，就是对自己Task所负责的Tile，完整运行一遍体素化、分层、区域划分、构建相邻三角形导航数据等过程。</p>
+<p>其关键函数在<code>FRecastTileGenerator::GenerateCompressedLayers()</code>和<code>FRecastTileGenerator::GenerateNavigationData()</code>中。详细流程将会后续文章中详细阐述。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">FRecastTileGenerator::GenerateCompressedLayers</span><span class="params">(FNavMeshBuildContext&amp; BuildContext)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 函数有简化，略去了一些不影响流程阅读的判断和变量初始化</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建高度场，准备构建体素</span></span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">CreateHeightField</span>(BuildContext, RasterContext))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 将三角形光栅化到体素上</span></span><br><span class="line">    <span class="built_in">ComputeRasterizationMasks</span>(BuildContext, RasterContext);</span><br><span class="line">    <span class="built_in">RasterizeTriangles</span>(BuildContext, RasterContext);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果配置开启，将根据边界来剔除边界之外的体素</span></span><br><span class="line">    <span class="keyword">if</span> (TileConfig.bPerformVoxelFiltering &amp;&amp; !bFullyEncapsulatedByInclusionBounds)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">ApplyVoxelFilter</span>(RasterContext.SolidHF, TileConfig.walkableRadius);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 构建压缩高度场</span></span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">BuildCompactHeightField</span>(BuildContext, RasterContext))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// </span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1>Tile 的加载和使用</h1>
+<p>对于UE4来说，每个Tile只是存储当前线下已经预生成的导航数据。生成之后，实际使用A*算法来进行寻路时，直接用生成好的导航数据来进行寻路。</p>
+<p>在UE4中，承载recast数据的类是<code>FRecastTileData</code>。其结构如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">FRecastTileData</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">FRawData</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">FRawData</span>(uint8* InData);</span><br><span class="line">        ~<span class="built_in">FRawData</span>();</span><br><span class="line"></span><br><span class="line">        uint8* RawData;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">FRecastTileData</span>();</span><br><span class="line">    <span class="built_in">FRecastTileData</span>(int32 TileDataSize, uint8* TileRawData, int32 TileCacheDataSize, uint8* TileCacheRawData);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Location of attached tile</span></span><br><span class="line">    int32                    OriginalX;    <span class="comment">// Tile X coordinates when gathered</span></span><br><span class="line">    int32                    OriginalY;    <span class="comment">// Tile Y coordinates when gathered</span></span><br><span class="line">    int32                    X;                    </span><br><span class="line">    int32                    Y;                    </span><br><span class="line">    int32                    Layer;</span><br><span class="line">        </span><br><span class="line">    <span class="comment">// Tile data</span></span><br><span class="line">    int32                    TileDataSize;</span><br><span class="line">    <span class="comment">// 这个RawData是recast使用的数据</span></span><br><span class="line">    TSharedPtr&lt;FRawData&gt;    TileRawData;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Compressed tile cache layer </span></span><br><span class="line">    int32                    TileCacheDataSize;</span><br><span class="line">    TSharedPtr&lt;FRawData&gt;    TileCacheRawData;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Whether this tile is attached to NavMesh</span></span><br><span class="line">    <span class="type">bool</span>                    bAttached;    </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>对于UE4来说，对于<code>PersistantLevel</code>，加载Level时会自动在场景中创建一个<code>ARecastNavMesh</code>类，导航数据会直接生成在场景中的<code>ARecastNavMesh</code>对象中。</p>
+<p>而对于SubLevel，导航数据会序列化到ULevel类上的<code>NavMeshChunk</code>对象中。及导航数据会跟随场景加载。</p>
+<p>加载上来的数据，将会在<code>FPImplRecastNavMesh::Serialize()</code>过程中，读取文件中的数据存储至<code>DetourNavMesh</code>对象上。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">FPImplRecastNavMesh::Serialize</span><span class="params">( FArchive&amp; Ar, int32 NavMeshVersion )</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    <span class="keyword">if</span> (Ar.<span class="built_in">IsLoading</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// allocate the navmesh object</span></span><br><span class="line">        <span class="built_in">ReleaseDetourNavMesh</span>();</span><br><span class="line">        DetourNavMesh = <span class="built_in">dtAllocNavMesh</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//...</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 这里读取每个Tile的内容，添加到DetourNavMesh中</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NumTiles; ++i)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        </span><br><span class="line">        <span class="type">unsigned</span> <span class="type">char</span>* TileData = <span class="literal">NULL</span>;</span><br><span class="line">        TileDataSize = <span class="number">0</span>;</span><br><span class="line">        <span class="comment">// 读取每个TileData的内容。这个TileData实际上是dtMeshHeader结构</span></span><br><span class="line">        <span class="built_in">SerializeRecastMeshTile</span>(Ar, NavMeshVersion, TileData, TileDataSize);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (TileData != <span class="literal">NULL</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 直接将每个Tile数据添加到DetourNavMesh中</span></span><br><span class="line">            dtMeshHeader* <span class="type">const</span> TileHeader = (dtMeshHeader*)TileData;</span><br><span class="line">            DetourNavMesh-&gt;<span class="built_in">addTile</span>(TileData, TileDataSize, DT_TILE_FREE_DATA, TileRef, <span class="literal">NULL</span>);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">//... 处理CompressedData序列化</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1>总结</h1>
+<p>这一篇作为系列第一篇，从整个框架层，来分析了UE4是如何划分导航的Tile，如何分Tile构建导航网格，Tile的存储方式，以及加载上来如何使用Tile，并简单介绍了UE4如何支持动态更新导航。</p>
+<p>下一篇将会介绍UE4导航的整个体素化过程。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2024/03/15/2024-3-15-2/">https://qlipphoth.github.io/2024/03/15/2024-3-15-2/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/UE/">UE</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/03/15/2024-3-15-1/" title="与延迟抗争，射击游戏如何做到更好的体验"><img class="cover" src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">与延迟抗争，射击游戏如何做到更好的体验</div></div></a></div><div class="next-post pull-right"><a href="/2024/03/15/2024-3-15-3/" title="UE 补完计划（四） 导航系统-2"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">UE 补完计划（四） 导航系统-2</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2024/03/22/2024-3-22-1/" title="UE 补完计划（五） UE中的STL-2"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-22</div><div class="title">UE 补完计划（五） UE中的STL-2</div></div></a></div><div><a href="/2024/03/18/2024-3-18-4/" title="UE 补完计划（五） UE中的STL-1"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（五） UE中的STL-1</div></div></a></div><div><a href="/2024/03/18/2024-3-18-3/" title="UE 补完计划（四） 导航系统-5"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（四） 导航系统-5</div></div></a></div><div><a href="/2024/03/18/2024-3-18-2/" title="UE 补完计划（四） 导航系统-4"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（四） 导航系统-4</div></div></a></div><div><a href="/2024/03/18/2024-3-18-1/" title="UE 补完计划（四） 导航系统-3"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（四） 导航系统-3</div></div></a></div><div><a href="/2024/03/15/2024-3-15-3/" title="UE 补完计划（四） 导航系统-2"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-15</div><div class="title">UE 补完计划（四） 导航系统-2</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">前言：基于Tile的导航系统</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">Tile 的概念</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">3.</span> <span class="toc-text">NavigationSystem的八叉树</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E5%8F%89%E6%A0%91%E5%A6%82%E4%BD%95%E6%9B%B4%E6%96%B0"><span class="toc-number">3.1.</span> <span class="toc-text">八叉树如何更新</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">4.</span> <span class="toc-text">NavigationSystem分块构建过程</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">5.</span> <span class="toc-text">Tile 的加载和使用</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

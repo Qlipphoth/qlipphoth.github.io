@@ -1,0 +1,738 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>UE 入坑系列（七）：UE 中的 UDP | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="参考：  https:&#x2F;&#x2F;zhuanlan.zhihu.com&#x2F;p&#x2F;580460488 https:&#x2F;&#x2F;blog.csdn.net&#x2F;u012999985&#x2F;article&#x2F;details&#x2F;117236770 https:&#x2F;&#x2F;zhuanlan.zhihu.com&#x2F;p&#x2F;430799766 https:&#x2F;&#x2F;blog.csdn.net&#x2F;csdnsevenn&#x2F;article&#x2F;details&#x2F;10686587">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UE 入坑系列（七）：UE 中的 UDP">
+<meta property="og:url" content="https://qlipphoth.github.io/2023/12/13/2023-12-13-1/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="参考：  https:&#x2F;&#x2F;zhuanlan.zhihu.com&#x2F;p&#x2F;580460488 https:&#x2F;&#x2F;blog.csdn.net&#x2F;u012999985&#x2F;article&#x2F;details&#x2F;117236770 https:&#x2F;&#x2F;zhuanlan.zhihu.com&#x2F;p&#x2F;430799766 https:&#x2F;&#x2F;blog.csdn.net&#x2F;csdnsevenn&#x2F;article&#x2F;details&#x2F;10686587">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2023/08/28/4K7FV6pqUwYjn2X.png">
+<meta property="article:published_time" content="2023-12-13T13:54:40.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="UE">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/08/28/4K7FV6pqUwYjn2X.png"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2023/12/13/2023-12-13-1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'UE 入坑系列（七）：UE 中的 UDP',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2023/08/28/4K7FV6pqUwYjn2X.png')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">UE 入坑系列（七）：UE 中的 UDP</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2023-12-13T13:54:40.000Z" title="Created 2023-12-13 13:54:40">2023-12-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/UE/">UE</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">6.9k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>22min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="UE 入坑系列（七）：UE 中的 UDP"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><blockquote>
+<p>参考：</p>
+<ol start="0">
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/580460488">https://zhuanlan.zhihu.com/p/580460488</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/u012999985/article/details/117236770">https://blog.csdn.net/u012999985/article/details/117236770</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/430799766">https://zhuanlan.zhihu.com/p/430799766</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/csdnsevenn/article/details/106865876">https://blog.csdn.net/csdnsevenn/article/details/106865876</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/606905438">https://zhuanlan.zhihu.com/p/606905438</a></li>
+</ol>
+</blockquote>
+<h1>预备知识</h1>
+<h2 id="UDP-TCP">UDP &amp; TCP</h2>
+<p>TCP (Transmission Control Protocol)和 UDP(User Datagram Protocol) 协议属于传输层协议。</p>
+<p>其中TCP提供IP环境下的数据可靠传输，它提供的服务包括数据流传送、可靠性、有效流控、全双工操作和多路复用。通过面向连接、端到端和可靠的数据包发送。通俗说，它是事先为所发送的数据开辟出连接好的通道，然后再进行数据发送；而UDP则不为IP提供可靠性、 流控或差错恢复功能。</p>
+<p>一般来说，TCP对应的是可靠性要求高的应用，而UDP对应的则是可靠性要求低、传输经济的应用。</p>
+<p>TCP支持的应用协议主要有：Telnet、FTP、SMTP等；<br>
+UDP支持的应用层协议主要有：NFS（网络文件系统）、SNMP（简单网络管理协议）、DNS（主域名称系统）、TFTP（通用文件传输协议）等。</p>
+<p>TCP/IP 协议与低层的数据链路层和物理层无关，这也是 TCP/IP 的重要特点</p>
+<h3 id="UDP">UDP</h3>
+<p>UDP 是 User Datagram Protocol 的简称， 中文名是<strong>用户数据报协议</strong>，是OSI（Open System Interconnection，开放式系统互联） 参考模型中一种<strong>无连接的传输层协议，传输可靠性没有保证</strong>。</p>
+<p>UDP首部只有8字节（源端口号，目的端口号，UDP总长度，检验和，各16位/2字节）。</p>
+<p><img src="https://s2.loli.net/2023/12/13/uAVKaWCjLDJgnw1.png" alt="image.png"></p>
+<p>UDP头部的标识如下：</p>
+<ul>
+<li>16位源端口号：源主机的应用程序使用的端口号。</li>
+<li>16位目的端口号：目的主机的应用程序使用的端口号。</li>
+<li>16位UDP长度：是指UDP头部和UDP数据的字节长度。因为UDP头部长度为8字节，所以该字段的最小值为8。</li>
+<li>16位UDP校验和：该字段提供了与TCP校验字段同样的功能；该字段是可选的。</li>
+</ul>
+<p>UDP 是面向报文传输的协议，对于应用层交下来的报文段不进行拆分合并，直接保留原有报文段的边界然后添加 UDP 的首部就交付给网络层。不论报文的长短，UDP 都不会进行处理。因此为了避免报文段过短降低传输效率以及报文段过长导致网络层对 IP 数据进行分片操作，应用层应该选择合适长度的报文交付给运输层的 UDP。</p>
+<p>UDP是无连接的协议，数据传输之前不需要建立数据连接，也没有超时重传等机制，拥塞控制以及流量控制，但是传输速度快，灵活。</p>
+<h3 id="TCP">TCP</h3>
+<p>TCP(Transmission Control Protocol 传输控制协议)是一种面向连接(连接导向)的、可靠的、 基于IP的传输层协议。</p>
+<h4 id="TCP-的特点">TCP 的特点</h4>
+<ol>
+<li>TCP 是面向连接的运输层协议。应用程序在使用 TCP 协议之前，必须先建立 TCP 连接。在传送数据完毕后，必须释放已经建立的 TCP 连接。</li>
+<li>每一条 TCP 连接只能有两个端点，每一条 TCP 连接只能是点对点的(一对一)</li>
+<li>TCP 提供可靠交付的服务。通过 TCP 连接传送的数据，无差错、不丢失、不重复，并且按序到达</li>
+<li>TCP 提供全双工通信。TCP 允许通信双方的应用进程在任何时候都能发送数据。TCP 连接的两端都设有发送缓存和接受缓存，用来临时存放双向通信的数据</li>
+<li>面向字节流。TCP 中的“流”指的是流入到进程或从进程流出的字节序列</li>
+</ol>
+<p>“面向字节流”的含义是：虽然应用程序和 TCP 的交互式一次一个数据块(大小不等)，但 TCP 把应用程序交下来的数据仅仅看成是一连串的无结构的字节流。TCP 并不知道所传送的字节流的含义。</p>
+<p>TCP 不保证接收方应用程序所收到的数据块和发送方应用程序所发出的数据块具有对应大小的关系。</p>
+<p>接收方应用程序收到的字节流必须和发送方应用程序发出的字节流完全一样。接收方的应用程序必须有能力识别收到的字节流，把它还原成有意义的应用层数据。</p>
+<p>TCP 和 UDP 在发送报文时采用的方式完全不同。TCP 并不关心应用进程一次把多长的报文发送到 TCP 的缓存中，而是根据对方给出的窗口值和当前网络拥塞的程度来决定一个报文段应包含多少个字节(UDP 发送的报文长度是应用进程给出的)。如果应用进程传送到 TCP 缓存的数据块太长，TCP 就可以把它划分短一些再传送。如果应用进程一次只发来一个字节，TCP 也可以等待积累有足够多的字节后再构成报文段发送出去。</p>
+<h4 id="TCP-首部结构">TCP 首部结构</h4>
+<p><img src="https://s2.loli.net/2023/12/13/Xf1lkpUC3KiWDF6.png" alt="image.png"></p>
+<ul>
+<li>源端口：占 16bit ，用来标识发送该 TCP 报文段的应用进程。</li>
+<li>目的端口：占 16bit，用来标识接收该 TCP 报文段的应用进程。</li>
+<li>序号：占 32bit，取值范围[0, 2^32 - 1]，序号增加到最后一个后，下一个序号就又回到 0。指出本 TCP 报文段数据载荷的第一个字节的序号。</li>
+<li>确认号：占 32bit，取值范围[0,2^32-1]，确认号增加到最后一个后，下一个确认号就又回到0。指出期望收到对方下一个 TCP 报文段的数据载荷的第一个字节的序号，同时也是对之前收到的所有数据的确认。若确认号 = n，则表明到序号 n-1 为止的所有数据都已正确接收，期望接收序号为 n 的数据。</li>
+<li>确认标志位 ACK：取值为 1 时确认号字段才有效；取值为 0 时确认号字段无效。TCP 规定，在连接建立后所有传送的 TCP 报文段都必须把 ACK 置 1。</li>
+<li>数据偏移: 占 4bit，并以 4byte 为单位。用来指出 TCP 报文段的数据载荷部分的起始处距离 TCP 报文段的起始处有多远。这个字段实际上是指出了 TCP 报文段的首部长度。</li>
+<li>窗口：占 16比特，以字节为单位。指出发送本报文段的一方的接收窗。</li>
+<li>同步标志位 SYN：在 TCP 连接建立时用来同步序号。</li>
+<li>终止标志位FIN：用来释放TCP连接。</li>
+<li>复位标志位RST：用来复位TCP连接。</li>
+<li>推送标志位PSH：接收方的TCP收到该标志位为1的报文段会尽快上交应用进程，而不必等到接收缓存都填满后再向上交付。</li>
+<li>校验和： 占16比特，检查范围包括TCP报文段的首部和数据载荷两部分。在计算校验和时，要在TCP报文段的前面加上12字节的伪首部。</li>
+<li>紧急指针： 占16比特，以字节为单位，用来指明紧急数据的长度。</li>
+<li>填充： 由于选项的长度可变，因此使用填充来 确保报文段首部能被4整除，(因为数据偏移字段，也就是首部长度字段，是以4字节为单位的)。</li>
+</ul>
+<h4 id="三次握手过程">三次握手过程</h4>
+<p><img src="https://s2.loli.net/2023/12/13/gBjyb1NwtnH24aZ.png" alt="image.png"></p>
+<ol>
+<li>
+<p>首先客户端向服务器发送一个 SYN 包，并等待服务器确认，其中：</p>
+<ul>
+<li>标志位为 SYN，标识请求建立连接</li>
+<li>序号为 Seq = x（x一般取随机数）</li>
+<li>随后客户端进入 SYN-SENT阶段（SYN已发送）</li>
+</ul>
+</li>
+<li>
+<p>服务器接收到客户端发来的 SYN 包后，对该包进行确认后结束 LISTEN 阶段，并返回一段 TCP 报文，其中：</p>
+<ul>
+<li>标志位为 SYN 和 ACK，标识确认客户端的报文 Seq 序号有效，服务器能够正常接收客户端发送的数据，并同意创建新连接；</li>
+<li>序号为 Seq = y；</li>
+<li>确认号为 Ack = x + 1，表示收到客户端的 Seq 并期望收到下一个 Seq，随后服务器进入 SYN-RECV 阶段（SYN 已接收）</li>
+</ul>
+</li>
+<li>
+<p>客户端接收到发送的 SYN + ACK 包后，明确了从客户端到服务器的数据传输是正常的，从而结束 SYN-SENT 阶段。并返回最后一段报文。其中：</p>
+<ul>
+<li>标志位为 ACK，表示确认收到服务器端同意连接的信号；</li>
+<li>序号为 Seq = x + 1，表示收到服务器端的确认号 Ack，并将其值作为自己的序号值，即发送下一个 Seq；</li>
+<li>确认号为 Ack= y + 1，表示收到服务器端序号 seq，并将其值加 1 作为自己的确认号 Ack 的值。</li>
+<li>随后客户端进入 ESTABLISHED。</li>
+</ul>
+</li>
+</ol>
+<p>当服务器端收到来自客户端确认收到服务器数据的报文后，得知从服务器到客户端的数据传输是正常的，从而结束 SYN-RECV 阶段，进入 ESTABLISHED 阶段，从而完成三次握手。</p>
+<blockquote>
+<p><strong>两次握手弊端：</strong> 三次握手的主要目的是确认自己和对方的发送和接收都是正常的，从而保证了双方能够进行可靠通信。若采用两次握手，当第二次握手后就建立连接的话，此时客户端知道服务器能够正常接收到自己发送的数据，而服务器并不知道客户端是否能够收到自己发送的数据。</p>
+<p>我们知道网络往往是非理想状态的（存在丢包和延迟），当客户端发起创建连接的请求时，如果服务器直接创建了这个连接并返回包含 SYN、ACK 和 Seq 等内容的数据包给客户端，这个数据包因为网络传输的原因丢失了，丢失之后客户端就一直接收不到返回的数据包。由于客户端可能设置了一个超时时间，一段时间后就关闭了连接建立的请求，再重新发起新的请求，而服务器端是不知道的，如果没有第三次握手告诉服务器客户端能否收到服务器传输的数据的话，服务器端的端口就会一直开着，等到客户端因超时重新发出请求时，服务器就会重新开启一个端口连接。长此以往， 这样的端口越来越多，就会造成服务器开销的浪费。</p>
+</blockquote>
+<h4 id="TCP-为什么可靠">TCP 为什么可靠</h4>
+<ol>
+<li>
+<p>乱序重排、应答确认</p>
+<ul>
+<li>乱序重排：每个TCP报文段都有一个序号，用于标识数据段的位置，接收方按序号重新排序数据段，从而保证数据传输的正确性。</li>
+<li>应答确认：TCP报文包含确认号，确认号是接收方接收到的序列号 + 1。接收方收到数据时会返回一个确认报文，确认报文中会包含确认号，用于告诉发送方它已经接收到了哪些数据段（序列号是它期望接受的下一个数据段的序列号）。</li>
+</ul>
+</li>
+<li>
+<p>报文重传</p>
+<ul>
+<li>超时重传：当发送端在规定的时间内没有收到接收端的确认报文，发送端会重新发送该报文。当发送方在指定时间内没有收到接收方的确认报文，则认为数据包丢失，会进行重传，以保证数据传输的正确性和可靠性。TCP会根据报文的往返时间（RTT）自动调整重传时间（RTO）。</li>
+<li>快速重传：接收方收到序号1后，回复确认号2，希望下次收到序号2的报文段，但却乱序收到比序号2大的3、4、5报文段，于是连续发出确认号为2的报文段。如果发送方连续三次收到重复的确认号，立即重发该报文段，而不管是否超时。</li>
+</ul>
+</li>
+<li>
+<p>流量控制（滑动窗口解决）：</p>
+<ul>
+<li>TCP再三次握手建立连接时，会协商双方缓冲区window大小。如果因为接收方处理速度较慢，接收方会通过window告知发送方，实现动态调整，避免“溢出”。发送方与接收方滑动窗口大小的信息通过ACK来进行传递，ACK包含两个非常重要的信息：一是期望接收到的下亿字节的序号 n； 二是当前的窗口大小 m。发送方根据收到ACK当中期望收到的下一个字节的序号 n 以及窗口大小 m ， 还有当前已经发送的字节序号 x ，算出还可以发送的字节数。</li>
+</ul>
+</li>
+<li>
+<p>拥塞控制</p>
+<ul>
+<li>慢开始</li>
+<li>拥塞避免</li>
+<li>快重传</li>
+<li>快恢复</li>
+</ul>
+</li>
+<li>
+<p>校验机制</p>
+<ul>
+<li>TCP 报文段还包含一个校验和，用于检查在传输过程中是否发生了错误，如果发现错误，数据将被丢弃并要求重新传输。</li>
+</ul>
+</li>
+</ol>
+<h3 id="UDP-与-TCP-的区别">UDP 与 TCP 的区别</h3>
+<ul>
+<li>
+<p>UDP：对网络通讯质量要求不高时，要求网络通讯速度快的场景</p>
+<ul>
+<li>无连接，发送数据之前不需要建立连接。</li>
+<li>尽最大努力交付，不保证可靠交付，不适用拥塞控制。</li>
+<li>面向报文，适合多媒体通信。</li>
+<li>支持一对一、一对多、多对一，多对多的交互通信。</li>
+<li>首部开销小，仅 8 个字节。</li>
+</ul>
+</li>
+<li>
+<p>TCP：对网络通讯质量有要求，如HTTP、HTTPS、FTP等传输文件的协议，POP3、SMTP 等邮件传输的协议。</p>
+<ul>
+<li>面向连接。</li>
+<li>每一条TCP有且只有两个端点，为一对一关系。</li>
+<li>提供可靠交付。</li>
+<li>全双工通信，全双工为即可传输又可接收。</li>
+<li>面向字节流。</li>
+</ul>
+</li>
+</ul>
+<h1>UE4 中的网络连接</h1>
+<h2 id="UE4-为什么要使用-UDP-协议">UE4 为什么要使用 UDP 协议</h2>
+<p>在虚幻里面，由于很多游戏的同步（比如 FPS）对网络延迟要求比较苛刻，所以放弃了需要三次握手的 TCP 而改用UDP（更不可能考虑 HTTP了）。</p>
+<p>关于网络协议，游戏界经过大量的测试很早就公认——对于高频同步的游戏，使用UDP同步的效果要好于TCP。因此，Unreal使用的就是UDP协议，但是为了保证数据的可靠性，需要在上层封装一个可靠的UDP，也就是NetDriver + NetConnection + Channel那一套。</p>
+<p>里面的逻辑很复杂而且涉及到很多模块，确实有一些冗余。此外，虽说是可靠的，但是在属性同步和RPC的处理方式上并不相同，属性同步只保证最后的数据是可靠的，中间的结果可能会丢失，而RPC则可以保证消息一定按序送达。针对其内置的RUDP的重发机制，UE其实已经做过很多次的优化和调整了，之前任何的丢包和乱序都会立刻触发重发，4.24里面已经添加了循环队列来收包矫正收包的次序，一定程度上减少了不必要的重传。</p>
+<h2 id="UE4-UDP是如何进行可靠传输的">UE4 UDP是如何进行可靠传输的</h2>
+<p>总的来说 UE 使用 UDP 作为网络传输协议是为了连接速度等多方面的考虑；但这并不意味着 UE 中的网络连接就是不可靠的。相反。UE 自己实现了一套保证 UDP 可靠传输的机制。</p>
+<p>学过计网的都知道，想基于 UDP 实现可靠传输，就需要把 TCP 可靠传输的特性（序列号、确认应答、超时重传、流量控制、拥塞控制）在应用层用类似的方法实现一遍，下面我们就开始分析 UE 到底是如何做到这一点的。</p>
+<h3 id="UE-的网络框架：">UE 的网络框架：</h3>
+<p><img src="https://s2.loli.net/2023/12/13/HxzmiT91ZfeY4k7.png" alt="image.png"></p>
+<h4 id="NetDrivers-NetConnections-Channels">NetDrivers, NetConnections, Channels</h4>
+<ol>
+<li>
+<p><code>UNetDrivers</code></p>
+<p>网络驱动，网络处理的核心，负责管理 <code>UNetConnections</code>，以及它们之间可以共享的数据。对于某个游戏来说，一般会有相对较少的 <code>UNetDrivers</code>，这些可能包括：</p>
+<ol>
+<li>
+<p><code>Game NetDriver</code>：负责标准游戏网络流量</p>
+</li>
+<li>
+<p><code>Demo NetDriver</code>：负责录制或回放先前录制的游戏数据，这就是重播（观战）的工作原理。</p>
+</li>
+<li>
+<p><code>Beacon NetDriver</code>：负责不属于“正常”游戏流量的网络流量。</p>
+</li>
+</ol>
+<p>当然，也可以自定义 <code>NetDrivers</code>，由游戏或应用程序实现并使用。</p>
+</li>
+<li>
+<p><code>NetConnections</code></p>
+<p>表示连接到游戏（或更一般的说，连接到 <code>NetDriver</code>）的单个客户端。每个网络连接都有自己的一组通道，连接将数据路由到通道。</p>
+</li>
+<li>
+<p><code>Channel</code></p>
+<p>数据通道，每一个通道只负责交换某一个特定类型特定实例的数据信息。</p>
+<ol>
+<li>
+<p><code>Control Channel</code>：用于发送有关连接状态的信息（连接是否应该关闭等）。</p>
+</li>
+<li>
+<p><code>Voice Channel</code>：用于在客户端和服务器之间发送语音数据。</p>
+</li>
+<li>
+<p><code>Actor Channel</code>：从服务器复制到客户端的每个 <code>Actor</code> 都将存在唯一的 <code>Actor Channel</code>。（<code>Actor</code> 是在世界中存在的对象，UE4 大部分的同步功能都是围绕 <code>Actor</code> 来实现的。）</p>
+</li>
+</ol>
+</li>
+</ol>
+<p>在正常情况下，只有一个 <code>NetDriver</code>（在客户端和服务器上创建）用于“标准”游戏流量和连接。</p>
+<p>服务器 <code>NetDriver</code> 将维护一个 <code>NetConnections</code> 列表，每个连接代表游戏中的一个玩家。它负责复制 <code>Actor</code> 数据。</p>
+<p>客户端 <code>NetDrivers</code> 将具有一个代表到服务器的连接的单个 <code>NetConnection</code>。</p>
+<p>在服务器和客户端上，<code>NetDriver</code> 负责接收来自网络的数据包并将这些数据包传递给适当的 <code>NetConnection</code>（必要时建立新的 <code>NetConnections</code>）。</p>
+<h4 id="数据传输">数据传输</h4>
+<p>UE 在 UDP 协议基础上，实现了一套提供不同类型服务的网络框架。既有 reliable/unreliable 的 rpc，也有可容忍中间状态丢失，但最终数据肯定一致的属性同步。可根据游戏不同业务，选择对应网络功能，最大程度利用网络。</p>
+<p>首先，UE创建了Bunch和Packet两种数据结构，用于承载游戏数据。</p>
+<ol>
+<li>
+<p><code>Bunches</code></p>
+<p><code>Bunch</code> 偏向上层游戏业务，承载属性同步、rpc等重要功能。Actor在执行属性同步，或调用rpc后，会生成一个<code>OutBunch</code>，并向其中写入数据。</p>
+<p><code>FOutBunch</code> 被定义在 <code>DataBunch.h</code> 中。<code>FoutBunch</code>结构如下，其中很多属性都是该<code>Bunch</code>的描述信息。</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// A bunch of data to send.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ENGINE_API</span> FOutBunch : <span class="keyword">public</span> FNetBitWriter</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// Variables.</span></span><br><span class="line">    FOutBunch *             Next;</span><br><span class="line">    UChannel *              Channel;</span><br><span class="line">    <span class="type">double</span>                  Time;</span><br><span class="line">    int32                   ChIndex;</span><br><span class="line">    FName                   ChName;</span><br><span class="line">    int32                   ChSequence;</span><br><span class="line">    int32                   PacketId;</span><br><span class="line">    uint8                   ReceivedAck:<span class="number">1</span>;</span><br><span class="line">    uint8                   bOpen:<span class="number">1</span>;</span><br><span class="line">    uint8                   bClose:<span class="number">1</span>;</span><br><span class="line">    uint8                   bIsReplicationPaused:<span class="number">1</span>;   <span class="comment">// Replication on this channel is being paused by the server</span></span><br><span class="line">    uint8                   bReliable:<span class="number">1</span>;</span><br><span class="line">    uint8                   bPartial:<span class="number">1</span>;				<span class="comment">// Not a complete bunch</span></span><br><span class="line">    uint8                   bPartialInitial:<span class="number">1</span>;		<span class="comment">// The first bunch of a partial bunch</span></span><br><span class="line">    uint8                   bPartialFinal:<span class="number">1</span>;			<span class="comment">// The final bunch of a partial bunch</span></span><br><span class="line">    uint8                   bHasPackageMapExports:<span class="number">1</span>;	<span class="comment">// This bunch has networkGUID name/id pairs</span></span><br><span class="line">    uint8                   bHasMustBeMappedGUIDs:<span class="number">1</span>;	<span class="comment">// This bunch has guids that must be mapped before we can process this bunch</span></span><br><span class="line"></span><br><span class="line">    EChannelCloseReason     CloseReason;</span><br><span class="line"></span><br><span class="line">    TArray&lt; FNetworkGUID &gt;	ExportNetGUIDs;			<span class="comment">// List of GUIDs that went out on this bunch</span></span><br><span class="line">    TArray&lt; uint64 &gt;        NetFieldExports;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>此时Bunch中已序列化的数据称为&quot;ContentBlock&quot;，可以简单理解为 Actor GUID + 属性同步/rpc数据。</p>
+<p><img src="https://s2.loli.net/2023/12/13/LBMEGACJgS3hUTq.png" alt="image.png"></p>
+<p>之后调用 <code>UChannel::SendBunch</code> 函数发送该 <code>Bunch</code>。在 <code>Bunch</code> 前面按需添加 <code>ExportBunch </code>和 <code>MustBeMappedGuids</code>，这些也属于 <code>Bunch</code> 的数据部分。然后会根据 <code>OutBunch</code> 属性生成 <code>BunchHeader</code>，并添加到<code>ContentBlock</code> 数据前一起发送，<code>BunchHeader</code> + <code>ContentBlock</code> 才是完整的 <code>Bunch</code> 应用层数据包。<code>BunchHeader</code>内容如下：</p>
+<p><img src="https://s2.loli.net/2023/12/13/VzoAp2huG5TRId7.png" alt="image.png"></p>
+<p>BunchHeader里有很多属性，其中灰色属性要根据之前值确定是否写入。</p>
+<ul>
+<li>部分属性含义：
+<ol>
+<li><code>bReliable</code>：<code>Bunch</code>是否为<code>Reliable</code></li>
+<li><code>ChannelIndex</code>：对应哪个<code>Channel</code>，或者可理解为该<code>Bunch</code>属于哪个<code>Actor</code></li>
+<li><code>ChSequence</code>：<code>Reliable Bunch</code>的序列号</li>
+<li><code>bPartial</code>：是否为<code>PartialBunch</code></li>
+<li><code>ContentBits</code>：后面<code>ContentBlock</code>的大小</li>
+</ol>
+</li>
+</ul>
+<p><code>Bunch</code> 可以合并或拆分为单独的 UDP 数据包发送，这里就不再分析。<strong>Bunch的合并与拆分可以很明显的体现这是为 UDP 设计的应用层数据包协议，需要考虑网络 MTU。如果基于 TCP 设计的应用层数据包协议，则不需要考虑这些，因为 TCP 是基于流的协议</strong>。</p>
+</li>
+<li>
+<p><code>Packet</code></p>
+<p><code>Packet</code>为更接近网络的概念，是UE中的“数据包”，会对<code>Bunch</code>数据包进行一层简单的包装，然后交由UDP处理。</p>
+<p><code>Packet</code>有两个重要的概念，为<code>PacketSeq</code>和<code>AckedSeq</code>。</p>
+<p><code>PacketSeq</code>：每个<code>Packet</code>都有一个<code>Seq</code>序列号，长度<code>14Bit</code>，是线性递增的，到最大后回环。发送方和接收方要根据这个<code>Seq</code>来做排序和<code>Ack</code>确认，以支持<code>Partial</code>和<code>Reliable</code>等特性。</p>
+<p><code>AckedSeq</code>：对某个<code>PacketSeq</code>的<code>Ack</code>，表示自己收到了此<code>Packet</code>。</p>
+<p>注意这和代码中的<code>PacketId</code>是两个概念，<code>PacketId</code>是计数，<code>UConnection</code>每发送一个<code>Packet</code>，<code>PacketId</code>就会+1。</p>
+<p><code>Packet</code>头部包含了<code>PacketHeader</code>和<code>PacketInfoPayload</code>，结构如下：</p>
+<p><img src="https://s2.loli.net/2023/12/13/2vq3nbW1hiNeoJ7.png" alt="image.png"></p>
+<p><code>PacketHeader</code>包括<code>PacketSeq</code>，<code>AckedSeq</code>，<code>HistoryWordCount</code>，<code>History</code>。</p>
+<p><code>NetConnection</code>每帧发送的<code>Packet</code>，会有一个包含<code>PacketInfoPayload</code>信息。包含距离上帧发送<code>Packet</code>经过的时间<code>JitterClockTime</code>，单位毫秒，以及<code>Server</code>上一帧<code>tick</code>耗时<code>FrameTime</code>，单位毫秒，这些用于估计链路时延。</p>
+<p><code>Packet</code>中间会写入<code>Bunch</code>数据，末尾再写入bit 1，表示<code>UNetConnection</code>层处理结束。接收方收到<code>Packet</code>后，会从后往前找第一个bit 1，把后面填充的0移出。</p>
+<p>完整的<code>Packet</code>结构如下：</p>
+<p><img src="https://s2.loli.net/2023/12/13/sVvJb3NxXBCSrWc.png" alt="image.png"></p>
+<p>这个就是Packet的完整数据了，可交给UDP发送。</p>
+<blockquote>
+<p><code>PacketSeq</code>回环处理:<br>
+<code>PacketSeq</code>只有14位，可表示0-16383，因此一段时间后就会发生回环，那么接收方需要特殊处理<code>Packet</code>顺序问题。比如先收到5，后收到4，那么4就是之前发的旧<code>Packet</code>；如果先收到16383，后收到0，那么0就是新发的<code>Packet</code>，不能单纯比较<code>Seq</code>大小。UE做法为把16384/2（8192）作为界限，两个<code>Seq</code>相差绝对值小于8192，认为没有发生回环，反之则人为发生回环，取8192是认为这个区间足够一个<code>Packet</code>从发送端传输到接收端。</p>
+</blockquote>
+</li>
+</ol>
+<p>举个例子：客户端往服务器发送 <code>RPC</code></p>
+<ul>
+<li>客户端调用 <code>RPC</code></li>
+<li>该请求被转发（通过 <code>NetDriver</code> 和 <code>NetConnection</code>）到拥有调用 <code>RPC</code> 的 <code>Actor</code> 的 <code>Actor</code> 通道</li>
+<li><code>Actor</code> 通道将 <code>RPC</code> 标识符和参数序列化为一个 <code>Bunch</code>。该 <code>Bunch</code> 还将包含其 <code>Actor</code> 通道的 <code>ID</code></li>
+<li>然后，<code>Actor</code> 通道将请求 <code>NetConnection</code> 发送 <code>Bunch</code></li>
+<li>稍后，<code>NetConnection</code> 将把这些（和其他）数据组合成一个数据包 <code>Packet</code>，并发送到服务器</li>
+<li>在服务器上，网络驱动程序 <code>NetDriver</code> 将接收数据包</li>
+<li>网络驱动程序 <code>NetDriver</code> 将检查发送数据包的地址，并将数据包移交给适当的网络连接 <code>NetConnection</code></li>
+<li>网络连接 <code>NetConnection</code> 将数据包分解成 <code>Bunch</code>（一个接一个）</li>
+<li><code>NetConnection</code> 将使用 <code>Bunch</code> 上的通道 <code>ID</code> 将 <code>Bunch</code> 路由到对应的 <code>Actor</code> 通道</li>
+<li><code>ActorChannel</code> 解码 <code>Bunch</code>，查看它包含的 <code>RPC</code> 数据，并使用 <code>RPC ID</code> 和序列化参数</li>
+<li>对 <code>Actor</code> 调用对应的函数</li>
+</ul>
+<h3 id="可靠数据传输的实现">可靠数据传输的实现</h3>
+<p>TCP是一个成熟切复杂的可靠传输协议，可以广泛用于各种互联网业务场景，因此考虑比较周全。而 UE 作为游戏，可以实现适应游戏业务的可靠性协议，不需要面面俱到。因此 UE 仿照，不外乎仿照 TCP 协议，实现了一个简化版本，<strong>而其中最重要的就是Ack与重传机制</strong>。</p>
+<h4 id="“可靠”是Bunch的概念">“可靠”是Bunch的概念</h4>
+<p>如果游戏需要被可靠传输，比如<code>reliable rpc</code>，那么它生成的<code>Bunch</code>包<code>breliable</code>属性会置为&quot;1&quot;，再往下层的<code>Packet</code>则没有此概念，只管传输。从这个角度看，<code>Bunch</code>可类比于传输层，<code>Packet</code>可类比于网络层。</p>
+<p><strong>发送方缓存 <code>reliable bunch</code>：</strong> 在调用<code>UChannel::SendBunch</code>函数发送<code>reliable bunch</code>时，会给它们赋予一个递增的<code>ChSequene</code>，写入<code>bunch header</code>，作为<code>reliable bunch</code>的<code>Seq</code>。然后把<code>bunch</code>及数据复制一份，添加到<code>UChannel::OutRec</code>链表中，后面需要重传时再进行重传，收到接收方<code>ack</code>后方可删除。每个<code>bunch</code>都会记录所属的<code>PacketId</code>。</p>
+<p><strong><code>RELIABLE_BUFFER</code>：</strong> 每个<code>Channel</code>的<code>OutRec</code>缓存数量有上限，称为<code>RELIABLE_BUFFER</code>，默认256，超过此上限后会导致<code>Connection</code>关闭。即对某个<code>Actor</code>，不能在短时间内发送太多<code>reliable bunch</code>。</p>
+<h4 id="ACK-机制">ACK 机制</h4>
+<p>要实现可靠传输，发送方需要知道接收方收到了某些数据，这样才能确定是否要重新发送，就需要<code>Ack</code>机制。UE的<code>Ack</code>机制是<code>Packet</code>层面的，包括<code>Ack</code>与<code>Nak</code>。</p>
+<p><code>Ack</code>表示收到了某个<code>Packet</code>，<code>Nak</code>表示没收到某个<code>Packet</code>。每个被发送的<code>Packet</code>都会有明确的<code>Ack/Nak</code>反馈。</p>
+<ul>
+<li>
+<p><strong>接收方产生<code>Ack</code>和<code>Nak</code>：</strong> 接收方的特点为只处理新<code>Seq</code>的<code>Packet</code>，后面收到旧<code>Seq</code>的<code>Packet</code>会直接丢弃，缓存乱序<code>Packet</code>机制也是在此规则下工作的。因此接收方可以在收到<code>Packet</code>后立即产生对应的<code>Ack</code>。但中间跳过的旧<code>Packet</code>，即使接收方收到了也会丢弃，因此在接收方视角，这些<code>Packet</code>都算丢失了，会对这些<code>Packet</code>产生<code>Nak</code>，表示自己没收到。等下一次发送<code>Packet</code>时，把<code>Ack</code>与<code>Nak</code>信息都写入<code>AckSeq</code>和<code>History</code>中，实现一个<code>Packet</code>对多个<code>Seq</code>反馈<code>Ack</code>与<code>Nak</code>。</p>
+</li>
+<li>
+<p><strong>History结构</strong></p>
+<p><code>History</code>是一个<code>bit array</code>，表示以<code>AckSeq</code>基准，各偏移位置<code>Seq</code>是<code>Ack</code>或者<code>Nak</code>。举个例子：</p>
+<p><img src="https://s2.loli.net/2023/12/13/WmgTUZlsaDh2trB.png" alt="image.png"></p>
+<p>接收方上个收到的<code>Packet Seq</code>是1，这一帧收到了3和6，中间丢失2、4、5，那么最后的<code>AckSeq</code>和<code>History</code>数据如图所示。</p>
+</li>
+<li>
+<p><strong>发送方收到<code>Ack</code>：</strong> 发送方收到<code>Ack</code>后，会遍历<code>History</code>，查看哪些<code>Packet Seq</code>被<code>Ack</code>或<code>Nak</code>了。对于被<code>Ack</code>的<code>Packet Seq</code>，需要遍历<code>OutRec</code>中的<code>reliable bunch</code>，找到属于此<code>Packet</code>的<code>bunch</code>，把<code>OutBunch.ReceivedAck</code>属性设为1，表示这个<code>bunch</code>已经被<code>ack</code>了，后面可以被删除。这些操作在<code>UNetConnection::ReceivedAck</code>函数中完成。</p>
+</li>
+</ul>
+<h4 id="重传">重传</h4>
+<p>对于被<code>Nak</code>的<code>Packet</code>，则需要从<code>OutRec</code>中找到对应<code>bunch</code>，调用<code>SendRawBunch</code>函数进行重发，并产生新的<code>Packet</code>，<code>bunch</code>对应的<code>PacketId</code>也要重新设置。这属于被动重传机制，不像 TCP 有超时主动重传，但如果再实现主动重传，整个协议就更复杂了，与 TCP 也更相似。</p>
+<p>一个Ack与Nak的例子如下：</p>
+<p><img src="https://s2.loli.net/2023/12/13/9kYP4tb6rKWhECs.png" alt="image.png"></p>
+<p>前面两个bunch收到Ack后即可移除，最后一个Bunch由于收到了Nak，需要重发。</p>
+<p>可靠数据传输的一个完整例子如下，包括了乱序，重传。注意其中只有Packet5和Packet6包含<code>reliable bunch</code>数据，需要重传。</p>
+<p><img src="https://s2.loli.net/2023/12/13/IAYsmPytTO89NWX.png" alt="image.png"></p>
+<h4 id="属性同步的处理">属性同步的处理</h4>
+<p><strong>属性同步产生的<code>bunch</code>不是reliable的</strong>，因为 gameplay 上不需要知道属性的改变历史，只要知道当前最新属性值就可以了。但是按照上述网络传输方式，<code>unreliable bunch</code>丢失后，并不会重传，属性值会丢失，因为<strong>属性同步对<code>Nak</code>做了特殊处理</strong>。<code>SendingRepState</code>的<code>ChangeHistory</code>记录了属性改变对应的<code>PacketId</code>，如果这个<code>PacketId</code>被<code>Nak</code>了，这个属性数据就要被标记为需要重发，等下次触发属性同步时合并入<code>ChangeList</code>，一起发送。</p>
+<p>关于这部分的逻辑写在 <code>DataReplication.h</code> 中。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">FObjectReplicator::ReceivedNak</span><span class="params">( int32 NakPacketId )</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="type">const</span> UObject* Object = <span class="built_in">GetObject</span>();</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (Object == <span class="literal">nullptr</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">UE_LOG</span>(LogNet, Verbose, <span class="built_in">TEXT</span>(<span class="string">&quot;FObjectReplicator::ReceivedNak: Object == nullptr&quot;</span>));</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span> (ObjectClass == <span class="literal">nullptr</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="built_in">UE_LOG</span>(LogNet, Verbose, <span class="built_in">TEXT</span>(<span class="string">&quot;FObjectReplicator::ReceivedNak: ObjectClass == nullptr&quot;</span>));</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span> (!RepLayout-&gt;<span class="built_in">IsEmpty</span>())</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="keyword">if</span> (FSendingRepState* SendingRepState = RepState.<span class="built_in">IsValid</span>() ? RepState-&gt;<span class="built_in">GetSendingRepState</span>() : <span class="literal">nullptr</span>)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="comment">// Go over properties tracked with histories, and mark them as needing to be resent.</span></span><br><span class="line">			<span class="keyword">for</span> (int32 i = SendingRepState-&gt;HistoryStart; i &lt; SendingRepState-&gt;HistoryEnd; ++i)</span><br><span class="line">			&#123;</span><br><span class="line">				<span class="type">const</span> int32 HistoryIndex = i % FSendingRepState::MAX_CHANGE_HISTORY;</span><br><span class="line"></span><br><span class="line">				FRepChangedHistory&amp; HistoryItem = SendingRepState-&gt;ChangeHistory[HistoryIndex];</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 这里进行了特殊处理</span></span><br><span class="line">				<span class="keyword">if</span> (!HistoryItem.Resend &amp;&amp; HistoryItem.OutPacketIdRange.<span class="built_in">InRange</span>(NakPacketId))</span><br><span class="line">				&#123;</span><br><span class="line">					<span class="built_in">check</span>(HistoryItem.Changed.<span class="built_in">Num</span>() &gt; <span class="number">0</span>);</span><br><span class="line">					HistoryItem.Resend = <span class="literal">true</span>;</span><br><span class="line">					++SendingRepState-&gt;NumNaks;</span><br><span class="line">				&#125;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// ...</span></span><br></pre></td></tr></table></figure></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2023/12/13/2023-12-13-1/">https://qlipphoth.github.io/2023/12/13/2023-12-13-1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/UE/">UE</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2023/08/28/4K7FV6pqUwYjn2X.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/12/12/2023-12-12-2/" title="UE 入坑系列（六）：多线程"><img class="cover" src="https://s2.loli.net/2023/08/28/4K7FV6pqUwYjn2X.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">UE 入坑系列（六）：多线程</div></div></a></div><div class="next-post pull-right"><a href="/2023/12/14/2023-12-14-1/" title="图形学补完计划（五）：Forward Rendering &amp; Deferred Rendering"><img class="cover" src="https://s2.loli.net/2023/12/06/JlZLrtjTXB3WY1o.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">图形学补完计划（五）：Forward Rendering &amp; Deferred Rendering</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2024/03/22/2024-3-22-1/" title="UE 补完计划（五） UE中的STL-2"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-22</div><div class="title">UE 补完计划（五） UE中的STL-2</div></div></a></div><div><a href="/2024/03/18/2024-3-18-4/" title="UE 补完计划（五） UE中的STL-1"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（五） UE中的STL-1</div></div></a></div><div><a href="/2024/03/18/2024-3-18-3/" title="UE 补完计划（四） 导航系统-5"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（四） 导航系统-5</div></div></a></div><div><a href="/2024/03/18/2024-3-18-2/" title="UE 补完计划（四） 导航系统-4"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（四） 导航系统-4</div></div></a></div><div><a href="/2024/03/18/2024-3-18-1/" title="UE 补完计划（四） 导航系统-3"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（四） 导航系统-3</div></div></a></div><div><a href="/2024/03/15/2024-3-15-3/" title="UE 补完计划（四） 导航系统-2"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-15</div><div class="title">UE 补完计划（四） 导航系统-2</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">预备知识</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#UDP-TCP"><span class="toc-number">1.1.</span> <span class="toc-text">UDP &amp; TCP</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#UDP"><span class="toc-number">1.1.1.</span> <span class="toc-text">UDP</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#TCP"><span class="toc-number">1.1.2.</span> <span class="toc-text">TCP</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#TCP-%E7%9A%84%E7%89%B9%E7%82%B9"><span class="toc-number">1.1.2.1.</span> <span class="toc-text">TCP 的特点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#TCP-%E9%A6%96%E9%83%A8%E7%BB%93%E6%9E%84"><span class="toc-number">1.1.2.2.</span> <span class="toc-text">TCP 首部结构</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B%E8%BF%87%E7%A8%8B"><span class="toc-number">1.1.2.3.</span> <span class="toc-text">三次握手过程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#TCP-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8F%AF%E9%9D%A0"><span class="toc-number">1.1.2.4.</span> <span class="toc-text">TCP 为什么可靠</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#UDP-%E4%B8%8E-TCP-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">1.1.3.</span> <span class="toc-text">UDP 与 TCP 的区别</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">UE4 中的网络连接</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#UE4-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8-UDP-%E5%8D%8F%E8%AE%AE"><span class="toc-number">2.1.</span> <span class="toc-text">UE4 为什么要使用 UDP 协议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UE4-UDP%E6%98%AF%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E5%8F%AF%E9%9D%A0%E4%BC%A0%E8%BE%93%E7%9A%84"><span class="toc-number">2.2.</span> <span class="toc-text">UE4 UDP是如何进行可靠传输的</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#UE-%E7%9A%84%E7%BD%91%E7%BB%9C%E6%A1%86%E6%9E%B6%EF%BC%9A"><span class="toc-number">2.2.1.</span> <span class="toc-text">UE 的网络框架：</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#NetDrivers-NetConnections-Channels"><span class="toc-number">2.2.1.1.</span> <span class="toc-text">NetDrivers, NetConnections, Channels</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%BC%A0%E8%BE%93"><span class="toc-number">2.2.1.2.</span> <span class="toc-text">数据传输</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%AF%E9%9D%A0%E6%95%B0%E6%8D%AE%E4%BC%A0%E8%BE%93%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-number">2.2.2.</span> <span class="toc-text">可靠数据传输的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E2%80%9C%E5%8F%AF%E9%9D%A0%E2%80%9D%E6%98%AFBunch%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toc-number">2.2.2.1.</span> <span class="toc-text">“可靠”是Bunch的概念</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ACK-%E6%9C%BA%E5%88%B6"><span class="toc-number">2.2.2.2.</span> <span class="toc-text">ACK 机制</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%87%8D%E4%BC%A0"><span class="toc-number">2.2.2.3.</span> <span class="toc-text">重传</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B1%9E%E6%80%A7%E5%90%8C%E6%AD%A5%E7%9A%84%E5%A4%84%E7%90%86"><span class="toc-number">2.2.2.4.</span> <span class="toc-text">属性同步的处理</span></a></li></ol></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2023/08/28/4K7FV6pqUwYjn2X.png')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

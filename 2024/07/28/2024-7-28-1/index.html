@@ -1,0 +1,572 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>C# 补完计划（二）：C# 的 GC | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="Reference:  C#-垃圾回收机制(GC) 垃圾回收的基本知识 浅谈C#的GC机制   C# GC 官网中有这么一句话： The garbage collector is a common language runtime component that controls the allocation and release of managed memory。 垃圾回收机制（Garbag">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C# 补完计划（二）：C# 的 GC">
+<meta property="og:url" content="https://qlipphoth.github.io/2024/07/28/2024-7-28-1/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="Reference:  C#-垃圾回收机制(GC) 垃圾回收的基本知识 浅谈C#的GC机制   C# GC 官网中有这么一句话： The garbage collector is a common language runtime component that controls the allocation and release of managed memory。 垃圾回收机制（Garbag">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2024/07/25/OIHbUkK6TgaV2NY.jpg">
+<meta property="article:published_time" content="2024-07-28T22:53:08.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="Unity">
+<meta property="article:tag" content="CSharp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2024/07/25/OIHbUkK6TgaV2NY.jpg"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2024/07/28/2024-7-28-1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'C# 补完计划（二）：C# 的 GC',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2024/07/25/OIHbUkK6TgaV2NY.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">C# 补完计划（二）：C# 的 GC</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-07-28T22:53:08.000Z" title="Created 2024-07-28 22:53:08">2024-07-28</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/CSharp/">CSharp</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">6.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>19min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="C# 补完计划（二）：C# 的 GC"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><blockquote>
+<p>Reference:</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/2318791">C#-垃圾回收机制(GC)</a></li>
+<li><a target="_blank" rel="noopener" href="https://learn.microsoft.com/zh-cn/dotnet/standard/garbage-collection/fundamentals">垃圾回收的基本知识</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.drflower.top/posts/e782be43/">浅谈C#的GC机制</a></li>
+</ol>
+</blockquote>
+<h1>C# GC</h1>
+<p>官网中有这么一句话：</p>
+<p><em>The garbage collector is a common language runtime component that controls the allocation and release of managed memory</em>。</p>
+<p>垃圾回收机制（Garbage Collection）简称GC，是CLR的一个组件，它控制内存的分配与释放。</p>
+<p>概括：就是GC会帮你自动管理内存，分配内存，回收内存，采用的就是对应的GC的算法。</p>
+<p>由于 C# 的编译流程为先由 C# 编译器编译为中间语言代码（IL），再由公共语言运行时（CLR）执行。因此 C# 中的 GC 功能实际上由 CLR 提供。</p>
+<h1>C# GC 工作原理</h1>
+<p>垃圾收集器的本质,就是跟踪所有被引用到的对象，整理不再被引用的对象，回收相应的内存。</p>
+<p>以应用程序的root为基础，遍历应用程序在Heap上动态分配的所有对象，通过识别它们是否被引用来确定哪些对象是已经死亡的、哪些仍需要被使用。已经不再被应用程序的root或者别的对象所引用的对象就是已经死亡的对象，即所谓的垃圾，需要被回收。</p>
+<p>垃圾回收的算法有多种，在 .Net中采用了一种叫做&quot;<strong>标记与清除(Mark-Sweep)</strong>&quot;算法，该算法分两个步骤：</p>
+<ol>
+<li>标记——垃圾的识别：</li>
+</ol>
+<p>CLR开始GC时，首先暂停进程中所有的线程，这样可以防止线程在CLR检查期间访问底线并更改其状态。然后正式进入标记状态。</p>
+<p>从应用程序的root出发，利用相互引用关系，遍历其在Heap上动态分配的所有对象，没有被引用的对象不被标记，即成为垃圾；存活的对象被标记，即维护成了一张&quot;根-对象可达图&quot;。其实，CLR会把对象关系看做&quot;树图&quot;，这样会加快遍历对象的速度。<strong>.Net中利用栈来完成检测并标记对象引用，在不断的入栈与出栈中完成检测：先在树图中选择一个需要检测的对象，将该对象的所有引用压栈，如此反复直到栈变空为止。栈变空意味着已经遍历了这个局部根能够到达的所有对象</strong>。树图节点范围包括局部变量、寄存器、静态变量，这些元素都要重复这个操作。一旦完成，便逐个对象地检查内存，没有标记的对象变成了垃圾。</p>
+<blockquote>
+<p>如果过程中发现对象已标记，则不重新检查，避免了循环引用而造成的死循环。</p>
+</blockquote>
+<ol start="2">
+<li>清除——回收内存：</li>
+</ol>
+<p>标记完可回收对象后，便进入压缩阶段。首先要搞清楚的是，这里的压缩并不是指把对象的内存空间压缩变小了，而是把存活下来的对象进行移位，<strong>使他们占用连续的内存空间</strong>。但是大对象（large object heap）除外，GC不会移动一个内存中巨无霸。通常，大对象具有很长的生存期，当一个大对象在 .NET托管堆中产生时，它被分配在堆的一个特殊部分中，移动大对象所带来的开销超过了整理这部分堆所能提高的性能。</p>
+<p>实际上相比起“压缩”，用“<strong>碎片整理</strong>”这一词应该更贴近这一阶段的行为。这一行为可以使得引用恢复“局部化”，减少应用程序工作集，并提升了访问这些对象时的性能，并且对于压缩后的可使用空间，也会变成连续的，可容纳更大的对象，解决了空间碎片化问题。</p>
+<p>在内存中移动了对象位置后，引用幸存对象的根仍然引用着对象压缩前的位置，压缩阶段最后一步还会<strong>把每个根减去所引用的对象在内存中偏移的字节数，来保证每个根引用的还是和之前一样的对象</strong>。</p>
+<p>压缩好内存后，托管堆的<code>NextObjPtr</code>指针指向最后一个幸存对象之后的位置。下一个分配的对象将放到这个位置。压缩阶段完成后，CLR恢复应用程序的所有线程。这些线程继续访问对象，就好象GC没有发过一样。</p>
+<p>Compact算法除了会提高再次分配内存的速度，如果新分配的对象在堆中位置很紧凑的话，高速缓存的性能将会得到提高，因为一起分配的对象经常被一起使用(程序的局部性原理)，所以为程序提供一段连续空白的内存空间是很重要的。</p>
+<p>简单地把 .NET的GC算法看作Mark-Compact算法。阶段1: Mark-Sweep 标记清除阶段，先假设heap中所有对象都可以回收，然后找出不能回收的对象，给这些对象打上标记，最后heap中没有打标记的对象都是可以被回收的；阶段2: Compact 压缩阶段，对象回收之后heap内存空间变得不连续，在heap中移动这些对象，使他们重新从heap基地址开始连续排列，类似于磁盘空间的碎片整理。Heap内存经过回收、压缩之后，可以继续采用前面的heap内存分配方法，即仅用一个指针记录heap分配的起始地址就可以。</p>
+<p><img src="https://s2.loli.net/2024/07/28/5ugyZU6vwjMCqAz.png" alt="image.png"></p>
+<p>主要处理步骤：将线程挂起→确定roots→创建reachable objects graph→对象回收→heap压缩→指针修复。可以这样理解roots：heap中对象的引用关系错综复杂（交叉引用、循环引用），形成复杂的graph，roots是CLR在heap之外可以找到的各种入口点。</p>
+<blockquote>
+<p>GC搜索roots的地方包括<strong>全局对象</strong>、<strong>静态变量</strong>、<strong>局部对象</strong>、<strong>函数调用参数</strong>、<strong>当前CPU寄存器中的对象指针</strong>（还有finalization queue）等。主要可以归为2种类型：<strong>已经初始化了的静态变量、线程仍在使用的对象（stack+CPU register）</strong> 。</p>
+</blockquote>
+<p>Reachable objects：指根据对象引用关系，从roots出发可以到达的对象。例如当前执行函数的局部变量对象A是一个root object，他的成员变量引用了对象B，则B是一个reachable object。从roots出发可以创建reachable objects graph，剩余对象即为unreachable，可以被回收 。</p>
+<p>指针修复是因为compact过程移动了heap对象，对象地址发生变化，需要修复所有引用指针，包括stack、CPU register中的指针以及heap中其他对象的引用指针。</p>
+<h2 id="Debug和release执行模式的区别">Debug和release执行模式的区别</h2>
+<p>Debug和release执行模式之间稍有区别，release模式下后续代码没有引用的对象是unreachable的，而debug模式下需要等到当前函数执行完毕，这些对象才会成为unreachable，目的是为了调试时跟踪局部对象的内容。传给了COM+的托管对象也会成为root，并且具有一个引用计数器以兼容COM+的内存管理机制，引用计数器为0时，这些对象才可能成为被回收对象。Pinned objects指分配之后不能移动位置的对象，例如传递给非托管代码的对象（或者使用了fixed关键字），GC在指针修复时无法修改非托管代码中的引用指针，因此将这些对象移动将发生异常。pinned objects会导致heap出现碎片，但大部分情况来说传给非托管代码的对象应当在GC时能够被回收掉。</p>
+<h1>Generational 分代算法</h1>
+<p>GC 算法的设计考虑到了4个因素：</p>
+<ol>
+<li>对于较大内存的对象，频繁的进行GC将耗费大量的资源，成本很高且效果较差</li>
+<li>大量新创建的对象生命周期都较短，老对象的生命周期都较长</li>
+<li>小部分的进行 GC 比大块的进行GC效率更高，消耗更少</li>
+<li>新创建的对象在内存分配上多为连续，且关联程度较强，关联度较强有利于CPU Cache命中。</li>
+</ol>
+<p>基于此，按照寿命长短，托管堆被分为了三个年龄层，分别是Generation 0，Generation 1， Generation 2。垃圾收集器在第 0 代存储新对象。在应用程序生命周期早期创建的在收集过程中幸存下来的对象被提升并存储在第 1 代和第 2 代中。因为压缩托管堆的一部分比压缩整个堆要快，因此该方案允许垃圾收集器在特定代中释放内存，而不是在每次执行收集时释放整个托管堆的内存。</p>
+<p><img src="https://s2.loli.net/2024/07/28/NaXviEYAk8xs52y.png" alt="image.png"></p>
+<ul>
+<li>
+<p>第 0 代</p>
+<p>这是最年轻的一代，包含生命周期很短的对象。短期对象的一个例子是临时变量。垃圾收集在这一代发生得最频繁。新分配的对象形成了第0代的对象，并且是隐式的第 0 代集合。但当新分配的对象很大时，它们将进入大对象堆 (LOH)，有时也称为第 3 代（实际上是第二代）。第 3 代可以理解为物理代，作为第二代的衍生。大多数对象在第 0 代被回收用于垃圾收集，并且不会存活到下一代。</p>
+<p>如果应用程序在第 0 代已满时尝试创建新对象，垃圾收集器将执行收集以尝试释放对象的地址空间。<strong>垃圾收集器首先检查第 0 代中的对象，而不是托管堆中的所有对象</strong>。单独的第 0 代集合通常会回收足够的内存，使应用程序能够继续创建新对象。</p>
+</li>
+<li>
+<p>第 1 代</p>
+<p>这一代包含短期对象，并作为短期对象和长期对象之间的缓冲区。在垃圾收集器执行第 0 代的收集后，它会压缩可访问对象的内存并将它们提升到第 1 代。因为在收集中幸存下来的对象往往具有更长的生命周期，所以将它们提升到更高的代是有意义的。垃圾收集器不必在每次执行第 0 代收集时重新检查第 1 代和第 2 代中的对象。如果第 0 代的集合没有为应用程序回收足够的内存来创建新对象，则垃圾收集器可以执行第1 代的收集，然后是第 2 代。第 1 代中在集合中幸存下来的对象将被提升到第 2 代。</p>
+</li>
+<li>
+<p>第 2 代</p>
+<p>这一代包含长期存在的对象。长寿命对象的一个示例是服务器应用程序中的对象，其中包含<strong>在进程持续期间有效的静态数据</strong>。在集合中存活的第 2 代对象将保留在第 2 代中，直到它们被确定在未来的集合中不可访问。大对象堆（有时称为第 3 代）上的对象也在第 2 代中收集。</p>
+<p>当条件允许时，垃圾收集发生在特定的世代。收集一代意味着收集该一代及其所有年轻一代的对象。第 2 代垃圾回收也称为完整垃圾回收，因为它回收所有代中的对象（即托管堆中的所有对象）。</p>
+<p>当垃圾收集器检测到某一代存活率较高时，会增加该代的分配阈值。下一个集合获得大量回收内存。CLR 不断平衡两个优先级：不让应用程序的工作集因延迟垃圾收集而变得太大，以及不让垃圾收集运行得太频繁。</p>
+</li>
+</ul>
+<h2 id="分代回收">分代回收</h2>
+<p>程序在初始化时，托管堆不包含任何对象，这个时候新添加到堆中的对象，成为第0代对象。简单地说，第0代对象就是那些新构造的对象，垃圾回收器从来未检查过这些对象。CLR初始化时会为第0代对象选一个预算容量，当分配一个新的对象超出这个预算时，就会启动一次垃圾回收。在一次垃圾回收之后，没被回收的对象会成为第1代对象，此时第0代空间中已经不包含任何对象，原来的对象可能已被回收，可能已被放置到第1代中。</p>
+<p>新分配的对象会继续第0代空间中，直到第0代空间不足分配新对象，会再次触发垃圾回收，开始垃圾回收时，垃圾回收器必须决定需要检查哪些代，前文提到，CLR初始化时会为第0代对象选择预算，实际上，CLR还必须为第1代选择预算。这时，垃圾回收器会检查第1代的空间，若远小于预算，则这次回收只会检查第0代，基于“对象越新，生存期越短”的假设，第0代包含更多垃圾的可能性很大，能回收更多的内存。因为忽略了第1代中的对象，尽管第1代中可能存在不可达的垃圾对象，但这加快了垃圾回收的速度。对性能的有效提升，主要是在于，现在不需要遍历堆中的每一个对象，因为如果根或对象引用了老一代的某一个对象， 垃圾回收器会忽略老一代对象内部的所有引用。</p>
+<p>当然，也存在老对象会引用了新对象的可能性，<strong>为了避免老一代对象引用了新一代对象，垃圾回收时却没检查到这一引用，而把新一代对象回收了的情况发生，垃圾回收器利用了JIT编译器内部的一个机制，这个机制在对象的引用字段发生变化时，会设置一个对应的标记位，这样一来垃圾回收器就会知道自上一次垃圾回收以来，哪些老对象的引用字段发生了变化，这样就算这次回收只回收新生代，也会去检测引用字段发生了变化的老对象，是否引用了新生代对象</strong>。</p>
+<p>当下一次第0代分配空间超出预算，开始执行垃圾回收，并发现第一代空间也超出预算时，垃圾回收器就会对第0代和第1代都进行回收，垃圾回收后，第0代的存活对象会被提升到第1代，而第1代的对象会被提升到第二代，而第0代空间再次空了出来。</p>
+<h2 id="代预算的动态调节">代预算的动态调节</h2>
+<p>CLR初始化的时候会为每一代选择预算。而且，CLR的垃圾回收器是会根据实际运行情况动态调节预算的，例如在回收第0代后发现存活下来的对象很少，就可能减少第0代的预算，这意味着会更加频繁地执行垃圾回收，但每次回收需要做的事情少了（若第0代所有对象都是垃圾，垃圾回收就不需要压缩内存，直接让<code>NextObjPtr</code>指针指回第0代的起始处即可，速度上会快很多）。相反，如果回收了第0代后发现还有很多存活的对象，没有多少内存可以回收，就会增大第0代的预算，这样垃圾回收的次数就会减少，但每次进行垃圾回收时，能会收到的内存就会变多。如果没有会收到足够的内存，垃圾回收器会执行一次完整的回收，如果还是不够，就会抛出<code>OutOfMemoryException</code>异常。上述仅对第0代进行垃圾回收后动态调整预算的讨论，但垃圾回收器还会用类似的方法来调整第1代和第2代的预算，最终结果就是，垃圾回收器会根据应用程序要求的内存负载来进行自我优化。</p>
+<h2 id="GC-的触发条件">GC 的触发条件</h2>
+<p>上文说到的检测到第0代超出预算的时候会触发垃圾回收，这是最常见的一种触发条件，除此之外还有以下条件可以触发垃圾回收：</p>
+<ol>
+<li>代码显式调用<code>System.GC</code>的静态<code>Collect</code>方法</li>
+</ol>
+<p>代码可显式请求CLR进行垃圾回收，但微软强烈反对这种请求，托管语言应该信任它本身的垃圾回收机制。</p>
+<ol start="2">
+<li>Windows报告低内存情况</li>
+</ol>
+<p>如果Windows报告低内存，CLR会强制执行垃圾回收。</p>
+<ol start="3">
+<li>CLR正在卸载AppDomain</li>
+</ol>
+<p>当一个AppDomain卸载时，CLR认为其中一切都不是根，会执行涵盖所有代的垃圾回收。</p>
+<ol start="4">
+<li>CLR正在关闭</li>
+</ol>
+<p>CLR在进程正常终止时关闭，CLR认为其中一切都不是根，对象有机会进行资源清理，但CLR不会试图压缩或释放内存。进程终止时，Windows会回收进程的全部内存。</p>
+<h2 id="大对象">大对象</h2>
+<p>CLR把对象分为大对象和小对象，上文都是对小对象的讨论，目前认为85000字节以上的对象为大对象，CLR会以不同的方式对待大小对象。</p>
+<ol>
+<li>
+<p>大对象不在小对象的地址空间中分配，而是在进程地址空间的其他地方分配（大对象堆）</p>
+</li>
+<li>
+<p>目前版本GC不压缩大对象，因为在内存中移动大对象的代价太高，这可能会导致空间碎片化。（CLR有可能在未来版本压缩大对象）</p>
+</li>
+<li>
+<p>大对象总是第2代，不会在其他代，所以为了性能考虑，只能为需要长时间存活的资源创建大对象，分配短时间存活的大对象会导致第2代被更频繁地回收，损害性能。大对象一般是大字符串或用于IO操作的直接数组。</p>
+</li>
+<li>
+<p>一般情况下可以忽视大对象的存在，仅出现如空间碎片化等情况时才对大对象进行特殊处理。</p>
+</li>
+</ol>
+<h1>需要特殊清理的类型</h1>
+<h2 id="Finalize-方法">Finalize 方法</h2>
+<p><strong>有些类型除了内存外，还需要一些本机资源（也就是非托管资源）才能正常工作</strong>，例如<code>System.IO.FileStream</code>类型需要打开一个文件并保存文件的句柄。在包含非托管资源的类型被GC时，GC会回收对象在托管堆中的内存，如果直接进行回收，本机资源未释放，会导致本机资源的泄漏，为了解决这一问题CLR提供了<strong>终结机制</strong>，允许对象在被判定为垃圾后，在被回收之前执行一些代码，之后再从托管堆中回收对象。我们称这种对象为<strong>可终结</strong>的。</p>
+<p><code>System.Object</code>定义了受保护的虚方法<code>Finalize</code>，如果类型重写了这个方法，垃圾回收器会在判定对象是垃圾后调用对象的<code>Finalize</code>方法。C#要求要用特殊的语法来定义<code>Finalize</code>方法，如下所示（类似于 C++ 的析构函数定义）：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title">SomeType</span></span><br><span class="line">&#123;</span><br><span class="line">    ~SomeType()</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//....</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>虽然<code>System.Object</code>定义了<code>Finalize</code>方法，但CLR会忽略它，只有类型重写了这个方法，才会被认为是“可终结的”</p>
+<p><span style="color:red">C#的Finalize方法在语法上与C++的析构函数非常相似，但实际上工作方式完全不同，与C++中类型实例会被确定性析构不一样，面向CLR的语言，C#无法提供确定性析构这种机制</span></p>
+<h2 id="对于类型定义了Finalize方法的对象的回收机制">对于类型定义了Finalize方法的对象的回收机制</h2>
+<p>应用程序在创建新的对象时，new 操作符会在堆中分配内存，如果对象的类型定义了 <code>Finalize</code> 方法，那么这个实例在被构造之前，会将一个指向该对象的指针放到一个终结列表中（finalization list），终结列表是由垃圾回收器控制的一个内部数据结构，列表中的每一个项都指向一个类型定义了 <code>Finalize</code> 方法的对象。</p>
+<p>垃圾回收器在标记完垃圾对象后，会在终结列表中查找是否有包含垃圾对象的引用，即检查这些垃圾对象是否定义了 <code>Finalize</code> 方法，若检测到有，则会把这个引用从终结列表中移除，并加到<code>freachable</code> 队列中。<code>freachable</code> 队列也是垃圾回收器的一种内部数据结构，队列中每一个引用都代表准备要调用 <code>Finalize</code> 方法的对象。垃圾回收完毕后，没有定义 <code>Finalize</code> 方法的对象已被回收，但定义了 <code>Finalize</code> 方法的对象（即此时在 <code>freachable</code> 队列中的对象）会存活下来，因为此时他们的 <code>Finalize</code> 方法还没被调用。</p>
+<p>简单地说，当一个对象不可达时，垃圾回收器就把它视为垃圾。但是，当垃圾回收器把对象的引用从终结列表移到 <code>freachable</code> 队列时，对象不再被认为是垃圾，我们可以说对象被“复活了”，相应的，标记 <code>freachable</code> 队列中的对象时，还会递归对象中的引用字段所引用的对象，这些对象都会“复活”，最后在回收过程中存活下来。然后垃圾回收器会压缩内存，并把“复活”的对象提升到老一代，之后CLR 会用特殊的终结线程去调用 <code>freachable</code> 队列中每个对象的 <code>Finalize</code> 方法，并清空队列。</p>
+<p>也就是说，这些定义了 <code>Finalize</code> 方法的“可终结”的对象，由于在第一次回收时，会被“复活”以执行 <code>Finalize</code> 方法，并可能会被提升到老一代，所以<strong>至少需要执行两次垃圾回收才能释放掉它们占用的托管堆内存</strong>，更需要注意到的是，<strong>这些对象中的引用字段所引用的对象也会存活下来并提升到老一代</strong>，会造成更大的性能负担。所以，要尽量避免为引用类型的字段定义为“可终结”对象。</p>
+<p><span style="color:red">最后要注意，Finalize方法的执行时间和执行顺序是无法保证的，所以在Finalize方法中不要访问定义了Finalize方法的其他类型的对象，那些对象可能已经终结了，但是访问值类型实例或者没有定义Finalize方法类型的对象是安全的</span></p>
+<p>此外， .NET Framework的System.GC类提供了控制Finalize的两个方法：<code>ReRegisterForFinalize</code>和<code>SuppressFinalize</code>。前者是请求系统完成对象的Finalize方法，后者是请求系统不要完成对象的Finalize方法。<code>ReRegisterForFinalize</code>方法其实就是将指向对象的指针重新添加到Finalization Queue中。这就出现了一个很有趣的现象，因为在Finalization Queue中的对象可以复生，如果在对象的Finalize方法中调用<code>ReRegisterForFinalize</code>方法，这样就形成了一个在堆上永远不会死去的对象，像凤凰涅槃一样每次死的时候都可以复生。</p>
+<h1>C# 的 GC 机制存在的问题</h1>
+<ol>
+<li>GC并不是能释放所有的资源。它不能自动释放非托管资源。</li>
+<li>GC并不是实时性的，这将会造成系统性能上的瓶颈和不确定性。</li>
+</ol>
+<p>GC并不是实时性的，这会造成系统性能上的瓶颈和不确定性。所以有了<code>IDisposable</code>接口，<code>IDisposable</code>接口定义了<code>Dispose</code>方法，这个方法用来供程序员显式调用以释放非托管资源。使用using语句可以简化资源管理。</p>
+<blockquote>
+<p><code>using</code> 语句确保在其作用域结束时调用 <code>Dispose</code> 方法，自动释放资源。<code>using</code> 语句是 <code>try-finally</code> 语句的简化版本，不需要显式地调用 <code>Dispose</code> 方法。</p>
+</blockquote>
+<p>示例：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span>  </span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 执行SQL语句，返回影响的记录数  </span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span>  </span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;param name=&quot;SQLString&quot;&gt;</span>SQL语句<span class="doctag">&lt;/param&gt;</span>  </span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;returns&gt;</span>影响的记录数<span class="doctag">&lt;/returns&gt;</span>  </span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">int</span> <span class="title">ExecuteSql</span>(<span class="params"><span class="built_in">string</span> SQLString</span>)</span>  </span><br><span class="line">&#123;  </span><br><span class="line">    <span class="keyword">using</span> (SqlConnection connection = <span class="keyword">new</span> SqlConnection(connectionString))  </span><br><span class="line">    &#123;  </span><br><span class="line">        <span class="keyword">using</span> (SqlCommand cmd = <span class="keyword">new</span> SqlCommand(SQLString, connection))  </span><br><span class="line">        &#123;  </span><br><span class="line">            <span class="keyword">try</span>  </span><br><span class="line">            &#123;  </span><br><span class="line">                connection.Open();  </span><br><span class="line">                <span class="built_in">int</span> rows = cmd.ExecuteNonQuery();  </span><br><span class="line">                <span class="keyword">return</span> rows;  </span><br><span class="line">            &#125;  </span><br><span class="line">            <span class="keyword">catch</span> (System.Data.SqlClient.SqlException e)  </span><br><span class="line">            &#123;  </span><br><span class="line">                connection.Close();  </span><br><span class="line">                <span class="keyword">throw</span> e;  </span><br><span class="line">            &#125;  </span><br><span class="line">            <span class="keyword">finally</span>  </span><br><span class="line">            &#123;  </span><br><span class="line">                cmd.Dispose();  </span><br><span class="line">                connection.Close();  </span><br><span class="line">            &#125;  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;  </span><br></pre></td></tr></table></figure>
+<p>当你用<code>Dispose</code>方法释放未托管对象的时候，应该调用<code>GC.SuppressFinalize</code>。如果对象正在终结队列(finalization queue), <code>GC.SuppressFinalize</code>会阻止GC调用<code>Finalize</code>方法。因为<code>Finalize</code>方法的调用会牺牲部分性能。如果你的<code>Dispose</code>方法已经对委托管资源作了清理，就没必要让GC再调用对象的<code>Finalize</code>方法(MSDN)。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2024/07/28/2024-7-28-1/">https://qlipphoth.github.io/2024/07/28/2024-7-28-1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity/">Unity</a><a class="post-meta__tags" href="/tags/CSharp/">CSharp</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2024/07/25/OIHbUkK6TgaV2NY.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/07/27/2024-7-27-1/" title="C++ 补完计划（六）：C++ 编译过程"><img class="cover" src="https://s2.loli.net/2023/08/12/a6FceKmItYSsW7b.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">C++ 补完计划（六）：C++ 编译过程</div></div></a></div><div class="next-post pull-right"><a href="/2024/07/29/2024-7-29-1/" title="内存管理杂谈"><img class="cover" src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">内存管理杂谈</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2024/08/13/2024-8-13-1/" title="C# 补完计划（三）：string"><img class="cover" src="https://s2.loli.net/2024/07/25/OIHbUkK6TgaV2NY.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-08-13</div><div class="title">C# 补完计划（三）：string</div></div></a></div><div><a href="/2024/07/25/2024-7-25-1/" title="C# 补完计划（一）：值类型与引用类型"><img class="cover" src="https://s2.loli.net/2024/07/25/OIHbUkK6TgaV2NY.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-07-25</div><div class="title">C# 补完计划（一）：值类型与引用类型</div></div></a></div><div><a href="/2024/08/05/2024-8-5-1/" title="UGUI 源码解析"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-08-05</div><div class="title">UGUI 源码解析</div></div></a></div><div><a href="/2024/11/03/2024-11-3-1/" title="UGUI 番外之合批"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-11-03</div><div class="title">UGUI 番外之合批</div></div></a></div><div><a href="/2024/10/25/2024-10-25-2/" title="Unity 补完计划（四）：UGUI-16：Dropdown"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-25</div><div class="title">Unity 补完计划（四）：UGUI-16：Dropdown</div></div></a></div><div><a href="/2024/10/25/2024-10-25-1/" title="Unity 补完计划（四）：UGUI-15：ScrollBar &amp; ScrollRect"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-25</div><div class="title">Unity 补完计划（四）：UGUI-15：ScrollBar &amp; ScrollRect</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">C# GC</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">C# GC 工作原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Debug%E5%92%8Crelease%E6%89%A7%E8%A1%8C%E6%A8%A1%E5%BC%8F%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">2.1.</span> <span class="toc-text">Debug和release执行模式的区别</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">3.</span> <span class="toc-text">Generational 分代算法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E4%BB%A3%E5%9B%9E%E6%94%B6"><span class="toc-number">3.1.</span> <span class="toc-text">分代回收</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%A3%E9%A2%84%E7%AE%97%E7%9A%84%E5%8A%A8%E6%80%81%E8%B0%83%E8%8A%82"><span class="toc-number">3.2.</span> <span class="toc-text">代预算的动态调节</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GC-%E7%9A%84%E8%A7%A6%E5%8F%91%E6%9D%A1%E4%BB%B6"><span class="toc-number">3.3.</span> <span class="toc-text">GC 的触发条件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%A7%E5%AF%B9%E8%B1%A1"><span class="toc-number">3.4.</span> <span class="toc-text">大对象</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">4.</span> <span class="toc-text">需要特殊清理的类型</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Finalize-%E6%96%B9%E6%B3%95"><span class="toc-number">4.1.</span> <span class="toc-text">Finalize 方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E4%BA%8E%E7%B1%BB%E5%9E%8B%E5%AE%9A%E4%B9%89%E4%BA%86Finalize%E6%96%B9%E6%B3%95%E7%9A%84%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6"><span class="toc-number">4.2.</span> <span class="toc-text">对于类型定义了Finalize方法的对象的回收机制</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">5.</span> <span class="toc-text">C# 的 GC 机制存在的问题</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2024/07/25/OIHbUkK6TgaV2NY.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

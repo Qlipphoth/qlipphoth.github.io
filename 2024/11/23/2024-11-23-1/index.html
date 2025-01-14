@@ -1,0 +1,595 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Lua 源码解析（二）：基本数据类型 —— 表（下） | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="前言 在 上一篇文章 中我们探讨了 Lua 中表的基本结构，以及表的创建、访问及插入元素等操作。但 Lua 中的表还有一个非常重要的特性：元表（metatable）。元表是 Lua 中表的一个重要特性，它可以让我们对表进行一些特殊的操作，比如重载表的操作符、修改表的行为等。我们甚至可以利用元表来实现面向对象编程。本文将继续探讨 Lua 中表的元表。 元表与元方法 每个值都可以有 元表（metata">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lua 源码解析（二）：基本数据类型 —— 表（下）">
+<meta property="og:url" content="https://qlipphoth.github.io/2024/11/23/2024-11-23-1/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="前言 在 上一篇文章 中我们探讨了 Lua 中表的基本结构，以及表的创建、访问及插入元素等操作。但 Lua 中的表还有一个非常重要的特性：元表（metatable）。元表是 Lua 中表的一个重要特性，它可以让我们对表进行一些特殊的操作，比如重载表的操作符、修改表的行为等。我们甚至可以利用元表来实现面向对象编程。本文将继续探讨 Lua 中表的元表。 元表与元方法 每个值都可以有 元表（metata">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg">
+<meta property="article:published_time" content="2024-11-23T16:58:19.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="Lua">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2024/11/23/2024-11-23-1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Lua 源码解析（二）：基本数据类型 —— 表（下）',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Lua 源码解析（二）：基本数据类型 —— 表（下）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Lua/">Lua</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">6.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>25min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1>前言</h1>
+<p>在 <a href="https://qlipphoth.github.io/2024/11/17/2024-11-17-1/">上一篇文章</a> 中我们探讨了 Lua 中表的基本结构，以及表的创建、访问及插入元素等操作。但 Lua 中的表还有一个非常重要的特性：元表（<code>metatable</code>）。元表是 Lua 中表的一个重要特性，它可以让我们对表进行一些特殊的操作，比如重载表的操作符、修改表的行为等。我们甚至可以利用元表来实现面向对象编程。本文将继续探讨 Lua 中表的元表。</p>
+<h1>元表与元方法</h1>
+<p><strong>每个值都可以有 元表（metatable）</strong>（注意，是所有）。元表 是定义了原始数据在某些事件下行为的一个普通Lua表。你可以通过设置其元表的某些特定属性来改变某个值的某些行为。举个例子，一个非数字值进行加法操作时，Lua会在这个值的元表中查找<code>__add</code>属性函数，找到了的情况下，Lua就会调用这个函数来执行加法操作：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">mt = &#123;&#125;</span><br><span class="line">mt.<span class="built_in">__add</span> = <span class="function"><span class="keyword">function</span> <span class="params">(a, b)</span></span></span><br><span class="line">    <span class="keyword">return</span> a.a + b.a</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line">a = &#123;a = <span class="number">1</span>&#125;</span><br><span class="line">b = &#123;a = <span class="number">2</span>&#125;</span><br><span class="line"><span class="built_in">setmetatable</span>(a, mt)</span><br><span class="line"><span class="built_in">setmetatable</span>(b, mt)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(a+b)  <span class="comment">-- 3</span></span><br></pre></td></tr></table></figure>
+<p>元表中的每个事件对应的键都是一个字符串，内容是以两个下划线做前缀的事件名，其相应的值被称为 元值（<code>metavalue</code>）。对于大部分事件，其元值必须是一个称为 元方法（<code>metamethod</code>） 的方法。在上边说的例子里，键值是 <code>_add</code> 字符串且元函数是一个用来做加法操作的方法。若非另有说明，元函数实际上可以是任意可调用的值，它要么是个函数，要么是个带有元方法 <code>__call</code> 的值。</p>
+<p>表和<code>full userdata</code>有单独的元表，尽管多个表和<code>userdata</code>之间可以共享它们的元表。其他类型的值共享每个类型的单独元表；即，<strong>存在一个单独的元表给所有数字使用，一个单独的元表给所有的字符串使用</strong>，等等。<strong>默认情况下，值没有元表，但是字符串库给字符串类型设置了一个元表</strong>。</p>
+<p>字符串库所提供的函数都放在名为 string 的表中。其同时会设置字符串值的元表，其中 <code>__index</code> 字段指向了 string 表。因此我们可以使用面向对象的风格来调用字符串函数。例如 <code>string.byte(s,i)</code> 可以写成 s:byte(i) 的形式。例如：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">a = <span class="string">&quot;123&quot;</span></span><br><span class="line">b = a:<span class="built_in">sub</span>(<span class="number">1</span>,<span class="number">2</span>)  <span class="comment">-- 12</span></span><br><span class="line">c = <span class="built_in">string</span>.<span class="built_in">sub</span>(a, <span class="number">1</span>, <span class="number">2</span>)  <span class="comment">-- 12</span></span><br></pre></td></tr></table></figure>
+<p><code>ltm.h</code> 中定义了所有的元方法，这些元方法的标识被放在名为 <code>TMS</code> 的枚举类型中：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">enum</span> &#123;</span><br><span class="line">  TM_INDEX,</span><br><span class="line">  TM_NEWINDEX,</span><br><span class="line">  TM_GC,</span><br><span class="line">  TM_MODE,</span><br><span class="line">  TM_LEN,</span><br><span class="line">  TM_EQ,  <span class="comment">/* last tag method with fast access */</span></span><br><span class="line">  TM_ADD,</span><br><span class="line">  TM_SUB,</span><br><span class="line">  TM_MUL,</span><br><span class="line">  TM_MOD,</span><br><span class="line">  TM_POW,</span><br><span class="line">  TM_DIV,</span><br><span class="line">  TM_IDIV,</span><br><span class="line">  TM_BAND,</span><br><span class="line">  TM_BOR,</span><br><span class="line">  TM_BXOR,</span><br><span class="line">  TM_SHL,</span><br><span class="line">  TM_SHR,</span><br><span class="line">  TM_UNM,</span><br><span class="line">  TM_BNOT,</span><br><span class="line">  TM_LT,</span><br><span class="line">  TM_LE,</span><br><span class="line">  TM_CONCAT,</span><br><span class="line">  TM_CALL,</span><br><span class="line">  TM_CLOSE,</span><br><span class="line">  TM_N		<span class="comment">/* number of elements in the enum */</span></span><br><span class="line">&#125; TMS;</span><br></pre></td></tr></table></figure>
+<p><code>tm</code> 即为 <code>tag method</code> 的缩写，这些方法对应的会在 <code>luaT_init</code> 函数中被初始化：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">luaT_init</span> <span class="params">(lua_State *L)</span> </span>&#123;</span><br><span class="line">  <span class="type">static</span> <span class="type">const</span> <span class="type">char</span> *<span class="type">const</span> luaT_eventname[] = &#123;  <span class="comment">/* ORDER TM */</span></span><br><span class="line">    <span class="string">&quot;__index&quot;</span>, <span class="string">&quot;__newindex&quot;</span>,</span><br><span class="line">    <span class="string">&quot;__gc&quot;</span>, <span class="string">&quot;__mode&quot;</span>, <span class="string">&quot;__len&quot;</span>, <span class="string">&quot;__eq&quot;</span>,</span><br><span class="line">    <span class="string">&quot;__add&quot;</span>, <span class="string">&quot;__sub&quot;</span>, <span class="string">&quot;__mul&quot;</span>, <span class="string">&quot;__mod&quot;</span>, <span class="string">&quot;__pow&quot;</span>,</span><br><span class="line">    <span class="string">&quot;__div&quot;</span>, <span class="string">&quot;__idiv&quot;</span>,</span><br><span class="line">    <span class="string">&quot;__band&quot;</span>, <span class="string">&quot;__bor&quot;</span>, <span class="string">&quot;__bxor&quot;</span>, <span class="string">&quot;__shl&quot;</span>, <span class="string">&quot;__shr&quot;</span>,</span><br><span class="line">    <span class="string">&quot;__unm&quot;</span>, <span class="string">&quot;__bnot&quot;</span>, <span class="string">&quot;__lt&quot;</span>, <span class="string">&quot;__le&quot;</span>,</span><br><span class="line">    <span class="string">&quot;__concat&quot;</span>, <span class="string">&quot;__call&quot;</span>, <span class="string">&quot;__close&quot;</span></span><br><span class="line">  &#125;;</span><br><span class="line">  <span class="type">int</span> i;</span><br><span class="line">  <span class="keyword">for</span> (i=<span class="number">0</span>; i&lt;TM_N; i++) &#123;</span><br><span class="line">    <span class="built_in">G</span>(L)-&gt;tmname[i] = <span class="built_in">luaS_new</span>(L, luaT_eventname[i]);</span><br><span class="line">    <span class="built_in">luaC_fix</span>(L, <span class="built_in">obj2gco</span>(<span class="built_in">G</span>(L)-&gt;tmname[i]));  <span class="comment">/* never collect these names */</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上述这些以 <code>__</code> 开头的字符串就是元方法的名字，它们就是元表中对应元方法的键了。</p>
+<h2 id="index"><code>__index</code></h2>
+<p><code>__index</code> 想必是最常用的元方法了。这个操作发生在 <code>table</code> 不是一个表或者 <code>key</code> 不存在于 <code>table</code> 中的情况下。此时将会在 <code>table</code> 的元表中查找其元值。</p>
+<p>此事件的元值可以是一个方法、一个表、或者任何带有 <code>__index</code> 元值的值。如果是方法，它会将 <code>table</code> 和 <code>key</code> 作为参数来调用，调用结果（调整为单值）作为操作结果。否则，最终的结果是其元值索引 <code>key</code> 的结果。此索引是常规索引，而非直接索引，所以可以触发其他的 <code>__index</code> 元值（也即触发递归查找）。</p>
+<p>利用 <code>__index</code> 元方法，我们可以在 Lua 中模拟面向对象编程的一些行为，如类与继承等，详见 <a href="https://qlipphoth.github.io/2024/07/16/2024-7-16-1/">Lua 入门</a></p>
+<p>这里举一个简单的例子：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">t = &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getKey</span><span class="params">(table, key)</span></span></span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;function value&quot;</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">setmetatable</span>(t, &#123;<span class="built_in">__index</span> = getKey&#125;)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;t.key = &quot;</span> .. t.key)  <span class="comment">-- t.key = function value</span></span><br><span class="line"></span><br><span class="line">mt = &#123;key = <span class="string">&quot;table value&quot;</span>&#125;</span><br><span class="line"><span class="built_in">setmetatable</span>(t, &#123;<span class="built_in">__index</span> = mt&#125;)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;t.key = &quot;</span> .. t.key)  <span class="comment">-- t.key = table value</span></span><br><span class="line"></span><br><span class="line">tt = &#123;&#125;</span><br><span class="line"><span class="built_in">setmetatable</span>(tt, &#123;<span class="built_in">__index</span> = t&#125;)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;tt.key = &quot;</span> .. tt.key)  <span class="comment">-- tt.key = table value</span></span><br></pre></td></tr></table></figure>
+<p>注意如果一个函数被设为 <code>__index</code> 元方法，那么这个函数一定要有两个参数，第一个参数是表本身，第二个参数要查询的键。</p>
+<h3 id="index-的实现"><code>__index</code> 的实现</h3>
+<p><code>__index</code> 这种逐级查找的行为主要通过 <code>luaV_finishget</code> 函数实现。该函数用于访问<strong>一个值的元表</strong>，并返回对应元方法的访问结果。注意，这里需要再次强调，任何类型的值都可以有元表，该函数中也会对不同类型的值进行不同的处理。</p>
+<p><code>luaV_finishget</code> 函数的实现如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** Finish the table access &#x27;val = t[key]&#x27;.</span></span><br><span class="line"><span class="comment">** if &#x27;slot&#x27; is NULL, &#x27;t&#x27; is not a table; otherwise, &#x27;slot&#x27; points to</span></span><br><span class="line"><span class="comment">** t[k] entry (which must be empty).</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">luaV_finishget</span> <span class="params">(lua_State *L, <span class="type">const</span> TValue *t, TValue *key, StkId val,</span></span></span><br><span class="line"><span class="params"><span class="function">                      <span class="type">const</span> TValue *slot)</span> </span>&#123;</span><br><span class="line">  <span class="type">int</span> loop;  <span class="comment">/* counter to avoid infinite loops */</span></span><br><span class="line">  <span class="type">const</span> TValue *tm;  <span class="comment">/* metamethod */</span></span><br><span class="line">  <span class="keyword">for</span> (loop = <span class="number">0</span>; loop &lt; MAXTAGLOOP; loop++) &#123;</span><br><span class="line">    <span class="keyword">if</span> (slot == <span class="literal">NULL</span>) &#123;  <span class="comment">/* &#x27;t&#x27; is not a table? */</span></span><br><span class="line">      <span class="built_in">lua_assert</span>(!<span class="built_in">ttistable</span>(t));</span><br><span class="line">      tm = <span class="built_in">luaT_gettmbyobj</span>(L, t, TM_INDEX);</span><br><span class="line">      <span class="keyword">if</span> (<span class="built_in">unlikely</span>(<span class="built_in">notm</span>(tm)))</span><br><span class="line">        <span class="built_in">luaG_typeerror</span>(L, t, <span class="string">&quot;index&quot;</span>);  <span class="comment">/* no metamethod */</span></span><br><span class="line">      <span class="comment">/* else will try the metamethod */</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;  <span class="comment">/* &#x27;t&#x27; is a table */</span></span><br><span class="line">      <span class="built_in">lua_assert</span>(<span class="built_in">isempty</span>(slot));</span><br><span class="line">      tm = <span class="built_in">fasttm</span>(L, <span class="built_in">hvalue</span>(t)-&gt;metatable, TM_INDEX);  <span class="comment">/* table&#x27;s metamethod */</span></span><br><span class="line">      <span class="keyword">if</span> (tm == <span class="literal">NULL</span>) &#123;  <span class="comment">/* no metamethod? */</span></span><br><span class="line">        <span class="built_in">setnilvalue</span>(<span class="built_in">s2v</span>(val));  <span class="comment">/* result is nil */</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">/* else will try the metamethod */</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">ttisfunction</span>(tm)) &#123;  <span class="comment">/* is metamethod a function? */</span></span><br><span class="line">      <span class="built_in">luaT_callTMres</span>(L, tm, t, key, val);  <span class="comment">/* call it */</span></span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    t = tm;  <span class="comment">/* else try to access &#x27;tm[key]&#x27; */</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">luaV_fastget</span>(L, t, key, slot, luaH_get)) &#123;  <span class="comment">/* fast track? */</span></span><br><span class="line">      <span class="built_in">setobj2s</span>(L, val, slot);  <span class="comment">/* done */</span></span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/* else repeat (tail call &#x27;luaV_finishget&#x27;) */</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">luaG_runerror</span>(L, <span class="string">&quot;&#x27;__index&#x27; chain too long; possible loop&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先我们可以看到，函数整体是一个循环，这就是逐级查找的过程了，循环的最大次数由 <code>MAXTAGLOOP</code> 定义，Lua 5.4 版本中默认是 20000 次。如果超过了这个值还是没有查询到结果，就会抛出一个错误。</p>
+<p>这里以一个递归的例子来说明，最终就会抛出上述的错误：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">t1 = &#123;&#125;</span><br><span class="line">t2 = &#123;&#125;</span><br><span class="line"></span><br><span class="line">t1.<span class="built_in">__index</span> = t2</span><br><span class="line">t2.<span class="built_in">__index</span> = t1</span><br><span class="line"></span><br><span class="line"><span class="built_in">setmetatable</span>(t1, t2)</span><br><span class="line"><span class="built_in">setmetatable</span>(t2, t1)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(t1.a)  <span class="comment">-- &#x27;__index&#x27; chain too long; possible loop</span></span><br></pre></td></tr></table></figure>
+<p>从函数的注释中可以看出，如果 <code>t</code> 是一个表的话，则 <code>slot</code> 会是一个非 <code>NULL</code> 的指针（但肯定是一个空的表项，不然也不会查元表），否则 <code>slot</code> 会是 <code>NULL</code>。</p>
+<p>当 <code>slot</code> 为 <code>NULL</code> 时，会调用 <code>luaT_gettmbyobj</code> 函数来获取该值的 <code>__index</code> 元方法：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">const</span> TValue *<span class="title">luaT_gettmbyobj</span> <span class="params">(lua_State *L, <span class="type">const</span> TValue *o, TMS event)</span> </span>&#123;</span><br><span class="line">  Table *mt;</span><br><span class="line">  <span class="keyword">switch</span> (<span class="built_in">ttype</span>(o)) &#123;</span><br><span class="line">    <span class="keyword">case</span> LUA_TTABLE:</span><br><span class="line">      mt = <span class="built_in">hvalue</span>(o)-&gt;metatable;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> LUA_TUSERDATA:</span><br><span class="line">      mt = <span class="built_in">uvalue</span>(o)-&gt;metatable;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">      mt = <span class="built_in">G</span>(L)-&gt;mt[<span class="built_in">ttype</span>(o)];</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> (mt ? <span class="built_in">luaH_getshortstr</span>(mt, <span class="built_in">G</span>(L)-&gt;tmname[event]) : &amp;<span class="built_in">G</span>(L)-&gt;nilvalue);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，对于基本类型，会直接从一个全局的数组中取得对应类型的元表，并通过 <code>luaH_getshortstr</code> 的方式访问元表中的元方法。如上述 <code>string</code> 类型的种种库函数，就是通过这种方式实现的。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span> &#123;  <span class="comment">/* &#x27;t&#x27; is a table */</span></span><br><span class="line">  <span class="built_in">lua_assert</span>(<span class="built_in">isempty</span>(slot));</span><br><span class="line">  tm = <span class="built_in">fasttm</span>(L, <span class="built_in">hvalue</span>(t)-&gt;metatable, TM_INDEX);  <span class="comment">/* table&#x27;s metamethod */</span></span><br><span class="line">  <span class="keyword">if</span> (tm == <span class="literal">NULL</span>) &#123;  <span class="comment">/* no metamethod? */</span></span><br><span class="line">    <span class="built_in">setnilvalue</span>(<span class="built_in">s2v</span>(val));  <span class="comment">/* result is nil */</span></span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">/* else will try the metamethod */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果查询的对象是一张表的话则会通过 <code>fasttm</code> 宏来获取该表的元表中的 <code>__index</code> 元方法。</p>
+<p><code>fasttm</code> 等相关元方法快速查询的实现也十分巧妙，</p>
+<p>首先，<code>Table</code> 结构体中有一个大小为 <code>1 byte</code> 的 <code>flags</code> 字段，用于标记该表是否有某个元方法，这样可以避免重复查询：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">Table</span> &#123;</span><br><span class="line">  CommonHeader;</span><br><span class="line">  lu_byte flags;  <span class="comment">/* 1&lt;&lt;p means tagmethod(p) is not present */</span></span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125; Table;</span><br></pre></td></tr></table></figure>
+<p>如果某一位被置为 <code>1</code>，则表示该表中没有对应的元方法。再回到 <code>TMS</code> 的定义中：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">enum</span> &#123;</span><br><span class="line">  TM_INDEX,</span><br><span class="line">  TM_NEWINDEX,</span><br><span class="line">  TM_GC,</span><br><span class="line">  TM_MODE,</span><br><span class="line">  TM_LEN,</span><br><span class="line">  TM_EQ,  <span class="comment">/* last tag method with fast access */</span></span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125; TMS;</span><br></pre></td></tr></table></figure>
+<p>可以看到，Lua 将最常用的几种元方法放在了前面，<code>TM_EQ</code> 之前的元方法都可以通过 <code>fasttm</code> 宏来快速查询，这也是因为 <code>flags</code> 只有 8 位。</p>
+<blockquote>
+<p>这里不由得感慨 Lua 的设计之精妙，无论是对于空间还是时间的优化都做得非常好。</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> gfasttm(g,et,e) ((et) == NULL ? NULL : \</span></span><br><span class="line"><span class="meta">  ((et)-&gt;flags &amp; (1u<span class="string">&lt;&lt;(e))) ? NULL : luaT_gettm(et, e, (g)-&gt;</span>tmname[e]))</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> fasttm(l,et,e)	gfasttm(G(l), et, e)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">const</span> TValue *<span class="title">luaT_gettm</span> <span class="params">(Table *events, TMS event, TString *ename)</span> </span>&#123;</span><br><span class="line">  <span class="type">const</span> TValue *tm = <span class="built_in">luaH_getshortstr</span>(events, ename);</span><br><span class="line">  <span class="built_in">lua_assert</span>(event &lt;= TM_EQ);</span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">notm</span>(tm)) &#123;  <span class="comment">/* no tag method? */</span></span><br><span class="line">    events-&gt;flags |= <span class="built_in">cast_byte</span>(<span class="number">1u</span>&lt;&lt;event);  <span class="comment">/* cache this fact */</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">return</span> tm;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>fasttm</code> 宏也正是利用了 <code>flags</code> 字段，如果该表中没有对应的元方法，则会将对应的位设置为 <code>1</code>，并返回 <code>NULL</code>; 否则依然使用 <code>luaH_getshortstr</code> 函数来获取元方法。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">ttisfunction</span>(tm)) &#123;  <span class="comment">/* is metamethod a function? */</span></span><br><span class="line">  <span class="built_in">luaT_callTMres</span>(L, tm, t, key, val);  <span class="comment">/* call it */</span></span><br><span class="line">  <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line">t = tm;  <span class="comment">/* else try to access &#x27;tm[key]&#x27; */</span></span><br><span class="line"><span class="keyword">if</span> (<span class="built_in">luaV_fastget</span>(L, t, key, slot, luaH_get)) &#123;  <span class="comment">/* fast track? */</span></span><br><span class="line">  <span class="built_in">setobj2s</span>(L, val, slot);  <span class="comment">/* done */</span></span><br><span class="line">  <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* else repeat (tail call &#x27;luaV_finishget&#x27;) */</span></span><br></pre></td></tr></table></figure>
+<p>获取到了元方法后，如果是函数则会调用并将结果存放在 <code>val</code> 中并返回，否则会尝试访问 <code>tm[key]</code>；如果上述尝试都没有结果则需要递归查找。</p>
+<p>至此，就完成了 <code>__index</code> 元方法的查找过程。</p>
+<h2 id="newindex"><code>__newindex</code></h2>
+<p><code>__newindex</code> 事件发生在<strong>对表中不存在的键赋值时</strong>，此时会在表的元表中查找其元值。与 <code>__index</code> 类似，此元值可以是方法、表、或者任何带有 <code>__newindex</code> 元值的值。如果是方法，它会将 <code>table</code>、<code>key</code> 和 <code>value</code> 作为参数来调用。否则，Lua 将再次对这个元值做索引赋值。这里的赋值流程是常规赋值，而不是直接的赋值，所以它可能会递归触发其他的 <code>__newindex</code> 元值。</p>
+<p>无论何时，当 <code>__newindex</code> 元值被调用，Lua不会执行任何更多的赋值操作。如果需要，元函数自身可以调用 <code>rawset</code> 来做赋值。举例来说，如果我们这样写：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> t = &#123;&#125;</span><br><span class="line"><span class="keyword">local</span> metatable_t = &#123;</span><br><span class="line">  <span class="built_in">__newindex</span> = <span class="function"><span class="keyword">function</span><span class="params">(tt, key, value)</span></span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;call __newindex&quot;</span>)</span><br><span class="line">    tt[key] = value</span><br><span class="line">  <span class="keyword">end</span>,</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">setmetatable</span>(t, metatable_t)</span><br><span class="line"></span><br><span class="line">t[<span class="number">1</span>] = <span class="number">2</span></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;t[1]: &quot;</span> .. <span class="built_in">tostring</span>(t[<span class="number">1</span>]))</span><br></pre></td></tr></table></figure>
+<p>看似在 <code>__newindex</code> 中对 <code>tt[key]</code> 进行赋值，十分合理，但实际上这样会导致递归调用，最终会抛出错误，正确的方法是使用 <code>rawset</code>：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> t = &#123;&#125;</span><br><span class="line"><span class="keyword">local</span> metatable_t = &#123;</span><br><span class="line">  <span class="built_in">__newindex</span> = <span class="function"><span class="keyword">function</span><span class="params">(tt, key, value)</span></span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;call __newindex&quot;</span>)</span><br><span class="line">    <span class="built_in">rawset</span>(tt, key, value)</span><br><span class="line">    <span class="comment">-- tt[key] = value</span></span><br><span class="line">  <span class="keyword">end</span>,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">setmetatable</span>(t, metatable_t)</span><br><span class="line"></span><br><span class="line">t[<span class="number">1</span>] = <span class="number">2</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;t[1]: &quot;</span> .. <span class="built_in">tostring</span>(t[<span class="number">1</span>]))</span><br><span class="line"></span><br><span class="line"><span class="comment">-- output:</span></span><br><span class="line"><span class="comment">-- call __newindex</span></span><br><span class="line"><span class="comment">-- t[1]: 2</span></span><br></pre></td></tr></table></figure>
+<p><code>rawset</code> 函数用于直接将 <code>table[index]</code> 设为 <code>value</code> ，不会使用元值 <code>__newindex</code>。参数 <code>table</code> 必须是一个表，参数 <code>index</code> 可以是除 <code>nil</code> 和 <code>NaN</code> 的任何值，参数 <code>value</code> 可以是任意 <code>Lua</code> 值，此函数会将 table 返回。</p>
+<p>可以看到，当 <code>__newindex</code> 元值是一个函数时，传入的第一个参数是表本身，即修改会发生在原表上。</p>
+<p><code>__newindex</code> 的元值也可以是一张表：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> t = &#123;&#125;</span><br><span class="line"><span class="keyword">local</span> mt = &#123;<span class="string">&quot;value&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">setmetatable</span>(t, &#123;<span class="built_in">__newindex</span> = mt&#125;)</span><br><span class="line"></span><br><span class="line">t[<span class="number">1</span>] = <span class="string">&quot;new value&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(t[<span class="number">1</span>])  <span class="comment">-- nil</span></span><br><span class="line"><span class="built_in">print</span>(mt[<span class="number">1</span>])  <span class="comment">-- new value</span></span><br></pre></td></tr></table></figure>
+<p>相反地，当 <code>__newindex</code> 的元值是一张表时，赋值操作并不会影响到原表，而是会将值设置在元表中，当元表也有元表且实现了 <code>__newindex</code> 时，会递归调用。</p>
+<h3 id="newindex-的实现"><code>__newindex</code> 的实现</h3>
+<p><code>__newindex</code> 的实现与 <code>__index</code> 类似，主要位于 <code>luaV_finishset</code> 函数中：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** Finish a table assignment &#x27;t[key] = val&#x27;.</span></span><br><span class="line"><span class="comment">** If &#x27;slot&#x27; is NULL, &#x27;t&#x27; is not a table.  Otherwise, &#x27;slot&#x27; points</span></span><br><span class="line"><span class="comment">** to the entry &#x27;t[key]&#x27;, or to a value with an absent key if there</span></span><br><span class="line"><span class="comment">** is no such entry.  (The value at &#x27;slot&#x27; must be empty, otherwise</span></span><br><span class="line"><span class="comment">** &#x27;luaV_fastget&#x27; would have done the job.)</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">luaV_finishset</span> <span class="params">(lua_State *L, <span class="type">const</span> TValue *t, TValue *key,</span></span></span><br><span class="line"><span class="params"><span class="function">                     TValue *val, <span class="type">const</span> TValue *slot)</span> </span>&#123;</span><br><span class="line">  <span class="type">int</span> loop;  <span class="comment">/* counter to avoid infinite loops */</span></span><br><span class="line">  <span class="keyword">for</span> (loop = <span class="number">0</span>; loop &lt; MAXTAGLOOP; loop++) &#123;</span><br><span class="line">    <span class="type">const</span> TValue *tm;  <span class="comment">/* &#x27;__newindex&#x27; metamethod */</span></span><br><span class="line">    <span class="keyword">if</span> (slot != <span class="literal">NULL</span>) &#123;  <span class="comment">/* is &#x27;t&#x27; a table? */</span></span><br><span class="line">      Table *h = <span class="built_in">hvalue</span>(t);  <span class="comment">/* save &#x27;t&#x27; table */</span></span><br><span class="line">      <span class="built_in">lua_assert</span>(<span class="built_in">isempty</span>(slot));  <span class="comment">/* slot must be empty */</span></span><br><span class="line">      tm = <span class="built_in">fasttm</span>(L, h-&gt;metatable, TM_NEWINDEX);  <span class="comment">/* get metamethod */</span></span><br><span class="line">      <span class="keyword">if</span> (tm == <span class="literal">NULL</span>) &#123;  <span class="comment">/* no metamethod? */</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">isabstkey</span>(slot))  <span class="comment">/* no previous entry? */</span></span><br><span class="line">          slot = <span class="built_in">luaH_newkey</span>(L, h, key);  <span class="comment">/* create one */</span></span><br><span class="line">        <span class="comment">/* no metamethod and (now) there is an entry with given key */</span></span><br><span class="line">        <span class="built_in">setobj2t</span>(L, <span class="built_in">cast</span>(TValue *, slot), val);  <span class="comment">/* set its new value */</span></span><br><span class="line">        <span class="built_in">invalidateTMcache</span>(h);</span><br><span class="line">        <span class="built_in">luaC_barrierback</span>(L, <span class="built_in">obj2gco</span>(h), val);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">/* else will try the metamethod */</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;  <span class="comment">/* not a table; check metamethod */</span></span><br><span class="line">      tm = <span class="built_in">luaT_gettmbyobj</span>(L, t, TM_NEWINDEX);</span><br><span class="line">      <span class="keyword">if</span> (<span class="built_in">unlikely</span>(<span class="built_in">notm</span>(tm)))</span><br><span class="line">        <span class="built_in">luaG_typeerror</span>(L, t, <span class="string">&quot;index&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/* try the metamethod */</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">ttisfunction</span>(tm)) &#123;</span><br><span class="line">      <span class="built_in">luaT_callTM</span>(L, tm, t, key, val);</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    t = tm;  <span class="comment">/* else repeat assignment over &#x27;tm&#x27; */</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">luaV_fastget</span>(L, t, key, slot, luaH_get)) &#123;</span><br><span class="line">      <span class="built_in">luaV_finishfastset</span>(L, t, slot, val);</span><br><span class="line">      <span class="keyword">return</span>;  <span class="comment">/* done */</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/* else &#x27;return luaV_finishset(L, t, key, val, slot)&#x27; (loop) */</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">luaG_runerror</span>(L, <span class="string">&quot;&#x27;__newindex&#x27; chain too long; possible loop&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>函数的主体部分也是一个循环，用于逐级查找；如果 <code>t</code> 是一张表且元表中没有 <code>__newindex</code> 元方法，则会直接将值赋给 <code>t[key]</code>，如果没有这个键则会调用 <code>luaH_newkey</code> 创建一个键。否则会分类别调用元方法。</p>
+<p>如果元方法是一个函数，则会调用并返回，否则会尝试访问 <code>tm[key]</code>，如果有结果则会调用 <code>luaV_finishfastset</code> 函数完成赋值操作（也即不会触发进一步的递归查找），否则会递归查找。</p>
+<h2 id="gc"><code>__gc</code></h2>
+<p><code>__gc</code> 元函数被称为终结器（<code>finalizers</code>），于垃圾收集器发现相应的表或 userdata 将要被销毁时被调用。<strong>finalizers 允许你将垃圾收集器与外部资源管理协调起来，例如关闭文件、网络或数据库连接，或者释放你自己的内存</strong>。</p>
+<blockquote>
+<p><code>__gc</code> 的作用与 C# 中的 <code>Finalize</code> 方法有异曲同工之妙，都是用于非托管资源的释放。下面可以看到，它们也有着相同的缺点。</p>
+</blockquote>
+<p>对于收集时要终结的对象（表或者 <code>userdata</code> ），需要把它标记为可触发终结（<code>finalization</code>）。如果想将标记一个对象，我们需要设置一个对象的元表并且此元表要有元函数<code>__gc</code>。<strong>注意，当你设置元表时没有 <code>__gc</code> 属性，而是之后再于元表上创建这个属性的话，这个对象将不会被标记</strong>。</p>
+<p>当一个被标记的对象死亡时，其并不会立刻被垃圾收集器收集起来。相反，Lua会将其放到一个列表中。Lua 在收集完成后遍历这个列表。对于列表中的每个对象都会查找其是否有元函数<code>__gc</code>，如果有，Lua <strong>将这个对象作为单一参数</strong>来调用此函数。</p>
+<p>在垃圾收集周期的最后，终结器会以和标记顺序相反的顺序来调用该周期内收集的对象的终结器。<strong>终结器的调用可能发生在常规代码执行时的任意时刻</strong>。</p>
+<p>因为被回收的对象仍然会被终结器使用，所以其一定会被Lua复原（包括被其唯一关联的其他对象）。通常，这个复原是暂时的，而且其内存会在下一次GC周期内被释放。然而，如果终结器将对象保存到了某些全局位置（例如全局变量），那么这个复原就是持续的。此外，如果终结器将一个正在被终结的对象再次标记为可触发终结，那么终结器会在下个GC周期时的对象死亡的地方被再次调用。在任意情况下，没有被标记为可触发终结并已经死亡的对象，其内存只可能在GC周期内被释放。</p>
+<p>下面举一个简单的例子：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> t = &#123;&#125;</span><br><span class="line"><span class="keyword">local</span> mt = &#123;</span><br><span class="line">    <span class="built_in">__gc</span> = <span class="function"><span class="keyword">function</span> <span class="params">(o)</span></span></span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;release object: &quot;</span>, o)</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">setmetatable</span>(t, mt)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;done&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">-- output:</span></span><br><span class="line"><span class="comment">-- done</span></span><br><span class="line"><span class="comment">-- release object: table: 0000000000fa99d0</span></span><br></pre></td></tr></table></figure>
+<p>可以看到，在执行完一个 Lua 文件后，进行了一次垃圾回收，此时 <code>__gc</code> 函数被调用。当然我们也可以手动触发垃圾回收：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> t = &#123;&#125;</span><br><span class="line"><span class="keyword">local</span> mt = &#123;</span><br><span class="line">    <span class="built_in">__gc</span> = <span class="function"><span class="keyword">function</span> <span class="params">(o)</span></span></span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;release object: &quot;</span>, o)</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">setmetatable</span>(t, mt)</span><br><span class="line">t = <span class="literal">nil</span></span><br><span class="line"><span class="built_in">collectgarbage</span>()</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;done&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">-- output:</span></span><br><span class="line"><span class="comment">-- release object: table: 0000000000ed9f90</span></span><br><span class="line"><span class="comment">-- done</span></span><br></pre></td></tr></table></figure>
+<h3 id="gc-的实现"><code>__gc</code> 的实现</h3>
+<p><code>__gc</code> 的实现主要位于 <code>lgc.c</code> 中的 <code>GCTM</code> 函数中：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">GCTM</span> <span class="params">(lua_State *L)</span> </span>&#123;</span><br><span class="line">  global_State *g = <span class="built_in">G</span>(L);</span><br><span class="line">  <span class="type">const</span> TValue *tm;</span><br><span class="line">  TValue v;</span><br><span class="line">  <span class="built_in">lua_assert</span>(!g-&gt;gcemergency);</span><br><span class="line">  <span class="built_in">setgcovalue</span>(L, &amp;v, <span class="built_in">udata2finalize</span>(g));</span><br><span class="line">  tm = <span class="built_in">luaT_gettmbyobj</span>(L, &amp;v, TM_GC);</span><br><span class="line">  <span class="keyword">if</span> (!<span class="built_in">notm</span>(tm)) &#123;  <span class="comment">/* is there a finalizer? */</span></span><br><span class="line">    <span class="type">int</span> status;</span><br><span class="line">    lu_byte oldah = L-&gt;allowhook;</span><br><span class="line">    <span class="type">int</span> running  = g-&gt;gcrunning;</span><br><span class="line">    L-&gt;allowhook = <span class="number">0</span>;  <span class="comment">/* stop debug hooks during GC metamethod */</span></span><br><span class="line">    g-&gt;gcrunning = <span class="number">0</span>;  <span class="comment">/* avoid GC steps */</span></span><br><span class="line">    <span class="built_in">setobj2s</span>(L, L-&gt;top++, tm);  <span class="comment">/* push finalizer... */</span></span><br><span class="line">    <span class="built_in">setobj2s</span>(L, L-&gt;top++, &amp;v);  <span class="comment">/* ... and its argument */</span></span><br><span class="line">    L-&gt;ci-&gt;callstatus |= CIST_FIN;  <span class="comment">/* will run a finalizer */</span></span><br><span class="line">    status = <span class="built_in">luaD_pcall</span>(L, dothecall, <span class="literal">NULL</span>, <span class="built_in">savestack</span>(L, L-&gt;top - <span class="number">2</span>), <span class="number">0</span>);</span><br><span class="line">    L-&gt;ci-&gt;callstatus &amp;= ~CIST_FIN;  <span class="comment">/* not running a finalizer anymore */</span></span><br><span class="line">    L-&gt;allowhook = oldah;  <span class="comment">/* restore hooks */</span></span><br><span class="line">    g-&gt;gcrunning = running;  <span class="comment">/* restore state */</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">unlikely</span>(status != LUA_OK)) &#123;  <span class="comment">/* error while running __gc? */</span></span><br><span class="line">      <span class="built_in">luaE_warnerror</span>(L, <span class="string">&quot;__gc metamethod&quot;</span>);</span><br><span class="line">      L-&gt;top--;  <span class="comment">/* pops error object */</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该函数会在一个表或者 <code>userdata</code> 将要被销毁时被调用。首先会获取到该对象的元表中的 <code>__gc</code> 元方法，如果存在则会调用该方法。</p>
+<h2 id="mode"><code>__mode</code></h2>
+<p><code>__mode</code> 元方法用于控制元表的数据引用方式。 <code>__mode</code> 的值是一个字符串，共有以下三种取值：</p>
+<ul>
+<li><code>k</code>：表示弱引用键</li>
+<li><code>v</code>：表示弱引用值</li>
+<li><code>kv</code>：表示弱引用键和值</li>
+</ul>
+<p>这里弱引用的含义与 C++ 中的 <code>weak_ptr</code> 类似，即弱引用不会增加对象的引用计数，如果仅有弱引用指向一个对象，那么这个对象会被垃圾回收器回收。举例来说：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> key = &#123;<span class="string">&quot;key&quot;</span>&#125;</span><br><span class="line"><span class="keyword">local</span> value = &#123;<span class="string">&quot;value&quot;</span>&#125;</span><br><span class="line"><span class="keyword">local</span> t = &#123;[key] = value&#125;</span><br><span class="line"></span><br><span class="line">value = <span class="literal">nil</span></span><br><span class="line"><span class="built_in">collectgarbage</span>()</span><br><span class="line"><span class="built_in">print</span>(t.key[<span class="number">1</span>]) <span class="comment">-- value</span></span><br></pre></td></tr></table></figure>
+<p>在上述代码中，<code>value</code> 被赋值为 <code>nil</code>，但是 <code>t.key</code> 仍然可以访问到 <code>value</code>，这是因为 <code>t</code> <strong>强引用</strong>了 <code>value</code>。如果我们将 <code>t</code> 的元表设置为弱引用值：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> key = &#123;<span class="string">&quot;key&quot;</span>&#125;</span><br><span class="line"><span class="keyword">local</span> value = &#123;<span class="string">&quot;value&quot;</span>&#125;</span><br><span class="line"><span class="keyword">local</span> t = &#123;[key] = value&#125;</span><br><span class="line"><span class="built_in">setmetatable</span>(t, &#123;<span class="built_in">__mode</span> = <span class="string">&quot;v&quot;</span>&#125;)</span><br><span class="line"></span><br><span class="line">value = <span class="literal">nil</span></span><br><span class="line"><span class="built_in">collectgarbage</span>()</span><br><span class="line"><span class="built_in">print</span>(t.key) <span class="comment">-- nil</span></span><br></pre></td></tr></table></figure>
+<p>此时 <code>t.key</code> 为 <code>nil</code>，因为 <code>t</code> <strong>弱引用</strong>了 <code>value</code>，所以在 <code>value</code> 被赋值为 <code>nil</code> 并进行垃圾回收后，<code>value</code> 本身被回收。</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> key = &#123;<span class="string">&quot;key&quot;</span>&#125;</span><br><span class="line"><span class="keyword">local</span> value = &#123;<span class="string">&quot;value&quot;</span>&#125;</span><br><span class="line"><span class="keyword">local</span> t = &#123;[key] = value&#125;</span><br><span class="line"><span class="built_in">setmetatable</span>(t, &#123;<span class="built_in">__mode</span> = <span class="string">&quot;k&quot;</span>&#125;)</span><br><span class="line"></span><br><span class="line">key = <span class="literal">nil</span></span><br><span class="line"><span class="built_in">collectgarbage</span>(<span class="string">&quot;collect&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> k, v <span class="keyword">in</span> <span class="built_in">pairs</span>(t) <span class="keyword">do</span></span><br><span class="line">    <span class="built_in">print</span>(k, v)</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+<p>同样地，我们也可以设置弱引用键，此时 <code>t</code> <strong>弱引用</strong>了 <code>key</code>，所以在 <code>key</code> 被赋值为 <code>nil</code> 并进行垃圾回收后，<code>t</code> 中的这一节点也将被回收。</p>
+<p>由 <code>__mode</code> 元方法可以延伸出一种特殊的表：弱表（<code>Weak Tables</code>）：</p>
+<p>弱表（Weak Tables） 就是一个其元素为弱引用的表。弱引用会被GC忽略。换言之，一个仅被弱引用指向的对象会被GC回收。</p>
+<p>一个弱表可以同时或任一拥有弱键和弱值。拥有弱值的表允许收集其值，但是会阻止收集其键。一个同时拥有弱值和弱键的表的键和值都允许收集。任意情况下，当键或值被收集，其键值对都会从表中移除。表的“弱性”由元表中的__mode属性来控制。此元值如果存在，则必须为给出的字符串之一：“k”——表示拥有弱键的表，&quot;v&quot;表示拥有弱值的表，&quot;kv&quot;表示同时拥有弱键和弱值的表。</p>
+<p>拥有弱键和强值的表也被称为临时表（ephemeron table）。在临时表中，键可达是值可达的前提。具体来说，某个键只被其值引用时，这个键值对将被删除。</p>
+<p>任何对表的“弱性”做的修改都会在下一次GC周期生效。比如，当你将“弱性”改成一个更强的模式时，Lua仍然会在改动生效之前回收一些东西。</p>
+<p><strong>只有显式构建的对象才会从弱表中移除</strong>。纯值，例如数字和轻量C函数，其不受 GC 的约束，因此它们不会从弱表中移除（除了收集它们所关联的值）。<strong>尽管字符串受制于GC，但其没有显式的结构且与纯值平等，比起对象其行为更类似于值。因此其也不会从弱表中移除</strong>。</p>
+<p>复原的对象（即，正被执行终结的对象，或仅被正在终结的对象所引用的对象）在弱表中的行为比较特殊。当对象明确被释放时，于弱值中的将会在执行终结之前被移除，而在弱键中的则只会在执行终结后的下一次收集中被移除。这是为了允许终结器通过弱表来访问与其对象所关联的属性。</p>
+<p>如果弱表在一个收集周期中被复原的值里，那么在下个循环之前可能都没有得到适当的清理。</p>
+<h3 id="mode-的实现"><code>__mode</code> 的实现</h3>
+<p><code>__mode</code> 的实现主要位于 <code>traversetable</code> 函数中：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> lu_mem <span class="title">traversetable</span> <span class="params">(global_State *g, Table *h)</span> </span>&#123;</span><br><span class="line">  <span class="type">const</span> <span class="type">char</span> *weakkey, *weakvalue;</span><br><span class="line">  <span class="type">const</span> TValue *mode = <span class="built_in">gfasttm</span>(g, h-&gt;metatable, TM_MODE);</span><br><span class="line">  <span class="built_in">markobjectN</span>(g, h-&gt;metatable);</span><br><span class="line">  <span class="keyword">if</span> (mode &amp;&amp; <span class="built_in">ttisstring</span>(mode) &amp;&amp;  <span class="comment">/* is there a weak mode? */</span></span><br><span class="line">      (<span class="built_in">cast_void</span>(weakkey = <span class="built_in">strchr</span>(<span class="built_in">svalue</span>(mode), <span class="string">&#x27;k&#x27;</span>)),</span><br><span class="line">       <span class="built_in">cast_void</span>(weakvalue = <span class="built_in">strchr</span>(<span class="built_in">svalue</span>(mode), <span class="string">&#x27;v&#x27;</span>)),</span><br><span class="line">       (weakkey || weakvalue))) &#123;  <span class="comment">/* is really weak? */</span></span><br><span class="line">    <span class="built_in">black2gray</span>(h);  <span class="comment">/* keep table gray */</span></span><br><span class="line">    <span class="keyword">if</span> (!weakkey)  <span class="comment">/* strong keys? */</span></span><br><span class="line">      <span class="built_in">traverseweakvalue</span>(g, h);</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (!weakvalue)  <span class="comment">/* strong values? */</span></span><br><span class="line">      <span class="built_in">traverseephemeron</span>(g, h, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">else</span>  <span class="comment">/* all weak */</span></span><br><span class="line">      <span class="built_in">linkgclist</span>(h, g-&gt;allweak);  <span class="comment">/* nothing to traverse now */</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span>  <span class="comment">/* not weak */</span></span><br><span class="line">    <span class="built_in">traversestrongtable</span>(g, h);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">1</span> + h-&gt;alimit + <span class="number">2</span> * <span class="built_in">allocsizenode</span>(h);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该函数主要在垃圾回收的过程中被调用，用于遍历表并对其中引用到的所有元素都进行标记。在遍历表的过程中，会检查表的元表中是否有 <code>__mode</code> 元方法，如果有则会根据其值来设置表的弱引用方式。这部分的具体逻辑涉及到 Lua 的 gc 过程，以及三色标记法等，我们会在 gc 部分再做介绍。</p>
+<h2 id="len"><code>__len</code></h2>
+<p><code>__len</code> 元方法用于重载 <code>#</code> 操作符，即获取表或者字符串的长度。如果对象不是一个字符串，Lua 将尝试调用其元函数。如果元函数存在，则调用将对象作为参数调用元函数，并将调用结果（通常调整为单个值）作为操作结果。如果元表不存在但是对象是 <code>table</code>，Lua 使用表的取长操作，也即 <code>luaH_getn</code>，详见<a href="https://qlipphoth.github.io/2024/11/17/2024-11-17-1/">表（上）</a>。否则，Lua抛出将会抛出错误。</p>
+<p>举例来说：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> t = &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>&#125;</span><br><span class="line"><span class="built_in">print</span>(#t)  <span class="comment">-- 8</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">setmetatable</span>(t, &#123;</span><br><span class="line">    <span class="built_in">__len</span> = <span class="function"><span class="keyword">function</span><span class="params">(t)</span></span></span><br><span class="line">        <span class="keyword">local</span> count = <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> k, v <span class="keyword">in</span> <span class="built_in">pairs</span>(t) <span class="keyword">do</span></span><br><span class="line">            <span class="keyword">if</span> k % <span class="number">2</span> == <span class="number">0</span> <span class="keyword">then</span></span><br><span class="line">                count = count + <span class="number">1</span></span><br><span class="line">            <span class="keyword">end</span></span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">        <span class="keyword">return</span> count</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(#t)  <span class="comment">-- 4</span></span><br></pre></td></tr></table></figure>
+<p>在上述代码中，首先会调用默认的 <code>luaH_getn</code> 函数获取表的长度；当我们设置了 <code>__len</code> 元方法后，会调用该方法来获取表的长度，这里即会返回表中偶数索引的个数。</p>
+<h3 id="len-的实现"><code>__len</code> 的实现</h3>
+<p><code>__len</code> 的实现主要位于 <code>luaV_objlen</code> 函数中：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** Main operation &#x27;ra = #rb&#x27;.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">luaV_objlen</span> <span class="params">(lua_State *L, StkId ra, <span class="type">const</span> TValue *rb)</span> </span>&#123;</span><br><span class="line">  <span class="type">const</span> TValue *tm;</span><br><span class="line">  <span class="keyword">switch</span> (<span class="built_in">ttypetag</span>(rb)) &#123;</span><br><span class="line">    <span class="keyword">case</span> LUA_VTABLE: &#123;</span><br><span class="line">      Table *h = <span class="built_in">hvalue</span>(rb);</span><br><span class="line">      tm = <span class="built_in">fasttm</span>(L, h-&gt;metatable, TM_LEN);</span><br><span class="line">      <span class="keyword">if</span> (tm) <span class="keyword">break</span>;  <span class="comment">/* metamethod? break switch to call it */</span></span><br><span class="line">      <span class="built_in">setivalue</span>(<span class="built_in">s2v</span>(ra), <span class="built_in">luaH_getn</span>(h));  <span class="comment">/* else primitive len */</span></span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">case</span> LUA_VSHRSTR: &#123;</span><br><span class="line">      <span class="built_in">setivalue</span>(<span class="built_in">s2v</span>(ra), <span class="built_in">tsvalue</span>(rb)-&gt;shrlen);</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">case</span> LUA_VLNGSTR: &#123;</span><br><span class="line">      <span class="built_in">setivalue</span>(<span class="built_in">s2v</span>(ra), <span class="built_in">tsvalue</span>(rb)-&gt;u.lnglen);</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">default</span>: &#123;  <span class="comment">/* try metamethod */</span></span><br><span class="line">      tm = <span class="built_in">luaT_gettmbyobj</span>(L, rb, TM_LEN);</span><br><span class="line">      <span class="keyword">if</span> (<span class="built_in">unlikely</span>(<span class="built_in">notm</span>(tm)))  <span class="comment">/* no metamethod? */</span></span><br><span class="line">        <span class="built_in">luaG_typeerror</span>(L, rb, <span class="string">&quot;get length of&quot;</span>);</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">luaT_callTMres</span>(L, tm, rb, rb, ra);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该函数用于获取表或者字符串等对象的长度。可以看到这里针对表会先判断是否有 <code>__len</code> 元方法，如果有则会调用该方法，否则会调用 <code>luaH_getn</code> 函数获取表的长度。</p>
+<h2 id="其他元方法">其他元方法</h2>
+<p>除上述的这些常用元方法外，Lua 还有其他一些元方法，它们都用于重载不同的运算符，如 <code>+</code>、<code>-</code>、<code>*</code>、<code>/</code> 等，增加了这些元方法作用类似于 C++ 中的运算符重载，可以使得对于表的操作更加灵活。重载运算符的元方法主要可以分为三类：</p>
+<ol>
+<li>
+<p>算术操作运算符：</p>
+<ul>
+<li><code>TM_ADD</code>：加法操作，符号 <code>+</code></li>
+<li><code>TM_SUB</code>：减法操作，符号 <code>-</code></li>
+<li><code>TM_MUL</code>：乘法操作，符号 <code>*</code></li>
+<li><code>TM_MOD</code>：取模操作，符号 <code>%</code></li>
+<li><code>TM_POW</code>：幂运算，符号 <code>^</code></li>
+<li><code>TM_DIV</code>：除法操作，符号 <code>/</code></li>
+<li><code>TM_IDIV</code>：整除操作，符号 <code>//</code></li>
+</ul>
+</li>
+<li>
+<p>位操作运算符：</p>
+<ul>
+<li><code>TM_BAND</code>：按位与操作，符号 <code>&amp;</code></li>
+<li><code>TM_BOR</code>：按位或操作，符号 <code>|</code></li>
+<li><code>TM_BXOR</code>：按位异或操作，符号 <code>~</code></li>
+<li><code>TM_SHL</code>：左移操作，符号 <code>&lt;&lt;</code></li>
+<li><code>TM_SHR</code>：右移操作，符号 <code>&gt;&gt;</code></li>
+<li><code>TM_UNM</code>：取负操作，符号 <code>-</code></li>
+<li><code>TM_BNOT</code>：按位取反操作，符号 <code>~</code></li>
+</ul>
+</li>
+<li>
+<p>比较操作运算符：</p>
+<ul>
+<li><code>TM_EQ</code>：等于操作，符号 <code>==</code></li>
+<li><code>TM_LT</code>：小于操作，符号 <code>&lt;</code></li>
+<li><code>TM_LE</code>：小于等于操作，符号 <code>&lt;=</code></li>
+</ul>
+</li>
+<li>
+<p>其他操作：</p>
+<ul>
+<li><code>TM_CONCAT</code>：连接操作，符号 <code>..</code></li>
+<li><code>TM_CALL</code>：调用操作，符号 <code>()</code></li>
+<li><code>TM_CLOSE</code>：关闭操作，常与 <code>goto</code> 一起使用，这里不做详细介绍</li>
+</ul>
+</li>
+</ol>
+<p>通过定义这些元方法，我们可以对表的操作进行重载，使得表的操作更加灵活。例如：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> t1 = &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>&#125;</span><br><span class="line"><span class="keyword">local</span> t2 = &#123;<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">setmetatable</span>(t1, &#123;</span><br><span class="line">    <span class="built_in">__add</span> = <span class="function"><span class="keyword">function</span><span class="params">(t1, t2)</span></span></span><br><span class="line">        <span class="keyword">local</span> t = &#123;&#125;</span><br><span class="line">        <span class="keyword">for</span> i = <span class="number">1</span>, #t1 <span class="keyword">do</span></span><br><span class="line">            t[i] = t1[i] + t2[i]</span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">        <span class="keyword">return</span> t</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">local</span> t3 = t1 + t2</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i = <span class="number">1</span>, #t3 <span class="keyword">do</span></span><br><span class="line">    <span class="built_in">print</span>(t3[i])</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- output:</span></span><br><span class="line"><span class="comment">-- 5</span></span><br><span class="line"><span class="comment">-- 7</span></span><br><span class="line"><span class="comment">-- 9</span></span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2024/11/23/2024-11-23-1/">https://qlipphoth.github.io/2024/11/23/2024-11-23-1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Lua/">Lua</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img class="cover" src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">Lua 源码解析（二）：基本数据类型 —— 表（上）</div></div></a></div><div class="next-post pull-right"><a href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img class="cover" src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">TortoiseSVN 简单入门</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img class="cover" src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-11-17</div><div class="title">Lua 源码解析（二）：基本数据类型 —— 表（上）</div></div></a></div><div><a href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img class="cover" src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-11-15</div><div class="title">Lua 源码解析（二）：基本数据类型 —— 字符串</div></div></a></div><div><a href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img class="cover" src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-11-14</div><div class="title">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</div></div></a></div><div><a href="/2024/07/16/2024-7-16-1/" title="Lua 入门"><img class="cover" src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-07-16</div><div class="title">Lua 入门</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">元表与元方法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#index"><span class="toc-number">2.1.</span> <span class="toc-text">__index</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#index-%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-number">2.1.1.</span> <span class="toc-text">__index 的实现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#newindex"><span class="toc-number">2.2.</span> <span class="toc-text">__newindex</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#newindex-%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-number">2.2.1.</span> <span class="toc-text">__newindex 的实现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#gc"><span class="toc-number">2.3.</span> <span class="toc-text">__gc</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#gc-%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-number">2.3.1.</span> <span class="toc-text">__gc 的实现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mode"><span class="toc-number">2.4.</span> <span class="toc-text">__mode</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#mode-%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-number">2.4.1.</span> <span class="toc-text">__mode 的实现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#len"><span class="toc-number">2.5.</span> <span class="toc-text">__len</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#len-%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-number">2.5.1.</span> <span class="toc-text">__len 的实现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E5%85%83%E6%96%B9%E6%B3%95"><span class="toc-number">2.6.</span> <span class="toc-text">其他元方法</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

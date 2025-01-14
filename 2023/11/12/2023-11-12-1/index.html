@@ -1,0 +1,532 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>GASDocumentation 案例项目分析（三） | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="前言 上回说到，FireGun 这个类有一个名为 DamageGameplayEffect 的 GE 用于伤害计算以及击中特效播放，并且最终通过 Projectile-&gt;DamageEffectSpecHandle 的形式将该 GE 传递给了 Projectile。不难想象最终一定会由子弹本身的碰撞等事件来执行该 GE 以计算伤害（DamageExecCalc）及播放 GC。 12UPROP">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GASDocumentation 案例项目分析（三）">
+<meta property="og:url" content="https://qlipphoth.github.io/2023/11/12/2023-11-12-1/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="前言 上回说到，FireGun 这个类有一个名为 DamageGameplayEffect 的 GE 用于伤害计算以及击中特效播放，并且最终通过 Projectile-&gt;DamageEffectSpecHandle 的形式将该 GE 传递给了 Projectile。不难想象最终一定会由子弹本身的碰撞等事件来执行该 GE 以计算伤害（DamageExecCalc）及播放 GC。 12UPROP">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2023/11/11/gjWYPFRMALU6H8r.gif">
+<meta property="article:published_time" content="2023-11-12T14:08:00.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="UE">
+<meta property="article:tag" content="GAS">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/11/11/gjWYPFRMALU6H8r.gif"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2023/11/12/2023-11-12-1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'GASDocumentation 案例项目分析（三）',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2023/11/10/zXw1uyBSA4fYKeL.png')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">GASDocumentation 案例项目分析（三）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2023-11-12T14:08:00.000Z" title="Created 2023-11-12 14:08:00">2023-11-12</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/UE/">UE</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/UE/GAS/">GAS</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">2.8k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>10min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="GASDocumentation 案例项目分析（三）"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="前言">前言</h2>
+<p>上回说到，FireGun 这个类有一个名为 <code>DamageGameplayEffect</code> 的 GE 用于伤害计算以及击中特效播放，并且最终通过 <code>Projectile-&gt;DamageEffectSpecHandle</code> 的形式将该 GE 传递给了 Projectile。不难想象最终一定会由子弹本身的碰撞等事件来执行该 GE 以计算伤害（DamageExecCalc）及播放 GC。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">UPROPERTY</span>(BlueprintReadOnly, EditAnywhere)</span><br><span class="line">TSubclassOf&lt;UGameplayEffect&gt; DamageGameplayEffect;</span><br></pre></td></tr></table></figure>
+<p>上一节主要分析了前者，即 <code>GDDamageExecCalculation</code>  的实现，本节就从 GameplayCue（GC）开始分析。</p>
+<h2 id="GameplayCue">GameplayCue</h2>
+<p>首先来看一下文档中关于 GC 的解释：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/BillEliot/GASDocumentation_Chinese#48-gameplay-cues">GASDocumentation_Chinese:GameplayCue</a></p>
+<p><code>GameplayCue(GC)</code> 执行非游戏逻辑相关的功能, 像音效, 粒子效果, 镜头抖动等等。 <code>GameplayCue</code> 一般是可同步(除非在客户端明确<code>执行(Executed)</code>, <code>添加(Added)</code>和<code>移除(Removed)</code>)和可预测的。</p>
+<p>我们可以在 ASC 中通过发送一个强制带有 “GameplayCue” 父名的相应 <code>GameplayTag</code> 和 <code>GameplayCueManager</code> 的事件类型(Execute, Add或Remove)来触发<code>GameplayCue</code>。<code>GameplayCueNotify</code> 对象和其他实现 <code>IGameplayCueInterface</code> 的 Actor 可以基于 <code>GameplayCue</code> 的 <code>GameplayTag(GameplayCueTag)</code> 来订阅(Subscribe)这些事件。</p>
+<blockquote>
+<p>Note: 再次强调, <code>GameplayCue</code> 的 <code>GameplayTag</code> 需要以 <code>GameplayCue</code> 为开头, 举例来说, 一个有效的 <code>GameplayCue</code> 的<code>GameplayTag</code> 可能是 <code>GameplayCue.A.B.C</code>。</p>
+</blockquote>
+<p>有两个<code>GameplayCueNotify</code>类, <code>Static</code> 和 <code>Actor</code>。它们各自响应不同的事件, 并且不同的 <code>GameplayEffect</code> 类型可以触发它们，根据你的逻辑重写相关的事件。</p>
+<table>
+<thead>
+<tr>
+<th>GameplayCue类</th>
+<th>事件</th>
+<th>GameplayEffect类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GameplayCueNotify_Static</td>
+<td>Execute</td>
+<td>Instant或Periodic</td>
+<td>Static GameplayCueNotify直接操作ClassDefaultObject(意味着没有实例)并且对于一次性效果(像击打伤害)是极好的.</td>
+</tr>
+<tr>
+<td>GameplayCueNotify_Actor</td>
+<td>Add或Remove</td>
+<td>Duration或Infinite</td>
+<td>Actor GameplayCueNotify会在添加(Added)时生成一个新的实例, 因为其是实例化的, 所以可以随时间推移执行操作直到被移除(Removed). 这对循环的声音和粒子效果是很好的, 其会在持续(Duration)或无限(Infinite)GameplayEffect被移除或手动调用移除时移除. 其也自带选项来管理允许同时添加(Added)多少个, 因此多个相同效果的应用只启用一次声音或粒子效果.</td>
+</tr>
+</tbody>
+</table>
+<p>默认情况下, 游戏开始时 <code>GameplayCueManager</code> 会扫描游戏的全部目录以寻找 <code>GameplayCueNotify</code> 并将其加载进内存. 我们可以设置 <code>DefaultGame.ini</code> 来修改 <code>GameplayCueManager</code> 的扫描路径。</p>
+<p>查看 <code>GE_GunDamage</code> 这个 GE 蓝图，会发现在 Display 中指定了一个 Tag 为 <code>GameplayCue.Hero.FireGun.Impact</code> 的 GC。配置在这里的 GC 会在 GE 生效时触发。</p>
+<p><img src="https://s2.loli.net/2023/11/11/WKytLlmBS1Dc4Tv.png" alt="image.png"></p>
+<p>上文中也说过一个合法的 GC 的 Tag 必须以 <code>GameplayCue.A.B.C</code> 的形式来组织，游戏开始时 <code>GameplayCueManager</code> 会扫描全部 GC 并加载，GC 在创建时就需要绑定一个 Tag，因此这样就完成了 Tag -&gt; GC 的对应，在 GE 的 Display 中配置相应的 Tag 就可以播放对应的特效或声效了。</p>
+<p>在 FireGun 文件夹中，可以找到一个名为 <code>GC_FireGunImpact</code> 的 GC，打开该蓝图就会发现相应的 Tag 配置的刚好是 <code>GameplayCue.Hero.FireGun.Impact</code>，也就是说在 <code>GE_GunDamage</code> 生效时就会播放这个 GC 了。</p>
+<p><img src="https://s2.loli.net/2023/11/12/JyCItTeZ6Num1q2.png" alt="image.png"></p>
+<p>该 GC 继承自 <code>GameplayCueNotify_Static</code> 并且重写了 <code>OnExcute()</code> 函数，查看蓝图中的逻辑就会发现该 GC 会提取 <code>EffectContext</code> 信息并在 <code>HitResult.Location</code> 的位置播放一个特效，该效果就是打击特效了。</p>
+<p><img src="https://s2.loli.net/2023/11/12/Wdy2HI6MzPJTCb8.png" alt="image.png"></p>
+<blockquote>
+<p>博主在之后加了一个音效播放（</p>
+</blockquote>
+<h2 id="GE-GunDamage-的生效方式">GE_GunDamage 的生效方式</h2>
+<p>上文中我们说到，FireGun 这个 GA（GameplayAbility）最终会生成一颗子弹，并把 <code>GE_GunDamage</code> 包装为 <code>DamageEffectSpecHandle</code> 传给 Projectile，而这个 GE 要负责伤害的计算，以及播放一个 GC；那么，这个 GE 是什么时候生效的呢？这就需要回到 <code>BP_GunProjectile</code> 中来了。</p>
+<p>查看该蓝图，貌似逻辑较为复杂，我们一点一点分析。</p>
+<p><img src="https://s2.loli.net/2023/11/12/4GSFMOYUTRog8rH.png" alt="image.png"></p>
+<p>首先，在 <code>BeginPlay()</code> 时通过 <code>Range</code> 及 <code>Speed</code> 设置了子弹的 <code>LifeSpan</code>。</p>
+<p><img src="https://s2.loli.net/2023/11/12/nJ5IzTlNM39Uhw7.png" alt="image.png"></p>
+<p>剩下的都是发生碰撞时的执行逻辑，这里可以看出子弹不会攻击释放者。</p>
+<p><img src="https://s2.loli.net/2023/11/12/pYGk1LuxJ6VUadB.png" alt="image.png"></p>
+<p>这里获取了被击中目标的 ASC，可以看出，只有在 Server 端才会触发之后的逻辑，Client 会直接销毁子弹。即，GE 只会发生在 Server 上，Client 通过 Attribute 同步的方式接收信息。</p>
+<p><img src="https://s2.loli.net/2023/11/12/7i6e9lTWPMXDAJL.png" alt="image.png"></p>
+<p>这部分的目的就是为了获取到被击中的方向并赋给 <code>FinalHit</code>，以播放不同方向的受击动画。</p>
+<p><img src="https://s2.loli.net/2023/11/12/ufhsLMVWiOaAxYD.png" alt="image.png"></p>
+<p>最后这部分就是 GE 真正生效的地方了，我们终于用到了 <code>DamageEffectSpecHandle</code> 并且将 <code>FinalHit</code> 设置给了它的 <code>EffectContext</code> 并且最终将该 GE 作用于被击中的 Target，最后再销毁该子弹。</p>
+<p>GE 生效的过程我们已经分析过，分为计算伤害与播放 GC 两个部分。</p>
+<h2 id="属性修改、受击动画">属性修改、受击动画</h2>
+<p>现在，我们的 Projectile 中携带的 GE 终于对 Target 生效了，播放了击中的烟雾特效并且修改了 Target 的 Damage 属性，接下来的问题是，如何将 Damage 属性的改变反映到 Health 中呢？ 这部分的逻辑在上一节提到过的 <code>UGDAttributeSetBase::PostGameplayEffectExecute</code> 中完成。</p>
+<h3 id="Meta-Attribute">Meta Attribute</h3>
+<p>在分析这部分内容之前，需要先了解以下 <code>Damage</code> 这个特殊的属性，<code>GDAttriibuteSetBase.h</code> 中对于该属性是这样注释的：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Damage is a meta attribute used by the DamageExecution to calculate final damage, </span></span><br><span class="line"><span class="comment">// which then turns into -Health. Temporary value that only exists on the Server. Not replicated.</span></span><br><span class="line"><span class="built_in">UPROPERTY</span>(BlueprintReadOnly, Category = <span class="string">&quot;Damage&quot;</span>, meta = (HideFromLevelInfos))</span><br><span class="line">FGameplayAttributeData Damage;</span><br><span class="line"><span class="built_in">ATTRIBUTE_ACCESSORS</span>(UGDAttributeSetBase, Damage)</span><br></pre></td></tr></table></figure>
+<p>这是一个“临时变量”并且只存在于 Server 端，更重要的是，这是一个 <code>meta Attribute</code>。</p>
+<p>查看 <a target="_blank" rel="noopener" href="https://github.com/BillEliot/GASDocumentation_Chinese#433-%E5%85%83metaattribute">GASDocumentation_Chinese:metaAttribute</a> 的解释：</p>
+<p>一些 <code>Attribute</code> 被视为占位符, 其是用于预计和 <code>Attribute</code> 交互的临时值, 这些 <code>Attribute</code> 被叫做 <code>Meta Attribute</code>。例如, 我们通常定义伤害值为 <code>Meta Attribute</code>, 使用伤害值 <code>Meta Attribute</code> 作为占位符, 而不是使用 <code>GameplayEffect</code> 直接修改生命值 <code>Attribute</code>, 使用这种方法, 伤害值就可以在 <code>GameplayEffectExecutionCalculation</code> 中由 buff 和 debuff 修改, 并且可以在 <code>AttributeSet</code> 中进一步操作, 例如, 在最终将生命值减去伤害值之前, 要将伤害值减去当前的护盾值. 伤害值 <code>Meta Attribute</code> 在 <code>GameplayEffect</code> 之间不是持久化的, 并且可以被任何一方重写. <code>Meta Attribute</code> 一般是不可同步的。</p>
+<p><code>Meta Attribute</code>对于在&quot;我们应该造成多少伤害?&quot;和&quot;我们该如何处理伤害值?&quot;这种问题之中的伤害值和治疗值做了很好的解构, 这种解构意味着 <code>GameplayEffect</code> 和 <code>ExecutionCalculation</code> 无需了解目标是如何处理伤害值的。继续看伤害值的例子, <code>GameplayEffect</code> 确定造成多少伤害, 之后 <code>AttributeSet</code> 决定如何使用该伤害值, 不是所有的 <code>Character</code> 都有相同的<code>Attribute</code>, 特别是使用了 <code>AttributeSet</code> 子类的话, <code>AttributeSet</code> 基类可能只有一个生命值 <code>Attribute</code>, 但是它的子类可能增加了一个护盾值 <code>Attribute</code>, 拥有护盾值 <code>Attribute</code> 的子类 <code>AttributeSet</code> 可能会以不同于 <code>AttributeSet</code> 基类的方式分配收到的伤害。</p>
+<p>尽管 <code>Meta Attribute</code> 是一个很好的设计模式, 但其并不是强制使用的. 如果你只有一个用于所有伤害实例的 <code>Execution Calculation</code> 和一个所有 <code>Character</code> 共用的 <code>AttributeSet</code> 类, 那么你就可以在 <code>Exeuction Calculation</code> 中分配伤害到生命, 护盾等等, 并直接修改那些 <code>Attribute</code>, 这种方式你只会丢失灵活性, 但总体上并无大碍。</p>
+<p>--------------- 分界线 ------------------</p>
+<p>可以看出，<code>Damage</code> 属性是对于伤害与生命值等属性之间的又一次解耦，将伤害值本身抽取出来成为一个属性，这样可以处理更复杂的情况。虽然 <code>Damage</code> 不会同步到客户端，但 <code>Damage</code> 对于 <code>Health</code> 的修改会由 <code>Health</code> 本身同步到客户端。</p>
+<p>一般而言，在使用 GAS 的项目中，<code>AttributeSet</code> 都会有这样一个属性。</p>
+<h3 id="PostGameplayEffectExecute"><code>PostGameplayEffectExecute</code></h3>
+<p>回到这个函数中，在 <a href="https://qlipphoth.github.io/2023/11/10/2023-11-10-1/">案例分析一</a> 中分析过，该函数在 GE 执行后触发，并且在调用时属性还没有被同步到客户端，可以在这里再对属性进行一些操作，不会造成二次同步的问题。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UGDAttributeSetBase::PostGameplayEffectExecute</span><span class="params">(<span class="type">const</span> FGameplayEffectModCallbackData &amp; Data)</span></span></span><br></pre></td></tr></table></figure>
+<p>观察签名就会发现，该函数接受一个 <code>FGameplayEffectModCallbackData&amp;</code> 的参数，想必是包含了 GE 的所有上下文信息。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">FGameplayEffectContextHandle Context = Data.EffectSpec.<span class="built_in">GetContext</span>();</span><br><span class="line">UAbilitySystemComponent* Source = Context.<span class="built_in">GetOriginalInstigatorAbilitySystemComponent</span>();</span><br><span class="line"><span class="type">const</span> FGameplayTagContainer&amp; SourceTags = *Data.EffectSpec.CapturedSourceTags.<span class="built_in">GetAggregatedTags</span>();</span><br><span class="line">FGameplayTagContainer SpecAssetTags;</span><br><span class="line">Data.EffectSpec.<span class="built_in">GetAllAssetTags</span>(SpecAssetTags);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Get the Target actor, which should be our owner</span></span><br><span class="line">AActor* TargetActor = <span class="literal">nullptr</span>;</span><br><span class="line">AController* TargetController = <span class="literal">nullptr</span>;</span><br><span class="line">AGDCharacterBase* TargetCharacter = <span class="literal">nullptr</span>;</span><br><span class="line"><span class="keyword">if</span> (Data.Target.AbilityActorInfo.<span class="built_in">IsValid</span>() &amp;&amp; Data.Target.AbilityActorInfo-&gt;AvatarActor.<span class="built_in">IsValid</span>())</span><br><span class="line">&#123;</span><br><span class="line">  TargetActor = Data.Target.AbilityActorInfo-&gt;AvatarActor.<span class="built_in">Get</span>();</span><br><span class="line">  TargetController = Data.Target.AbilityActorInfo-&gt;PlayerController.<span class="built_in">Get</span>();</span><br><span class="line">  TargetCharacter = <span class="built_in">Cast</span>&lt;AGDCharacterBase&gt;(TargetActor);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Get the Source actor</span></span><br><span class="line"><span class="comment">// ...</span></span><br></pre></td></tr></table></figure>
+<p>可以看出，<code>Data</code> 中不仅包含了 <code>FGameplayEffectContextHandle</code>，还包含了关于 Target 与 Source 的信息，可以处理许多逻辑。</p>
+<p>这里先就 <code>Data.EvaluatedData.Attribute == GetDamageAttribute()</code> 的情况进行分析。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Store a local copy of the amount of damage done and clear the damage attribute</span></span><br><span class="line"><span class="type">const</span> <span class="type">float</span> LocalDamageDone = <span class="built_in">GetDamage</span>();</span><br><span class="line"><span class="built_in">SetDamage</span>(<span class="number">0.f</span>);</span><br></pre></td></tr></table></figure>
+<p>可以看出这里储存了一份 <code>Damage</code> 的备份，并把属性中的 <code>Damage</code> 清零。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Apply the health change and then clamp it</span></span><br><span class="line"><span class="type">const</span> <span class="type">float</span> NewHealth = <span class="built_in">GetHealth</span>() - LocalDamageDone;</span><br><span class="line"><span class="built_in">SetHealth</span>(FMath::<span class="built_in">Clamp</span>(NewHealth, <span class="number">0.0f</span>, <span class="built_in">GetMaxHealth</span>()));</span><br></pre></td></tr></table></figure>
+<p>之后通过 <code>LocalDamageDone</code> 设置了 <code>Health</code> 的值，完成了扣血的效果。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Play HitReact animation and sound with a multicast RPC.</span></span><br><span class="line"><span class="type">const</span> FHitResult* Hit = Data.EffectSpec.<span class="built_in">GetContext</span>().<span class="built_in">GetHitResult</span>();</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (Hit)</span><br><span class="line">&#123;</span><br><span class="line">  EGDHitReactDirection HitDirection = TargetCharacter-&gt;<span class="built_in">GetHitReactDirection</span>(Data.EffectSpec.<span class="built_in">GetContext</span>().<span class="built_in">GetHitResult</span>()-&gt;Location);</span><br><span class="line">  <span class="keyword">switch</span> (HitDirection)</span><br><span class="line">  &#123;</span><br><span class="line">  <span class="keyword">case</span> EGDHitReactDirection::Left:</span><br><span class="line">    TargetCharacter-&gt;<span class="built_in">PlayHitReact</span>(HitDirectionLeftTag, SourceCharacter);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> EGDHitReactDirection::Front:</span><br><span class="line">    TargetCharacter-&gt;<span class="built_in">PlayHitReact</span>(HitDirectionFrontTag, SourceCharacter);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> EGDHitReactDirection::Right:</span><br><span class="line">    TargetCharacter-&gt;<span class="built_in">PlayHitReact</span>(HitDirectionRightTag, SourceCharacter);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> EGDHitReactDirection::Back:</span><br><span class="line">    TargetCharacter-&gt;<span class="built_in">PlayHitReact</span>(HitDirectionBackTag, SourceCharacter);</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment">// No hit result. Default to front.</span></span><br><span class="line">  TargetCharacter-&gt;<span class="built_in">PlayHitReact</span>(HitDirectionFrontTag, SourceCharacter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>此外，这里还获取了 context 中储存的 <code>HitResult</code> 以得到受击方向。<code>GetHitReactDirection</code> 定义在 <code>GDCharacterBase.h</code> 中，输出一个代表方向的枚举值。<code>PlayHitReact</code> 也定义在该类中，最终会通知 <code>ABP_Hero</code>（Animation BluePrint）播放对应的受击动画。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Show damage number for the Source player unless it was self damage</span></span><br><span class="line"><span class="keyword">if</span> (SourceActor != TargetActor)</span><br><span class="line">&#123;</span><br><span class="line">  AGDPlayerController* PC = <span class="built_in">Cast</span>&lt;AGDPlayerController&gt;(SourceController);</span><br><span class="line">  <span class="keyword">if</span> (PC)</span><br><span class="line">  &#123;</span><br><span class="line">    PC-&gt;<span class="built_in">ShowDamageNumber</span>(LocalDamageDone, TargetCharacter);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>除此之外，还函数还处理了伤害的 PopupText，会调用 <code>AGDPlayerController::ShowDamageNumber</code> 以显示伤害数字。最后还处理了增加攻击者的经验及金币等的情况，这些功能都不是很重要，这里就不详细分析了。</p>
+<p>总的来看，在 <code>PostGameplayEffectExecute</code> 完成了 <code>Damage -&gt; -Health</code> 的计算，并且处理了许多显示上的逻辑，如播放受击动画、伤害漂字等。</p>
+<h2 id="还有高手？">还有高手？</h2>
+<p>没有高手了，FireGun 的整个 GA 流程已经被我们分析完毕，现在就来梳理一下整个 GA 的作用流程。</p>
+<p>首先，<code>GDGA_FireGun</code> 直接继承自 <code>UGDGameplayAbility</code>，在 <code>UGDGA_FireGun::ActivateAbility</code> 中，通过<code>UGDAT_PlayMontageAndWaitForEvent::PlayMontageAndWaitForEvent</code> 的方式播放射击动画并等待动画事件。</p>
+<p>在 Montage 中，共触发了两个事件，分别为生成一个 Projectile（<code>BP_GunProjectile</code>） 以及结束 Ability。<code>GDGA_FireGun</code> 中有一个 <code>Damage</code> 属性代表子弹的伤害，同时存放了一个实际赋值为 <code>GE_GunDamage</code> 的 GE，该 GE 最终会实例化赋给生成的子弹，负责计算伤害以及播放击中效果的 GC。</p>
+<p>在 <code>BP_GunProjectile</code> 中设置了碰撞事件，会在被击中的角色的 ASC 上执行该 GE 以造成伤害以及播放特效。此外，还额外传递了 <code>HitResult</code> 给 <code>Projectile-&gt;DamageEffectSpecHandle</code> 以保存击中方向的信息。</p>
+<p>在被击中角色的 <code>UGDAttributeSetBase::PostGameplayEffectExecute</code> 中，会处理掉 Projectile 对 <code>Damage</code> 的改动，并进行实际的扣血操作，此外还会根据 <code>HitResult</code> 的方向来播放不同的受击动画以及处理伤害漂字等效果。</p>
+<p>至此，FireGun 的整个流程也就分析完毕。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2023/11/12/2023-11-12-1/">https://qlipphoth.github.io/2023/11/12/2023-11-12-1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/UE/">UE</a><a class="post-meta__tags" href="/tags/GAS/">GAS</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2023/11/11/gjWYPFRMALU6H8r.gif" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/11/11/2023-11-11-1/" title="GASDocumentation 案例项目分析（二）"><img class="cover" src="https://s2.loli.net/2023/11/12/YE1PLFJBUQekhf8.gif" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">GASDocumentation 案例项目分析（二）</div></div></a></div><div class="next-post pull-right"><a href="/2023/11/13/2023-11-13-1/" title="GASDocumentation 案例项目分析（四）"><img class="cover" src="https://s2.loli.net/2023/11/14/5P1WOjDbn8GrQIS.gif" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">GASDocumentation 案例项目分析（四）</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2023/11/13/2023-11-13-1/" title="GASDocumentation 案例项目分析（四）"><img class="cover" src="https://s2.loli.net/2023/11/14/5P1WOjDbn8GrQIS.gif" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-11-13</div><div class="title">GASDocumentation 案例项目分析（四）</div></div></a></div><div><a href="/2023/11/11/2023-11-11-1/" title="GASDocumentation 案例项目分析（二）"><img class="cover" src="https://s2.loli.net/2023/11/12/YE1PLFJBUQekhf8.gif" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-11-11</div><div class="title">GASDocumentation 案例项目分析（二）</div></div></a></div><div><a href="/2023/11/10/2023-11-10-1/" title="GASDocumentation 案例项目分析（一）"><img class="cover" src="https://s2.loli.net/2023/11/10/zXw1uyBSA4fYKeL.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-11-10</div><div class="title">GASDocumentation 案例项目分析（一）</div></div></a></div><div><a href="/2024/03/22/2024-3-22-1/" title="UE 补完计划（五） UE中的STL-2"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-22</div><div class="title">UE 补完计划（五） UE中的STL-2</div></div></a></div><div><a href="/2024/03/18/2024-3-18-4/" title="UE 补完计划（五） UE中的STL-1"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（五） UE中的STL-1</div></div></a></div><div><a href="/2024/03/18/2024-3-18-3/" title="UE 补完计划（四） 导航系统-5"><img class="cover" src="https://s2.loli.net/2023/12/29/c1qfV78whYUi6ay.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-18</div><div class="title">UE 补完计划（四） 导航系统-5</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GameplayCue"><span class="toc-number">2.</span> <span class="toc-text">GameplayCue</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GE-GunDamage-%E7%9A%84%E7%94%9F%E6%95%88%E6%96%B9%E5%BC%8F"><span class="toc-number">3.</span> <span class="toc-text">GE_GunDamage 的生效方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B1%9E%E6%80%A7%E4%BF%AE%E6%94%B9%E3%80%81%E5%8F%97%E5%87%BB%E5%8A%A8%E7%94%BB"><span class="toc-number">4.</span> <span class="toc-text">属性修改、受击动画</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Meta-Attribute"><span class="toc-number">4.1.</span> <span class="toc-text">Meta Attribute</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#PostGameplayEffectExecute"><span class="toc-number">4.2.</span> <span class="toc-text">PostGameplayEffectExecute</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%98%E6%9C%89%E9%AB%98%E6%89%8B%EF%BC%9F"><span class="toc-number">5.</span> <span class="toc-text">还有高手？</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2023/11/10/zXw1uyBSA4fYKeL.png')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

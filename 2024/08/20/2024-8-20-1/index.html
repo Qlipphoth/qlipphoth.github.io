@@ -1,0 +1,580 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>程序的编译与运行（二）：静态链接 | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="参考： 《程序员的自我修养—链接、装载与库》 《深入理解计算机系统》  前言 现代编译器支持以分离编译的方式单独地编译所有的源文件，然后通过链接将所有模块组装成一个完整的应用。这种方式使得我们可以将一个复杂的应用程序分解成更小、更好管理的模块，并且可以独立地对这些模块进行修改和编译。当我们改变其中一个模块时，只需要对修改的模块重新编译，然后重新进行链接，而不必重新编译其它的模块。 静态链接 程序">
+<meta property="og:type" content="article">
+<meta property="og:title" content="程序的编译与运行（二）：静态链接">
+<meta property="og:url" content="https://qlipphoth.github.io/2024/08/20/2024-8-20-1/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="参考： 《程序员的自我修养—链接、装载与库》 《深入理解计算机系统》  前言 现代编译器支持以分离编译的方式单独地编译所有的源文件，然后通过链接将所有模块组装成一个完整的应用。这种方式使得我们可以将一个复杂的应用程序分解成更小、更好管理的模块，并且可以独立地对这些模块进行修改和编译。当我们改变其中一个模块时，只需要对修改的模块重新编译，然后重新进行链接，而不必重新编译其它的模块。 静态链接 程序">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg">
+<meta property="article:published_time" content="2024-08-20T15:11:08.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="OS">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2024/08/20/2024-8-20-1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '程序的编译与运行（二）：静态链接',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">程序的编译与运行（二）：静态链接</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-08-20T15:11:08.000Z" title="Created 2024-08-20 15:11:08">2024-08-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/OS/">OS</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">4.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>13min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="程序的编译与运行（二）：静态链接"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><blockquote>
+<p>参考：<br>
+《程序员的自我修养—链接、装载与库》<br>
+《深入理解计算机系统》</p>
+</blockquote>
+<h1>前言</h1>
+<p>现代编译器支持以<strong>分离编译</strong>的方式单独地编译所有的源文件，然后通过链接将所有模块组装成一个完整的应用。这种方式使得我们可以将一个复杂的应用程序分解成更小、更好管理的模块，并且可以<strong>独立地对这些模块进行修改和编译</strong>。当我们改变其中一个模块时，只需要对修改的模块重新编译，然后重新进行链接，而<strong>不必重新编译其它的模块</strong>。</p>
+<h1>静态链接</h1>
+<p>程序的编译可分为预处理、编译、汇编以及链接这四个主要阶段（见 <a href="https://qlipphoth.github.io/2024/07/27/2024-7-27-1/">C++ 编译过程</a> ），编译器在完成汇编阶段之后，所有的代码源文件已经都翻译成了二进制的目标文件，但是目标文件相互之间仍然是独立的，很多依赖信息还没有解决，包括：</p>
+<ul>
+<li>对于每个目标文件，它可能会依赖其它目标文件或者库中的符号信息；</li>
+<li>对于每个目标文件，其在内存中的运行地址信息此时也是不确定的，因此还无法直接加载到程序中运行。</li>
+</ul>
+<p>这些问题都将由静态链接解决。静态链接的核心作用就是<strong>将编译生成的多个目标文件及其依赖的库进行链接，以生成最终的可执行文件</strong>。静态链接的基本示意如下：</p>
+<p><img src="https://s2.loli.net/2024/08/20/2Vj4UBoa8SiLtGC.png" alt="image.png"></p>
+<h2 id="静态链接过程">静态链接过程</h2>
+<p>在 Linux 平台下，使用的静态链接器通常为 <code>ld</code> 工具，为了生成可执行文件，链接器必须完成三个主要任务，概述如下：</p>
+<ul>
+<li>
+<p>空间与地址分配：<strong>扫描</strong>所有输入的目标文件，获取所有文件中节的信息，包括属性、长度和位置等，并且<strong>收集</strong>所有目标文件中的符号定义和符号引用信息。计算出输出文件中各个段<strong>合并</strong>后的长度与位置，并建立与目标平台程序地址空间的<strong>映射</strong>关系；</p>
+</li>
+<li>
+<p>符号解析：目标文件中定义和引用的符号，每个符号都对应于一个函数、全局变量或者静态变量。<strong>符号解析的目的就是将每个符号引用和一个符号定义关联起来</strong>；</p>
+</li>
+<li>
+<p>重定位：目标文件包含从地址0开始的代码和数据节。链接通过把每个符号定义与一个内存地址关联起来，从而重定位这些节，然后<strong>修改所有对这些符号的引用，使得它们指向这个内存位置</strong>。</p>
+</li>
+</ul>
+<p>完成这三个任务之后，链接器会为最终的可执行文件指定一个程序入口地址，在链接 C 运行库的情况下，这个入口函数通常为 <code>_start</code>。当可执行文件被加载到内存中时，系统会跳转到指定的入口地址开始执行。</p>
+<h2 id="空间与地址分配">空间与地址分配</h2>
+<p>现代链接器执行的合并策略比较简单，通过<strong>将所有相同类型的节合并到一起</strong>，例如将所有输入目标文件的 <code>.text</code> 节合并到输出文件的 <code>.text</code> 节中；然后，链接器根据运行平台中进程虚拟地址空间的划分规则，为所有输入目标文件中定义的节和符号分配运行时内存地址；完成之后，程序中的每条指令和符号都有唯一的运行时内存地址了。链接器的空间分配示意如下：</p>
+<p><img src="https://s2.loli.net/2024/08/20/IKvEHxqTrQCOtU4.png" alt="image.png"></p>
+<p>在链接阶段，链接器会为会为所有的目标文件分配地址空间。这里的地址空间需要区分两种含义：</p>
+<ul>
+<li>可执行文件自身的空间：用于磁盘上静态存储可执行文件的内容；</li>
+<li>进程虚拟地址空间：由程序运行时，系统加载可执行文件的内容而动态建立。</li>
+</ul>
+<p><strong>链接器为可执行文件中符号确定的地址即是最后程序运行时所使用的地址，在可执行文件被装载时会被逐一映射到进程的虚拟地址空间。</strong> 典型的装载数据包括代码段和数据段中的数据，一些特殊的段，如.bss段在可执行文件中不占用空间，但是在可执行文件装载后的进程虚拟地址空间中需要进行空间分配。对于其它一些如符号表、调试信息等数据，链接器不会为其分配地址空间，因为它们并不是程序运行所必要的数据，因此也不会被装载入进程虚拟地址空间中去。</p>
+<h3 id="空间与地址分配示例">空间与地址分配示例</h3>
+<p>为了说明空间与地址分配的过程，这里使用如下两个源代码文件进行分析，后续也会继续使用这两个文件：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// sum.c</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">sum</span><span class="params">(<span class="type">int</span>* a, <span class="type">int</span> n)</span> &#123;</span><br><span class="line">    <span class="type">int</span> s = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n; i++) &#123;</span><br><span class="line">        s += a[i];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> s;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// main.c</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">sum</span><span class="params">(<span class="type">int</span>* a, <span class="type">int</span> n)</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="built_in">array</span>[<span class="number">2</span>] = &#123;<span class="number">1</span>, <span class="number">2</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span> &#123;</span><br><span class="line">    <span class="type">int</span> a = sum(<span class="built_in">array</span>, <span class="number">2</span>);</span><br><span class="line">    <span class="keyword">return</span> a;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先使用 gcc 将 <code>main.c</code> 和 <code>sum.c</code> 编译成目标文件：</p>
+<p><img src="https://s2.loli.net/2024/08/20/HS3ciOeEujmhsyC.png" alt="image.png"></p>
+<p>经过编译之后，已经生成了两个目标文件main.o和sum.o，在进行链接之前，先看下目标文件中的地址分配情况：</p>
+<p align="center">
+  <img src="https://s2.loli.net/2024/08/20/Recog598C7UaOMS.png" alt="Image 1" width="45%" />
+  <img src="https://s2.loli.net/2024/08/20/pcSHBvKyMfRldWx.png" alt="Image 2" width="45%" />
+</p>
+<p>可以看到，生成的每个目标文件都有自己独立的代码段和数据段，并且所有的段都未分配虚拟地址空间，因此文件中所有段的虚拟内存地址（VMA字段）都是 0。如果反汇编目标文件，可以看到每个目标文件的起始地址都是从 0 开始。</p>
+<p>现在我们使用<code>ld</code>链接器将<code>main.o</code>和<code>sum.o</code>链接起来生成可执行文件：</p>
+<p><img src="https://s2.loli.net/2024/08/20/SBEHtDcueK6aVGg.png" alt="image.png"></p>
+<p><code>-e</code> 选项用于指定 <code>main</code> 函数作为程序入口，<code>ld</code> 链接器默认的程序入口为 <code>_start</code>，定义于 C 运行库中，在此不链接使用 C 库的函数，因此需要单独指定程序入口。</p>
+<p>链接后默认生成的可执行文件名为 <code>a.out</code>，可以查看 <code>a.out</code> 的地址分配情况：</p>
+<p><img src="https://s2.loli.net/2024/08/20/y7aTSEUVjsJFH9o.png" alt="image.png"></p>
+<p>可以看到，在可执行文件中，链接器已经将所有输入目标文件的段进行合并，生成了新的段，并且都分配到了相应的虚拟地址。**当段的起始地址明确之后，段内的指令和数据地址也就逐一确定了。**这里虚拟地址的分配规则对于不同系统的实现是不同的，在32位Linux下，ELF可执行文件默认从地址<code>0x8048000</code>开始；对于64位Linux系统，则默认从<code>0x400000</code>开始。</p>
+<p>对于定义的全局符号，由于它们在段内的相对位置都是固定的，链接器只要加上相应的偏移，就可以依次计算出所有的符号的虚拟地址了。对于上面的代码中定义的两个全局符号array和sum，以外部函数sum为例，计算出的虚拟地址值如下：</p>
+<p><img src="https://s2.loli.net/2024/08/20/rbtIv36OwyQn4KW.png" alt="image.png"></p>
+<h2 id="符号解析">符号解析</h2>
+<p>在符号解析阶段，链接器根据所有输入的符号引用与定义信息，将程序中每个符号引用与链接过程中输入的可重定位目标文件中的符号表中的一个确定的符号关联起来。如果在链接过程中出现未定义的符号，那么链接过程中就会终止并且报错&quot;undefined reference&quot;。</p>
+<h3 id="多重定义的全局符号解析">多重定义的全局符号解析</h3>
+<p>对于局部符号以及未定义符号的解析，链接器的处理通常是很简单的，更复杂的情况是对全局符号的解析，尤其是当多个目标文件定义了相同的符号。为了能够正确处理这种多重定义的全局符号，编译器在编译时，会将这些符号区分成强符号和弱符号进行输出，这样链接器就可以根据符号的强弱属性，并按照特定的规则进行解析。</p>
+<p>对于C/C++语言来说，<strong>编译器默认函数和初始化了的全局变量为强符号，未初始化的全局变量为弱符号</strong>。注意，强符号和弱符号都是针对定义来说的，不是针对符号的引用。</p>
+<p>根据强弱符号的定义，链接器使用下面的规则来处理多重定义的符号：</p>
+<ol>
+<li>不允许强符号被多次定义，若有多个相同的强符号定义，则链接器报符号重复定义错误；</li>
+<li>若在输入的目标文件中，定义了一个强符号以及多个同名的弱符号，那么选择强符号；</li>
+<li>若在所有输入的目标文件中，只定义了多个同名的弱符号，那么选择其中<strong>占用空间最大</strong>的一个。</li>
+</ol>
+<p>GCC扩展支持使用 <code>attribute((weak))</code> 来定义任何一个强符号为弱符号</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> __attribute__((weak)) g_strong_val = <span class="number">5</span>;  <span class="comment">// g_strong_val 现在是弱符号</span></span><br></pre></td></tr></table></figure>
+<h3 id="特殊符号">特殊符号</h3>
+<p>在使用 ld 链接器生成可执行文件时，会在链接脚本中定义一些特殊符号，这些符号可以用来对程序链接进行控制，同时也可以在程序中被引用，链接器会在将程序最终链接成可执行文件的时候将其解析成正确的值。一些常见的特殊符号定义如下：</p>
+<ul>
+<li><code>__executable_start</code>：程序起始地址。</li>
+<li><code>__etext</code> 或 <code>_etext</code>或 <code>etext</code>：代码段结束地址，即代码段最末尾的地址；</li>
+<li><code>_edata</code> 或 <code>edata</code>：数据段结束地址，及数据段最末尾的地址；</li>
+<li><code>_end</code> 或 <code>end</code>：程序结束地址。</li>
+</ul>
+<h2 id="重定位">重定位</h2>
+<p>在完成地址分配和符号解析之后，程序中每个定义的符号都有了唯一的运行时内存地址，并且所有的符号引用都可以与某个确定的符号定义关联起来，然后链接器就可以进入重定位阶段了。在这个阶段中，链接器会读取所有可重定位目标文件中的重定位信息，然后调整代码段和数据段中对每个符号的引用，使它们指向正确的运行时内存地址。</p>
+<h3 id="重定位表">重定位表</h3>
+<p>重定位信息描述了如何对对应的节区中的符号引用进行修改，ELF 文件使用重定位表来存储重定位信息。对于可重定位文件中每个需要重定位的节区都有一个对应的重定位表（通常使用<code>.rel</code>作为前缀）。表中包含了需要进行重定位的项，典型的重定位表包括<code>.rel.text</code>和<code>.rel.data</code>，其中:</p>
+<ul>
+<li>
+<p><code>.rel.text</code>：描述代码段的重定位信息，用于对 <code>.text</code> 代码段进行重定位；</p>
+</li>
+<li>
+<p><code>.rel.data</code>：描述数据段的重定位信息，用于对 <code>.data</code> 数据段进行重定位。</p>
+</li>
+</ul>
+<p>可以使用<code>objdump</code>来查看<code>main.o</code>的重定位表：</p>
+<p><img src="https://s2.loli.net/2024/08/20/TeDaEdYWCrbV6op.png" alt="image.png"></p>
+<p>上图中，<code>RELOCATION RECORDS FOR [.text]</code> 表示这个重定位表是代码段的重定位表，后面的信息是需要进行重定位的符号，其中偏移表示代码段中需要被调整的位置。</p>
+<h3 id="重定位项">重定位项</h3>
+<p>当编译器生成一个可重定位目标文件时，它并不知道代码和数据最终会加载到内存中的什么位置，也不清楚这个模块引用的任何外部定义的符号的位置。因此，当编译器遇到对最终位置未知的符号的引用，就会为其生成一个重定位项，用于<strong>指示链接器在链接生成可执行文件时如何修改这个引用</strong>。ELF重定位表中存储的重定位项，其结构定义如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">        Elf64_Addr r_offset;</span><br><span class="line">        <span class="type">uint64_t</span>   r_info;</span><br><span class="line">        <span class="type">int64_t</span>    r_addend;</span><br><span class="line">&#125; Elf64_Rela;</span><br></pre></td></tr></table></figure>
+<p>重定位项最主要的作用是记录了<strong>需要重定位的符号在文件中的位置以及如何对符号进行重定位</strong>。重定位项结构中的各个字段意义如下：</p>
+<ul>
+<li><code>r_offset</code>：用于指明重定位项的地址，对于可重定位文件，字段的值为重定位项相对于所在节的偏移地址；对于可执行文件或共享目标文件，字段的值是链接器为重定位项分配的虚拟地址；</li>
+<li><code>r_info</code>：低32位表明了符号重定位的类型，高32位用于确定符号在符号表中的索引；</li>
+<li><code>r_addend</code>：附加的符号常数，一些重定位类型要使用这个常数被对被修改引用的值进行偏移调整。</li>
+</ul>
+<h3 id="重定位类型">重定位类型</h3>
+<ul>
+<li><code>R_X86_64_32</code>:（该类型在新版的GCC上已经没有看到了）. 重定位一个使用32位绝对地址的引用。</li>
+<li><code>R_X86_64_PC32</code>:  重定位一个使用32位PC相对地址的引用。</li>
+<li><code>R_X86_64_PLT32</code>: 过程链接表延迟绑定。</li>
+</ul>
+<h3 id="重定位符号引用">重定位符号引用</h3>
+<p>在前面示例源码中，<code>main</code> 函数引用了两个全局符号 <code>array</code> 和 <code>sum</code>。编译器为每个引用都生成了一个重定位项，每项的描述信息可以在重定位表中进行查看。这里将<code>main.o</code> 目标文件进行反汇编，可以看到编译器已经指定需要为下图中两个位置的对 <code>array</code> 和 <code>sum</code> 的引用进行重定位：</p>
+<p><img src="https://s2.loli.net/2024/08/20/rm5sIiYyFDqjtdC.png" alt="image.png"></p>
+<p>对于重定位类型 <code>R_X86_64_32</code> 和 <code>R_X86_64_PC32</code>，其重定位修正方法如下：</p>
+<ul>
+<li><code>R_X86_64_32</code>：属于绝对寻址方式修正，修正方式为 <code>S + A</code>；</li>
+<li><code>R_X86_64_PC32</code>： 属于相对寻址方式修正，修正方式为 <code>S + A - P</code>。</li>
+</ul>
+<p>其中，<code>S=符号的实际地址</code>，<code>A=附加的修正常量</code>，<code>P=重定位位置的地址</code>。对比可以看出，绝对寻址方式修正和相对寻址方式修正的区别就是<strong>绝对寻址修正后的地址是该符号的实际地址，相对寻址修正后的地址为符号距离被修正位置的地址差</strong>。</p>
+<h2 id="使用静态库">使用静态库</h2>
+<p>静态库本质上就是一组目标文件的集合，在日常开发中，我们通常都需要依赖一些基础的库，用以实现基本的输入输出、字符串操作等功能，系统将包含这些功能的目标文件打包到单独的库文件中，程序编译时可以将这些目标文件静态链接进程序中使用。在Linux中，静态库以后缀为 <code>.a</code> 的特殊存档文件进行存储，通常可以在标准目录 <code>/lib/</code> 和 <code>/usr/lib</code> 中找到。</p>
+<h3 id="静态库的创建">静态库的创建</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// add.c</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">add</span><span class="params">(<span class="type">const</span> <span class="type">int</span> a, <span class="type">const</span> <span class="type">int</span> b)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> (a + b);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// sub.c</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">sub</span><span class="params">(<span class="type">const</span> <span class="type">int</span> a, <span class="type">const</span> <span class="type">int</span> b)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> (a - b);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>依次编译 <code>add.c</code>、<code>sub.c</code> 生成目标文件：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">gcc -c add.c -o add.o</span><br><span class="line">gcc -c sub.c -o sub.o</span><br></pre></td></tr></table></figure>
+<p>GNU binutils 工具集中提供<code>ar</code>命令用于将多个目标文件打包成独立的静态库文件，命令操作如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">qliphoth ~ # ar -c -r libarithmetic.a add.o sub.o</span><br><span class="line">qliphoth ~ # ar -t libarithmetic.a     </span><br><span class="line">add.o</span><br><span class="line">sub.o</span><br></pre></td></tr></table></figure>
+<p>其中：</p>
+<ul>
+<li><code>-c</code>选项：指定创建静态库；</li>
+<li><code>-r</code>选项：指定插入目标文件到静态库中；</li>
+<li><code>-t</code>选项：用于查看静态库中包含的目标文件。</li>
+</ul>
+<p>这里需要注意的是，Linux下静态库文件的命名遵循一定的规范，通常是以 lib 开头，紧接着是静态库名，以 <code>.a</code> 为后缀名，即 <code>lib+静态库名+.a</code>。后续程序在引用静态库时，直接指定静态库名即可。</p>
+<h3 id="静态库的使用">静态库的使用</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// main.c</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">add</span><span class="params">(<span class="type">const</span> <span class="type">int</span> a, <span class="type">const</span> <span class="type">int</span> b)</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">sub</span><span class="params">(<span class="type">const</span> <span class="type">int</span> a, <span class="type">const</span> <span class="type">int</span> b)</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> a = <span class="number">10</span>, b = <span class="number">5</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;a + b = %d\n&quot;</span>, add(a, b));</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;a - b = %d\n&quot;</span>, sub(a, b));</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>为了使用静态库，编译main程序时需要指定链接上面创建的静态库文件，链接器会自动从静态库中查找包含依赖符号的目标文件，并将其链入到最后的可执行文件当中：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc main.c -L./ -larithmetic -o main</span><br></pre></td></tr></table></figure>
+<p>其中：</p>
+<ul>
+<li><code>-L</code>选项：指定静态库的搜索路径。对于存放在系统默认搜索路径下的静态库，可以不指定；</li>
+<li><code>-l</code>选项：指定需要链接的静态库名。</li>
+</ul>
+<p>在链接静态库时，系统会按照特定的顺序查找静态库文件。在Linux下，默认查找的优先级顺序如下：</p>
+<ul>
+<li>链接静态库时手动指定的搜索路径，通常使用 <code>-L</code> 选项；</li>
+<li>环境变量<code>LIBRARY_PATH</code>配置的路径；</li>
+<li>默认的静态库搜索路径<code>/lib</code>、<code>/usr/lib</code>。</li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2024/08/20/2024-8-20-1/">https://qlipphoth.github.io/2024/08/20/2024-8-20-1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/OS/">OS</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/08/19/2024-8-19-1/" title="程序的编译与运行（一）：ELF 文件格式"><img class="cover" src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">程序的编译与运行（一）：ELF 文件格式</div></div></a></div><div class="next-post pull-right"><a href="/2024/08/20/2024-8-20-2/" title="程序的编译与运行（三）：动态链接"><img class="cover" src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">程序的编译与运行（三）：动态链接</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2024/08/20/2024-8-20-2/" title="程序的编译与运行（三）：动态链接"><img class="cover" src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-08-20</div><div class="title">程序的编译与运行（三）：动态链接</div></div></a></div><div><a href="/2024/08/19/2024-8-19-1/" title="程序的编译与运行（一）：ELF 文件格式"><img class="cover" src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-08-19</div><div class="title">程序的编译与运行（一）：ELF 文件格式</div></div></a></div><div><a href="/2024/07/29/2024-7-29-1/" title="内存管理杂谈"><img class="cover" src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-07-29</div><div class="title">内存管理杂谈</div></div></a></div><div><a href="/2024/07/27/2024-7-27-2/" title="多线程杂谈"><img class="cover" src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-07-27</div><div class="title">多线程杂谈</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">静态链接</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9D%99%E6%80%81%E9%93%BE%E6%8E%A5%E8%BF%87%E7%A8%8B"><span class="toc-number">2.1.</span> <span class="toc-text">静态链接过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A9%BA%E9%97%B4%E4%B8%8E%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D"><span class="toc-number">2.2.</span> <span class="toc-text">空间与地址分配</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A9%BA%E9%97%B4%E4%B8%8E%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D%E7%A4%BA%E4%BE%8B"><span class="toc-number">2.2.1.</span> <span class="toc-text">空间与地址分配示例</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%A6%E5%8F%B7%E8%A7%A3%E6%9E%90"><span class="toc-number">2.3.</span> <span class="toc-text">符号解析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%9A%E9%87%8D%E5%AE%9A%E4%B9%89%E7%9A%84%E5%85%A8%E5%B1%80%E7%AC%A6%E5%8F%B7%E8%A7%A3%E6%9E%90"><span class="toc-number">2.3.1.</span> <span class="toc-text">多重定义的全局符号解析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%B9%E6%AE%8A%E7%AC%A6%E5%8F%B7"><span class="toc-number">2.3.2.</span> <span class="toc-text">特殊符号</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-number">2.4.</span> <span class="toc-text">重定位</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D%E8%A1%A8"><span class="toc-number">2.4.1.</span> <span class="toc-text">重定位表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D%E9%A1%B9"><span class="toc-number">2.4.2.</span> <span class="toc-text">重定位项</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D%E7%B1%BB%E5%9E%8B"><span class="toc-number">2.4.3.</span> <span class="toc-text">重定位类型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D%E7%AC%A6%E5%8F%B7%E5%BC%95%E7%94%A8"><span class="toc-number">2.4.4.</span> <span class="toc-text">重定位符号引用</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E9%9D%99%E6%80%81%E5%BA%93"><span class="toc-number">2.5.</span> <span class="toc-text">使用静态库</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9D%99%E6%80%81%E5%BA%93%E7%9A%84%E5%88%9B%E5%BB%BA"><span class="toc-number">2.5.1.</span> <span class="toc-text">静态库的创建</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9D%99%E6%80%81%E5%BA%93%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="toc-number">2.5.2.</span> <span class="toc-text">静态库的使用</span></a></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

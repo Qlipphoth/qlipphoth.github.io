@@ -1,0 +1,626 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>UGUI 番外之合批 | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="Refs: Unity3D UGUI系列之合批 UGUI学习 - 合批规则 UGUI合批源码分析及优化  前言 无论是我们的日常开发还是面试，UI 的合批永远是一个绕不开的话题。本文将分析 UGUI 中的合批机制，力图帮助大家以及笔者自己彻底搞清楚这一重要的概念。 批处理 批处理是渲染中常用的一种优化手段，它的核心思想是将多个绘制操作合并为一个绘制操作，从而减少 CPU 与 GPU 之间的通信次">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UGUI 番外之合批">
+<meta property="og:url" content="https://qlipphoth.github.io/2024/11/03/2024-11-3-1/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="Refs: Unity3D UGUI系列之合批 UGUI学习 - 合批规则 UGUI合批源码分析及优化  前言 无论是我们的日常开发还是面试，UI 的合批永远是一个绕不开的话题。本文将分析 UGUI 中的合批机制，力图帮助大家以及笔者自己彻底搞清楚这一重要的概念。 批处理 批处理是渲染中常用的一种优化手段，它的核心思想是将多个绘制操作合并为一个绘制操作，从而减少 CPU 与 GPU 之间的通信次">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg">
+<meta property="article:published_time" content="2024-11-03T21:01:21.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="Unity">
+<meta property="article:tag" content="C#">
+<meta property="article:tag" content="UGUI">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2024/11/03/2024-11-3-1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'UGUI 番外之合批',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">UGUI 番外之合批</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-11-03T21:01:21.000Z" title="Created 2024-11-03 21:01:21">2024-11-03</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Unity/UGUI/">UGUI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">4.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>15min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="UGUI 番外之合批"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><blockquote>
+<p>Refs:<br>
+<a target="_blank" rel="noopener" href="https://blog.csdn.net/sinat_25415095/article/details/112388638">Unity3D UGUI系列之合批</a><br>
+<a target="_blank" rel="noopener" href="https://codingcodingk.top/Tech/Game/UI/ugui_batch/">UGUI学习 - 合批规则</a><br>
+<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq826364410/article/details/80983861">UGUI合批源码分析及优化</a></p>
+</blockquote>
+<h1>前言</h1>
+<p>无论是我们的日常开发还是面试，UI 的合批永远是一个绕不开的话题。本文将分析 UGUI 中的合批机制，力图帮助大家以及笔者自己彻底搞清楚这一重要的概念。</p>
+<h1>批处理</h1>
+<p>批处理是渲染中常用的一种优化手段，它的核心思想是将多个绘制操作合并为一个绘制操作，从而减少 CPU 与 GPU 之间的通信次数（即 Draw Call），提高渲染效率。</p>
+<p>在介绍批处理之前我们先看看一个普通的3D模型是怎么渲染出来的（详见 <a href="https://qlipphoth.github.io/2023/12/07/2023-12-7-1/">图形学补完计划（二）：Rendering Pipeline</a>）：</p>
+<ol>
+<li>
+<p>CPU 准备好这个模型的网格、用到的贴图和Shader，然后 GPU 将网格、贴图、Shader加载到显存里面。</p>
+</li>
+<li>
+<p>CPU 设置渲染状态。所谓设置渲染状态，就是 CPU 设置渲染网格时需要使用的使用的Shader，贴图等信息。</p>
+</li>
+<li>
+<p>CPU 设置完毕渲染状态后，向 GPU 发出渲染的指令，然后GPU才开始按照 2 中设置的 Shader 和贴图真正渲染这个模型，并把渲染后的结果层递到屏幕上。CPU 向 GPU 发出渲染指令的过程即为 Draw Call。</p>
+</li>
+</ol>
+<p>从上面的流程可以看出，每一个 3D 模型要被渲染都应该会经过一个完整的渲染流程，调用一次 Draw Call。如场景中有 10 个模型，那么 Draw Call 数量就应该是 10，但大多数情况下查看统计面板我们会发现并没有这么多的 Draw Call。为什么会这样呢？ 这就是批处理的作用了。</p>
+<p><img src="https://s2.loli.net/2024/11/03/J9xFSyP1j7G8ChI.png" alt="image.png"></p>
+<p>批处理就是把渲染时使用<strong>相同材质(Shader)、相同贴图</strong>的3D模型的网格合并在一起，成为一个大网格，然后再调用一次Draw Call，直接渲染这一个合并后的网格。所以需要注意的是，<strong>一定要使用相同材质和相同贴图的模型才可以批处理</strong>，一个模型使用的材质或贴图与其他模型不同，那么 CPU 就得单独进行步骤 2 设置渲染状态，紧接着也就得单独进行步骤 3 调用 Draw Call，即无法进行批处理。</p>
+<p>在 <a href="https://qlipphoth.github.io/2024/09/27/2024-9-27-1/">UGUI-7：Graphic</a> 以及 <a href="https://qlipphoth.github.io/2024/10/15/2024-10-15-1/">UGUI-8：Text</a> 中提到过，UGUI 中的图片与文字也由 Mesh 组成，因此 UI 元素的合批机制与上述的 3D 模型合批机制也是类似的。</p>
+<p><strong>在 UGUI 中，合批是以 Canvas 为单位的</strong>，即在同一个 Canvas 下符合合批条件的 UI 元素最终都会被 Batch 到同一个 Mesh 中。而在 Batch 前，UGUI 会根据这些 UI 元素的材质以及渲染顺序进行重排，在不改变渲染结果的前提下，尽可能将相同材质的 UI 元素合并在同一个 SubMesh 中，从而把 DrawCall 降到最低。而 Batch 的操作只会在 UI 元素发生变化时才进行（如<code>Rebuild</code>），且合成的 Mesh 越大，操作的耗时也就越大。</p>
+<h1>UGUI 合批流程</h1>
+<p>UGUI以Canvas为单位进行批次生成和渲染，Canvas可以嵌套包含Canvas。Batching的生成和合并在 <code>Canvas::UpdateBatch()</code> 中：</p>
+<h2 id="UpdateBatch">UpdateBatch</h2>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">Canvas::UpdateBatch</span> <span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">float</span> alpha = <span class="built_in">CalculateCanvasAlpha</span>();</span><br><span class="line">    <span class="built_in">UpdateBatchOrder</span>();</span><br><span class="line">    UI::<span class="built_in">GetCanvasManager</span>().<span class="built_in">UpdateDirtyRenderers</span>(<span class="keyword">this</span>),</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(m_CanvasData.isDirty)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">PROFILER_AUTO</span>(gCanvasBuildBatch, <span class="keyword">this</span>)</span><br><span class="line">        <span class="built_in">CreateBatchoutput</span> (m_CanvasData.instructions.<span class="built_in">begin</span>(), alpha &gt; <span class="number">0.0f</span> ? m_CanvasData.instructions.<span class="built_in">size</span>() : <span class="number">0</span>, alpha, m_BatchedData);</span><br><span class="line">        m_CanvasData.isDirty = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// <span class="doctag">TODO:</span> 0nly do this is the batchedData.mesh changed</span></span><br><span class="line">        <span class="built_in">SetCachedMeshBoundsDirty</span>():</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> materialCount = <span class="number">0</span>;</span><br><span class="line">    std::map&lt;UInt32, BatchOutput&gt;::iterator iterator = m_BatchedData.<span class="built_in">begin</span>();</span><br><span class="line">    <span class="keyword">while</span>(iterator != m_BatchedData.<span class="built_in">end</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        materialCount += iterator-&gt;second.materials.<span class="built_in">size</span>();</span><br><span class="line">        ++iterator;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> materialCount &gt; <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>UpdateBatch()</code> 主要流程如下:</p>
+<ol>
+<li>
+<p>计算 Canvas alpha，包括父 Canvas 和嵌套 Canvas（<code>alpha=0</code>不生成合并批次）。</p>
+</li>
+<li>
+<p>UI 层次结构发生变化时，更新 Batch 顺序，对 Canvas 下所有UI元素（CanvasRenderer）按 UI 层次结构深度优先排序，生成 UI Instructions。</p>
+</li>
+<li>
+<p>更新所有需要同步数据的 renderer UI 数据，包括 <code>vertex</code>, <code>color</code>, <code>material</code>, <code>transform</code>, <code>rect</code>, <code>depth</code>（按UI层次结构深度优先排序的深度）等。非活动（<code>IsActive() == false</code>）且不强制更新的UI元素，将不同步数据。</p>
+</li>
+<li>
+<p>Canvas 数据更新时（<code>m_CanvasData.isDirty</code>，如 UI层次结构改变，同步关键数据，<code>Canvas.Awake</code>等），计算 UI Instructions 的 depth 并排序、生成 Batch。</p>
+</li>
+</ol>
+<h2 id="Mask-的特殊处理">Mask 的特殊处理</h2>
+<p>在 <a href="https://qlipphoth.github.io/2024/09/30/2024-9-30-1/">UGUI-8：IMeshModifier &amp; IMaterialModifier</a> 中我们提到了利用模板缓冲区进行遮罩的 <code>Mask</code> 组件，该组件的渲染过程较为特殊，在 <code>Canvas::UpdateBatchOrder()</code> 中可以看到如下的处理：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">Canvas::UpdateBatchOrder</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (m_CanvasData.orderIsDirty)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">int</span> nestedDepth = <span class="number">0</span>;</span><br><span class="line">        <span class="function">dynamic_array&lt;CanvasRenderer*&gt; <span class="title">renderers</span><span class="params">(kMemTempAlloc)</span></span>;</span><br><span class="line">        <span class="built_in">GetComponentsInChildren</span>&lt;CanvasRenderer&gt;(<span class="built_in">GetGameObject</span>(), renderers);</span><br><span class="line">    </span><br><span class="line">        <span class="built_in">ClearCanvasData</span>(m_CanvasData);</span><br><span class="line">        <span class="built_in">ClearNestedCanvasDepths</span>(m_CanvasData);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// stack to store a reference to a renderer that added mask</span></span><br><span class="line">        <span class="comment">// this renderer will be inserted a second time when we unmask</span></span><br><span class="line">        <span class="comment">// but will be rendered with the configured unmask material</span></span><br><span class="line">        <span class="function">dynamic_array&lt;CanvasRenderer*&gt; <span class="title">maskStack</span><span class="params">(kMemTempAlloc)</span></span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; (<span class="type">int</span>)renderers.<span class="built_in">size</span>(); i++)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// ...</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>即对于一个 <code>Mask</code> 而言，会额外调用两次 <code>DrawCall</code>，第一次用于绘制 <code>Stencil Mask</code> 以用于模板测试，第二次则用于移除 <code>Stencil Mask</code>。<code>Mask</code> 内的元素在满足合批条件的情况下可以合批；Mask 外的元素和 Mask 内的元素则始终无法合批。</p>
+<h2 id="Depth-的计算">Depth 的计算</h2>
+<p>遍历所有 UI 元素（已深度优先排序），对当前每一个 UI 元素 <code>CurrentUI</code>，如果不渲染，<code>CurrentUI.depth = -1</code>，如果渲染该 UI 且底下没有其他 UI 元素与其相交（<code>rect.Intersects()</code>），其 <code>CurrentUI.depth = 0</code>。</p>
+<p>如果 <code>CurrentUI</code> 下面只有一个的需要渲染的 UI 元素 <code>LowerUI</code> 与其相交，且可以与 <code>CurrentUI</code> 合批（即材质与纹理相同），则 <code>CurrentUI.depth = LowerUI.depth</code>，否则，<code>CurrentUI.depth = LowerUI.depth + 1</code>;</p>
+<p>如果 <code>CurrentUI</code> 下面叠了多个元素，这些元素的最大层是 <code>MaxLowerDepth</code>，如果有多个元素的层都是 <code>MaxLowerDepth</code>，那么 <code>CurrentUI</code> 和下面的元素是无法合批的；如果只有一个元素的层是 <code>MaxLowerDepth</code>，并且这个元素和 <code>CurrentUI</code> 的材质、纹理相同，那么它们就能合批。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="type">int</span> j = jStart; j &lt; jEnd; j++)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (output[j].depth == <span class="number">-1</span>)</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// among all the lower blocks we are looking for and intersecting element with the highest depth</span></span><br><span class="line">    <span class="type">const</span> Rectf&amp; lowerRect = rects[j];</span><br><span class="line">    <span class="keyword">if</span> (rect.<span class="built_in">Intersects</span>(lowerRect))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">CanBatch</span>(uiInstruction[i], uiInstruction[j]))</span><br><span class="line">            highestIntersectingDepth = std::<span class="built_in">max</span>(output[j].depth, highestIntersectingDepth);</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="type">const</span> <span class="type">int</span> lowerBlockDepth = output[j].depth;</span><br><span class="line">            highestIntersectingDepth = std::<span class="built_in">max</span>(lowerBlockDepth + <span class="number">1</span>, highestIntersectingDepth);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在 Depth 计算算法中，由于要遍历所有 UI 元素和已计算的底层 UI 元素（平方复杂度），源码中使用分组计算包围盒矩形的方法加快计算，<strong>即 16 个UI元素为一组计算 Group Rect，检查是否与底层UI元素相交时，先计算是否与底层Group相交，如果相交再与Group中的元素做判定</strong>。</p>
+<p>因此，UI元素数目过多和层次结构过于复杂，会影响排序和 Batch 更新速度，合理规划 UI 元素数量和层次结构可以提高 UI 性能。</p>
+<h2 id="VisiableList-的处理">VisiableList 的处理</h2>
+<p>在所有 UI 元素的 <code>depth</code> 计算完毕后，会依次根据它们的 <code>Depth</code>、<code>material ID</code>、<code>texture ID</code>、<code>RendererOrder</code> 进行排序，并剔除所有 <code>depth = -1</code> 的元素，得到 Batch 前的 UI 元素队列 <code>VisibleList</code>。</p>
+<p>最后，对 <code>VisibleList</code> 中相邻且可以合批（相同 <code>material ID</code> 与相同 <code>texture ID</code> 等）的 UI 元素进行合批，然后再生成相应的 mesh 进行绘制。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// first sort by depths</span></span><br><span class="line"><span class="comment">// if they&#x27;re equal, sort by materials</span></span><br><span class="line"><span class="keyword">if</span> (a.depth != b.depth)</span><br><span class="line">    <span class="keyword">return</span> a.depth &lt; b.depth;</span><br><span class="line"><span class="keyword">if</span> (a.materialInstanceID != b.materialInstanceID)</span><br><span class="line">    <span class="keyword">return</span> a.materialInstanceID &lt; b.materialInstanceID;</span><br><span class="line"><span class="keyword">if</span> (a.textureInstanceID != b.textureInstanceID)</span><br><span class="line">    <span class="keyword">return</span> a.textureInstanceID &lt; b.textureInstanceID;</span><br><span class="line"></span><br><span class="line"><span class="comment">// all else being equal... sort by render order</span></span><br><span class="line"><span class="keyword">return</span> a.renderOrder &lt; b.renderOrder;</span><br></pre></td></tr></table></figure>
+<p>这样，Canvas 就完成了 Batch 的生成和渲染。</p>
+<p><strong>需要注意的是，合批是将同一 Canvas 下多个 UI 的网格合并在一起，如果其中任何一个元素的材质、网格顶点、位置(Transform)甚至颜色发生改变，或者在该 Canvas 下动态创建或删除UI元素，都将导致该 Canvas 重新计算合批(需要注意的是仅仅会影响这一个 Canvas，子 Canvas 或父 Canvas 以及其他 Canvas 不会重新计算)，重新生成新的网格，这个重新计算生成网格的过程被称为 <code>Reuild</code>。所以，这也是为什么做 UI 提倡动静分离(动态部分和静态部分分别用不同的Canvas)，层级尽量减少(层级多了，重新计算更耗时)的原因。</strong></p>
+<h1>🌰</h1>
+<p>下面以一些案例直观展示 UGUI 的合批机制：</p>
+<h2 id="简单情况的合批">简单情况的合批</h2>
+<p>在场景中创建一些默认材质与纹理的 <code>Image</code>，打开 <code>Stats</code>、<code>Frame Debugger</code> 以及 <code>Profiler</code>，查看 <code>Draw Call</code> 数量。由于这些 <code>Image</code> 均为默认材质与纹理，因此满足合批条件。</p>
+<p><img src="https://s2.loli.net/2024/11/04/KMxrNzEP4JFuH6b.png" alt="image.png"></p>
+<p>可以发现 <code>Batches</code> 只有 1，即代表绘制所有的 <code>Image</code> 只发起了一次 <code>Draw Call</code>，也即进行了合批。</p>
+<p><img src="https://s2.loli.net/2024/11/04/gOjClFXnRZi4rJN.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2024/11/04/6knEHGwLMpVtxso.png" alt="image.png"></p>
+<p>由 <code>Frame Debugger</code> 以及 <code>Profiler</code> 可以更清晰地看到绘制过程，即一次性将所有的 <code>Image</code> 全部绘制出。</p>
+<h2 id="不同材质或纹理">不同材质或纹理</h2>
+<p>我们将第一张图片换为默认的 <code>Text</code> 组件，同样进行分析。由于文字与图片所使用的纹理是不同的，前者使用的是字体纹理，而默认的图片使用的是默认的白色纹理，因此二者无法进行合批。</p>
+<p><img src="https://s2.loli.net/2024/11/04/Z9vIEw3ixCYXlab.png" alt="image.png"></p>
+<p>可以发现 <code>Batches</code> 变为了 2，即代表绘制所有的 <code>Image</code> 与 <code>Text</code> 需要发起两次 <code>Draw Call</code>，也即无法进行合批。</p>
+<p><img src="https://s2.loli.net/2024/11/04/qX9ZbRtT6rvHaOY.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2024/11/04/c74DVJbvae8N6Os.png" alt="image.png"></p>
+<p>观察 <code>Profiler</code> 可以发现，<code>Text</code> 与 <code>Image</code> 分别进行了绘制，且 <code>Batch Break Reason</code> 为 <code>Different Texture</code>，即二者的纹理不同。</p>
+<p>除了合批被打断的原因之外还有一点值得注意，在上述的案例中，<code>Text</code> 实际上是在后续的 <code>Image</code> 组件之前的，应该先被渲染才对，然而实际上 <code>Text</code> 却是在 <code>Image</code> 之后被渲染，这是为什么呢？</p>
+<p>其原因就是上一节中提到的 <code>VisibleList</code> 的排序。在 <code>Canvas</code> 的合批过程中，会对 <code>VisibleList</code> 中的元素按照 <code>Depth</code>、<code>Material ID</code>、<code>Texture ID</code> 以及 <code>Renderer Order</code> 进行排序，值越小的排在越前面。在这里的案例中，<code>Text</code> 与 <code>Image</code> 的 <code>Depth</code> 都为 0，且二者的材质都是 <code>UI/Default</code>，因此渲染的顺序就取决于 <code>Texture ID</code> 了，为上述的物体挂载如下的脚本：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> UnityEngine;</span><br><span class="line"><span class="keyword">using</span> UnityEngine.UI;</span><br><span class="line"></span><br><span class="line">[<span class="meta">RequireComponent(typeof(Graphic))</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">PrintShaderInfo</span> : <span class="title">MonoBehaviour</span></span><br><span class="line">&#123;</span><br><span class="line">    Graphic graphic1;</span><br><span class="line">    Texture2D texture1;</span><br><span class="line">    Material material1;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">Awake</span>()</span> &#123;</span><br><span class="line">        graphic1 = GetComponent&lt;Graphic&gt;();</span><br><span class="line">        texture1 = graphic1.mainTexture <span class="keyword">as</span> Texture2D;</span><br><span class="line">        material1 = graphic1.materialForRendering;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">Start</span>()</span> &#123;</span><br><span class="line">        Debug.Log(<span class="string">$&quot;Current GameObject: <span class="subst">&#123;gameObject.name&#125;</span>, &quot;</span> +</span><br><span class="line">                  <span class="string">$&quot;Current Texture ID: <span class="subst">&#123;texture1.GetInstanceID()&#125;</span>, &quot;</span> + </span><br><span class="line">                  <span class="string">$&quot;Current Material ID: <span class="subst">&#123;material1.GetInstanceID()&#125;</span>&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行后可以发现如下的输出：</p>
+<p><img src="https://s2.loli.net/2024/11/04/5NkdbOXjRByCLqG.png" alt="image.png"></p>
+<p>我们发现 <code>Image</code> 的 <code>Texture ID</code> 确实比 <code>Text</code> 的要小，且二者的 <code>Material ID</code> 也确实是相同的，因此 <code>Image</code> 会先被渲染。</p>
+<h2 id="Depth-的影响">Depth 的影响</h2>
+<p>UI 元素的 <code>Depth</code> 也会影响合批的结果，<code>Depth</code> 即取决于 UI 元素在 <code>Canvas</code> 下的层级以及与其相交的 UI 元素的材质和纹理等。我们逐一实验：</p>
+<p>首先创建一些 <code>Image</code>，其中部分 <code>Image</code> 有交集。</p>
+<p><img src="https://s2.loli.net/2024/11/04/v9h31qKcSAQCdt7.png" alt="image.png"></p>
+<p>可以发现，即使图像之间有交集，但由于它们使用的都是相同的材质与纹理，因此所有的图像 <code>Depth</code> 都为 0，因此它们可以进行合批。只会产生一个 <code>Draw Call</code>。</p>
+<p>接着，我们在这些图像之间插入一个 <code>Text</code>，并使得二者的网格相交。<strong>注意，一定要保证网格相交</strong>。</p>
+<p><img src="https://s2.loli.net/2024/11/04/9uLBq5da3bSlQUg.png" alt="image.png"></p>
+<p>我们会发现，<code>Batches</code> 的数量变为了 3，让我们从 <code>VisibleList</code> 排序的角度分析一下这个结果：</p>
+<ol>
+<li>
+<p>首先，白色图片与文本均在最下方，因此它们的 <code>Depth</code> 都为 0；虽然二者在 <code>VisibleList</code> 中相邻，但由于纹理不同，因此无法进行合批；我们需要两个 <code>Draw Call</code> 来分别绘制它们。</p>
+<p><img src="https://s2.loli.net/2024/11/04/5G4Ljezcdw6YZyp.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2024/11/04/tyJPH6xRmOKprw4.png" alt="image.png"></p>
+</li>
+<li>
+<p>其次，橙色图片同时与白色图片以及文本相交，虽然与白色图片的材质与纹理都相同，但由于与文本相交，因此橙色图片自身的 <code>Depth</code> 为 1，无法与白色图片合批；同样地，绿色图片也与文本相交，因此 <code>Depth</code> 也为 1。但由于橙色与绿色图片的材质与纹理均相同，且二者的 <code>Depth</code> 也相同，因此它们可以进行合批。因此，我们需要第三个 <code>Draw Call</code> 来绘制橙色图片以及绿色图片。</p>
+<p><img src="https://s2.loli.net/2024/11/04/Blgvh2oK1OfztZI.png" alt="image.png"></p>
+</li>
+</ol>
+<p>明白了 <code>VisibleList</code> 的排序规则，我们就能够更好地理解合批的过程。</p>
+<h2 id="Mask-以及-RectMask2D-对于合批的影响">Mask 以及 RectMask2D 对于合批的影响</h2>
+<p>两种遮罩分别对合批过程有着不同的影响，我们逐一实验：</p>
+<h3 id="Mask">Mask</h3>
+<p>创建一个 <code>Mask</code>，并在其中放置一些 <code>Image</code>：</p>
+<p><img src="https://s2.loli.net/2024/11/04/Zws8IXpM97QWixH.png" alt="image.png"></p>
+<p>可以发现 <code>Batches</code> 直接变为了 3，这说明了两点：1. 一个 <code>Mask</code> 组件会额外产生两次 <code>Draw Call</code>；2. <code>Mask</code> 内部与外部的元素无法进行合批。</p>
+<p>观察 <code>Profiler</code> 的渲染过程：</p>
+<p><img src="https://s2.loli.net/2024/11/04/e3aTGyQKWqomrvx.png" alt="image.png"></p>
+<p>首先，调用一个 <code>Draw Call</code> 绘制 <code>Mask</code> 的 <code>Stencil Mask</code>。</p>
+<p><img src="https://s2.loli.net/2024/11/04/ORxfHFYqVNDSl25.png" alt="image.png"></p>
+<p>其次，调用第二个 <code>Draw Call</code> 绘制 <code>Mask</code> 中的内容，可以看到在绘制 <code>Mask</code> 内部的图像时进行了合批。</p>
+<p><img src="https://s2.loli.net/2024/11/04/Yx1KwbHWkdyXZF3.png" alt="image.png"></p>
+<p>最后，使用第三个 <code>Draw Call</code> 将 <code>Stencil Mask</code> 移除。</p>
+<p>可以发现两次合批被打断的原因都是因为 <code>Different Material Instance</code>，即三者的材质虽然相同，但却是不同的实例。这一点在研究完了 <code>Mask</code> 的原理后想必可以轻松理解：<strong>在 <code>Mask.GetModifiedMaterial()</code>，会生成两个材质实例，一个用于遮罩另一个用于清除模板缓冲区。虽然属于同一个材质但是对 <code>Stencil Buffer</code> 的设置不同；同时，<code>Mask</code> 内部的图像也会生成一个新的材质实例，设置仅在 <code>Mask</code> 范围内进行绘制。三者的材质实例都是不同的，因此无法进行合批</strong>。但 <code>Mask</code> 内部的图像如果材质与纹理相同则都能合批。</p>
+<p>由上述的分析可以得知，<code>Mask</code> 会额外产生两次 <code>Draw Call</code>，且合批被打断的原因是因为生成了不同的材质实例。但也正是因为如此，<strong>多个相同的 <code>Mask</code> 内部元素能够进行合批</strong>。</p>
+<p>举例来说，我们复制多份上述的 <code>Mask</code>：</p>
+<p><img src="https://s2.loli.net/2024/11/04/VjcyH9K4gSqh6mB.png" alt="image.png"></p>
+<p>会发现虽然图像数量变为了三倍，但 <code>Batches</code> 的数量却仍然是 3，这说明了多个相同的 <code>Mask</code> 能够进行合批。</p>
+<p><img src="https://s2.loli.net/2024/11/04/vxQmDOjCTEhXZ6B.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2024/11/04/uVFcRk4C1WzqAXU.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2024/11/04/6gTUPIhLKQ3OltG.png" alt="image.png"></p>
+<p>查看 <code>Profiler</code> 也可以发现，在第二个 <code>Batch</code> 中同时处理了所有 <code>Mask</code> 内部的元素。</p>
+<h3 id="RectMask2D">RectMask2D</h3>
+<p><code>RectMask2D</code> 遮罩的原理是直接设置了 <code>canvasRenderer</code> 的 <code>clipRect</code>，相比于 <code>Mask</code> 不会涉及复杂的模板缓冲区设置，对于合批的影响也有所不同。</p>
+<p>我们创建一个 <code>RectMask2D</code>，并在其中放置一些 <code>Image</code>：</p>
+<p><img src="https://s2.loli.net/2024/11/04/v9O4d5lMwXASxG6.png" alt="image.png"></p>
+<p>可以发现 <code>Batches</code> 的数量仅有 2，说明一个 <code>RectMask2D</code> 只会产生一个额外的 <code>Draw Call</code>。同样查看 <code>Profiler</code> 的渲染过程：</p>
+<p><img src="https://s2.loli.net/2024/11/04/23G8jpHlrzYWkuN.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2024/11/04/nycox7XpWCjwBl4.png" alt="image.png"></p>
+<p>合批被打断的原因为 <code>Different Rect Clipping</code>，这也正是 <code>RectMask2D</code> 的原理所在。同样地，因为这个原因，<strong>多个相同的 <code>RectMask2D</code> 内部元素无法合批</strong>。</p>
+<p>同样地，复制多份 <code>RectMask2D</code>：</p>
+<p><img src="https://s2.loli.net/2024/11/04/pXl9iVM5UCYNETf.png" alt="image.png"></p>
+<p>会发现 <code>Batches</code> 的数量居然变为了 4，查看 <code>Profiler</code> 的渲染过程：</p>
+<p><img src="https://s2.loli.net/2024/11/04/q5KV2mc8lieG1yJ.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2024/11/04/Ze7EP2Rpouh8vDx.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2024/11/04/AqEQLSCPaNm5tWh.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2024/11/04/cQM3mWyF4b9NIGf.png" alt="image.png"></p>
+<p>可以发现，虽然 <code>RectMask2D</code> 本身依然能够合批处理，但多个 <code>RectMask2D</code> 之间无法合批，即每个 <code>RectMask2D</code> 在绘制内部元素时都会产生一个额外的 <code>Draw Call</code>。这是因为每个 <code>RectMask2D</code> 所对应的 <code>ClipRect</code> 是不同的，CPU 需要单独设置渲染状态。</p>
+<h3 id="遮罩之间相交的情况">遮罩之间相交的情况</h3>
+<p>在上面的例子中，我们研究了图片以及文本相互相交的情况，并且发现由于 <code>Depth</code> 的原因，会出现无法合批的情况。对于遮罩也是如此：<strong>当一个遮罩与另一个遮罩的内部元素相交时，也会出现无法合批的情况。这一点对于 <code>Mask</code> 以及 <code>RectMask2D</code> 都适用</strong>。</p>
+<p>并且需要注意的是，<strong>遮罩区域之外的元素虽然已经被裁剪，但依然会影响相交以及 <code>Depth</code> 的计算</strong>，从而影响合批。</p>
+<p>如下面的两个例子，相交的两个 <code>Mask</code> 无法进行合批，从而产生了 6 个 <code>Draw Call</code>:</p>
+<p><img src="https://s2.loli.net/2024/11/04/iV4fUIPa9qbkh76.png" alt="image.png"></p>
+<p>并且与 <code>Mask</code> 区域之外的元素相交也有相同的效果。</p>
+<p><img src="https://s2.loli.net/2024/11/04/BzG7YP9Vopq2tHK.png" alt="image.png"></p>
+<p>对于 <code>RectMask2D</code> 也是如此：</p>
+<p><img src="https://s2.loli.net/2024/11/04/MkjofK8EBs417FU.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2024/11/04/pyXq8JSBv2QdOUr.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2024/11/04/imsBgzW3XPZbMCx.png" alt="image.png"></p>
+<h2 id="SpriteAtlas-图集-对于合批的影响">SpriteAtlas(图集) 对于合批的影响</h2>
+<p>在 <a href="https://qlipphoth.github.io/2024/10/14/2024-10-14-1/">UGUI-10：Image &amp; RawImage</a> 中，我们分析了使用 <code>SpriteAtlas</code> 的优势，<br>
+其中提到了 <code>SpriteAtlas</code> 对于合批的影响。这里我们再次总结一下：</p>
+<p>我们将需要显示的 <code>Sprite</code> 打包进同一个 <code>SpriteAtlas</code> 中，会发现场景中的 <code>Draw Call</code> 数量确实为 1，即所有的 <code>Sprite</code> 都被合批到了同一个 <code>Mesh</code> 中。</p>
+<p><img src="https://s2.loli.net/2024/11/07/47LJ1uUxjh5vsnB.png" alt="image.png"></p>
+<p>此外，通过打印它们的 <code>Texture ID</code> 以及 <code>Material ID</code>，我们可以发现它们的 <code>Texture ID</code> 都是相同的。</p>
+<p><img src="https://s2.loli.net/2024/11/07/2xvFMYpsHSgLrbQ.png" alt="image.png"></p>
+<p>也就是说，打包进同一个 <code>SpriteAtlas</code> 中的 <code>Sprite</code> 会被当成同一个纹理，因此它们可以进行合批。</p>
+<p>此外，当我们使用由一张 <code>Sprite</code> 通过 <code>Sprite Editor</code> 切割出的多个 <code>Sprite</code> 时，也会发现它们的 <code>Texture ID</code> 是相同的，因此也可以进行合批。</p>
+<p><img src="https://s2.loli.net/2024/11/07/j6k32yw7cEJpWMn.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2024/11/07/VDrTeH1bsxqRQOC.png" alt="image.png"></p>
+<h1>利用合批机制优化 UI 界面</h1>
+<p>在了解了 UGUI 的合批机制后，我们可以总结出一些 UI 界面制作时的一些优化方法了:</p>
+<ol>
+<li>
+<p>将需要用到的 <code>Sprite</code> 打包进同一个 <code>SpriteAtlas</code> 中。</p>
+</li>
+<li>
+<p>一些固定的 Text 可以考虑用图片代替。</p>
+</li>
+<li>
+<p>避免频繁删除/增加 UI 对象, UI 层次结构变化会引起 Canvas 的更新(<code>Rebuild</code>)。</p>
+</li>
+<li>
+<p>避免频繁更新 UI 元素的 <code>Vertex</code>、<code>Rect</code>、<code>Color</code>、<code>Material</code>、<code>Texture</code> 等数据，这样可能会引发 Canvas 重新计算 Batch。</p>
+</li>
+<li>
+<p><code>Mask</code> 会增加至少两个 <code>Draw Call</code>，而 <code>RectMask2D</code> 会增加一个 <code>Draw Call</code>，但二者的合批机制不同，因此优化思路也不同：</p>
+<ol>
+<li>当场景中的 <code>Mask</code> 内部元素材质纹理等相同时，使用 <code>Mask</code> 要优于 <code>RectMask2D</code>，因为 <code>Mask</code> 内部元素能够进行合批。</li>
+<li>当场景中的 <code>Mask</code> 内部元素材质纹理等不同时，使用 <code>RectMask2D</code> 要优于 <code>Mask</code>，因为 <code>Mask</code> 会产生更多额外的 <code>Draw Call</code>。</li>
+</ol>
+</li>
+<li>
+<p><code>Shadow</code>、<code>Outline</code> 等效果以及 <code>Image</code> 除了 <code>Simple</code> 以外的 <code>Type</code> 都会增加额外的顶点，不需要时尽量避免使用。</p>
+</li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2024/11/03/2024-11-3-1/">https://qlipphoth.github.io/2024/11/03/2024-11-3-1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity/">Unity</a><a class="post-meta__tags" href="/tags/C/">C#</a><a class="post-meta__tags" href="/tags/UGUI/">UGUI</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/10/25/2024-10-25-2/" title="Unity 补完计划（四）：UGUI-16：Dropdown"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">Unity 补完计划（四）：UGUI-16：Dropdown</div></div></a></div><div class="next-post pull-right"><a href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img class="cover" src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2024/08/05/2024-8-5-1/" title="UGUI 源码解析"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-08-05</div><div class="title">UGUI 源码解析</div></div></a></div><div><a href="/2024/10/25/2024-10-25-2/" title="Unity 补完计划（四）：UGUI-16：Dropdown"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-25</div><div class="title">Unity 补完计划（四）：UGUI-16：Dropdown</div></div></a></div><div><a href="/2024/10/25/2024-10-25-1/" title="Unity 补完计划（四）：UGUI-15：ScrollBar &amp; ScrollRect"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-25</div><div class="title">Unity 补完计划（四）：UGUI-15：ScrollBar &amp; ScrollRect</div></div></a></div><div><a href="/2024/10/23/2024-10-23-1/" title="Unity 补完计划（四）：UGUI-14：InputField"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-23</div><div class="title">Unity 补完计划（四）：UGUI-14：InputField</div></div></a></div><div><a href="/2024/10/17/2024-10-17-1/" title="Unity 补完计划（四）：UGUI-13：Toggle &amp; ToggleGroup &amp; Slider"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-17</div><div class="title">Unity 补完计划（四）：UGUI-13：Toggle &amp; ToggleGroup &amp; Slider</div></div></a></div><div><a href="/2024/10/15/2024-10-15-2/" title="Unity 补完计划（四）：UGUI-12：Selectable &amp; Button"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-15</div><div class="title">Unity 补完计划（四）：UGUI-12：Selectable &amp; Button</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">批处理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">3.</span> <span class="toc-text">UGUI 合批流程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#UpdateBatch"><span class="toc-number">3.1.</span> <span class="toc-text">UpdateBatch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mask-%E7%9A%84%E7%89%B9%E6%AE%8A%E5%A4%84%E7%90%86"><span class="toc-number">3.2.</span> <span class="toc-text">Mask 的特殊处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Depth-%E7%9A%84%E8%AE%A1%E7%AE%97"><span class="toc-number">3.3.</span> <span class="toc-text">Depth 的计算</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#VisiableList-%E7%9A%84%E5%A4%84%E7%90%86"><span class="toc-number">3.4.</span> <span class="toc-text">VisiableList 的处理</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">4.</span> <span class="toc-text">🌰</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E5%8D%95%E6%83%85%E5%86%B5%E7%9A%84%E5%90%88%E6%89%B9"><span class="toc-number">4.1.</span> <span class="toc-text">简单情况的合批</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E5%90%8C%E6%9D%90%E8%B4%A8%E6%88%96%E7%BA%B9%E7%90%86"><span class="toc-number">4.2.</span> <span class="toc-text">不同材质或纹理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Depth-%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="toc-number">4.3.</span> <span class="toc-text">Depth 的影响</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mask-%E4%BB%A5%E5%8F%8A-RectMask2D-%E5%AF%B9%E4%BA%8E%E5%90%88%E6%89%B9%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="toc-number">4.4.</span> <span class="toc-text">Mask 以及 RectMask2D 对于合批的影响</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Mask"><span class="toc-number">4.4.1.</span> <span class="toc-text">Mask</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RectMask2D"><span class="toc-number">4.4.2.</span> <span class="toc-text">RectMask2D</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%81%AE%E7%BD%A9%E4%B9%8B%E9%97%B4%E7%9B%B8%E4%BA%A4%E7%9A%84%E6%83%85%E5%86%B5"><span class="toc-number">4.4.3.</span> <span class="toc-text">遮罩之间相交的情况</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SpriteAtlas-%E5%9B%BE%E9%9B%86-%E5%AF%B9%E4%BA%8E%E5%90%88%E6%89%B9%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="toc-number">4.5.</span> <span class="toc-text">SpriteAtlas(图集) 对于合批的影响</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">5.</span> <span class="toc-text">利用合批机制优化 UI 界面</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

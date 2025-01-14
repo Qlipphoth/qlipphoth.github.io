@@ -1,0 +1,504 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Lua 源码解析（二）：基本数据类型 —— 字符串 | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="前言 Lua 中共有两种字符串的变体类型，分别是短字符串和长字符串。在 Lua 中，字符串是一种不可变的数据类型，即一旦创建，就不能再被修改。因此，Lua 会维护一个字符串池，在创建字符串之前会先检查字符串是否已经存在，如果存在则直接返回，否则创建一个新的字符串。为此 Lua 会对字符串做很多额外的工作，如计算它们的哈希值，初始化字符串池等等。我们将在本文中详细讨论这些内容。 String 的定义">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lua 源码解析（二）：基本数据类型 —— 字符串">
+<meta property="og:url" content="https://qlipphoth.github.io/2024/11/15/2024-11-15-1/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="前言 Lua 中共有两种字符串的变体类型，分别是短字符串和长字符串。在 Lua 中，字符串是一种不可变的数据类型，即一旦创建，就不能再被修改。因此，Lua 会维护一个字符串池，在创建字符串之前会先检查字符串是否已经存在，如果存在则直接返回，否则创建一个新的字符串。为此 Lua 会对字符串做很多额外的工作，如计算它们的哈希值，初始化字符串池等等。我们将在本文中详细讨论这些内容。 String 的定义">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg">
+<meta property="article:published_time" content="2024-11-15T16:09:05.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="Lua">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2024/11/15/2024-11-15-1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Lua 源码解析（二）：基本数据类型 —— 字符串',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Lua 源码解析（二）：基本数据类型 —— 字符串</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Lua/">Lua</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">4.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>17min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Lua 源码解析（二）：基本数据类型 —— 字符串"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1>前言</h1>
+<p>Lua 中共有两种字符串的变体类型，分别是短字符串和长字符串。在 Lua 中，字符串是一种不可变的数据类型，即一旦创建，就不能再被修改。因此，Lua 会维护一个字符串池，在创建字符串之前会先检查字符串是否已经存在，如果存在则直接返回，否则创建一个新的字符串。为此 Lua 会对字符串做很多额外的工作，如计算它们的哈希值，初始化字符串池等等。我们将在本文中详细讨论这些内容。</p>
+<h1>String 的定义</h1>
+<p>在 <a href="https://qlipphoth.github.io/2024/11/14/2024-11-14-1/">Lua 中的数据类型</a> 中我们介绍了 Lua 中字符串的类型定义：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Variant tags for strings */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LUA_VSHRSTR	makevariant(LUA_TSTRING, 0)  <span class="comment">/* short strings */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LUA_VLNGSTR	makevariant(LUA_TSTRING, 1)  <span class="comment">/* long strings */</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> setsvalue(L,obj,x) \</span></span><br><span class="line"><span class="meta">  &#123; TValue *io = (obj); TString *x_ = (x); \</span></span><br><span class="line"><span class="meta">    val_(io).gc = obj2gco(x_); settt_(io, ctb(x_-&gt;tt)); \</span></span><br><span class="line"><span class="meta">    checkliveness(L,io); &#125;</span></span><br></pre></td></tr></table></figure>
+<p>在 Lua 中，字符串的类型标签是 <code>LUA_TSTRING</code>，而字符串的变体标签有两种，分别是 <code>LUA_VSHRSTR</code> 和 <code>LUA_VLNGSTR</code>。其中，<code>LUA_VSHRSTR</code> 用于表示短字符串，<code>LUA_VLNGSTR</code> 用于表示长字符串。</p>
+<p>其中 <code>TString</code> 的定义如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** Header for a string value.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">TString</span> &#123;</span><br><span class="line">  CommonHeader;</span><br><span class="line">  lu_byte extra;  <span class="comment">/* reserved words for short strings; &quot;has hash&quot; for longs */</span></span><br><span class="line">  lu_byte shrlen;  <span class="comment">/* length for short strings */</span></span><br><span class="line">  <span class="type">unsigned</span> <span class="type">int</span> hash;</span><br><span class="line">  <span class="keyword">union</span> &#123;</span><br><span class="line">    <span class="type">size_t</span> lnglen;  <span class="comment">/* length for long strings */</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">TString</span> *hnext;  <span class="comment">/* linked list for hash table */</span></span><br><span class="line">  &#125; u;</span><br><span class="line">  <span class="type">char</span> contents[<span class="number">1</span>];</span><br><span class="line">&#125; TString;</span><br></pre></td></tr></table></figure>
+<p>可以看到 <code>TString</code> 结构体同时包含了短字符串和长字符串的信息。其中 <code>hash</code> 用于存放字符串的哈希值，而 <code>contents</code> 则指向字符串的首字符位置。</p>
+<p>针对短字符串，<code>TString</code> 的结构为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">TString</span> &#123;</span><br><span class="line">  CommonHeader;</span><br><span class="line">  lu_byte extra;  <span class="comment">/* reserved words for short strings; &quot;has hash&quot; for longs */</span></span><br><span class="line">  lu_byte shrlen;  <span class="comment">/* length for short strings */</span></span><br><span class="line">  <span class="type">unsigned</span> <span class="type">int</span> hash;</span><br><span class="line">  <span class="keyword">struct</span> <span class="title class_">TString</span> *hnext;  <span class="comment">/* linked list for hash table */</span></span><br><span class="line">  <span class="type">char</span> contents[<span class="number">1</span>];</span><br><span class="line">&#125; TString;</span><br></pre></td></tr></table></figure>
+<p>而针对长字符串，<code>TString</code> 的结构为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">TString</span> &#123;</span><br><span class="line">  CommonHeader;</span><br><span class="line">  lu_byte extra;  <span class="comment">/* reserved words for short strings; &quot;has hash&quot; for longs */</span></span><br><span class="line">  <span class="type">unsigned</span> <span class="type">int</span> hash;</span><br><span class="line">  <span class="type">size_t</span> lnglen;  <span class="comment">/* length for long strings */</span></span><br><span class="line">  <span class="type">char</span> contents[<span class="number">1</span>];</span><br><span class="line">&#125; TString;</span><br></pre></td></tr></table></figure>
+<p>由 <code>TString *hnext;</code> 的定义可以看出，Lua 仅针对短字符串做了字符串池的处理，字符串池是通过哈希表实现的，且哈希冲突的解决方式是链表法。因此短字符串需要维护一个 <code>hnext</code> 指针，用于指向哈希表中的下一个字符串。</p>
+<p>此外，<code>extra</code> 对于短字符串与长字符串也有不同的含义。对于短字符串，<code>extra</code> 用于标记该字符串是否是系统的保留字符串，而对于长字符串，<code>extra</code> 用于标记该字符串是否已经计算过哈希值。</p>
+<p>我们可以在 <code>lstring.h</code> 中找到一个宏定义：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** test whether a string is a reserved word</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> isreserved(s)	((s)-&gt;tt == LUA_VSHRSTR &amp;&amp; (s)-&gt;extra &gt; 0)</span></span><br></pre></td></tr></table></figure>
+<p>该宏用于判断一个字符串是否是系统的保留字符串。可以看出，如果一个字符串是短字符串且 <code>extra</code> 大于 0，则该字符串是系统的保留字符串。</p>
+<p>关于长短字符串的界限，Lua 在 <code>llimits.h</code> 中定义了一个宏：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** Maximum length for short strings, that is, strings that are</span></span><br><span class="line"><span class="comment">** internalized. (Cannot be smaller than reserved words or tags for</span></span><br><span class="line"><span class="comment">** metamethods, as these strings must be internalized;</span></span><br><span class="line"><span class="comment">** #(&quot;function&quot;) = 8, #(&quot;__newindex&quot;) = 10.)</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !defined(LUAI_MAXSHORTLEN)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LUAI_MAXSHORTLEN	40</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>这意味着默认情况下 Lua 认为 <strong>长度小于 40 的字符串是短字符串</strong>，否则是长字符串。该值也可以自行调整并重新编译 Lua，但需要注意该值必须大于系统的保留字符串长度。</p>
+<h1>String Table</h1>
+<p>前文中我们提到，Lua 会维护一个字符串池，用于存放短字符串。而该字符串池就是通过哈希表实现的。被称为 <code>stringtable</code>，定义在 <code>lstate.h</code> 中：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">stringtable</span> &#123;</span><br><span class="line">  TString **hash;</span><br><span class="line">  <span class="type">int</span> nuse;  <span class="comment">/* number of elements */</span></span><br><span class="line">  <span class="type">int</span> size;</span><br><span class="line">&#125; stringtable;</span><br></pre></td></tr></table></figure>
+<p>其中 <code>hash</code> 是一个指针数组，指向第一个哈希桶中的首个字符串。而 <code>nuse</code> 则表示当前字符串池中的字符串数量，<code>size</code> 则表示哈希表的大小。总体来看 <code>stringtable</code> 的结构十分简单，这是因为其哈希冲突的解决方式是链表法，且链表结构已经被 <code>TString</code> 中的 <code>hnext</code> 字段包含。</p>
+<p><code>stringtable</code> 会随着 lua 的启动而一同被初始化，并永久存在于 lua 的全局状态中。在 <code>lstate.h</code> 中，我们可以看到这样一个结构体：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** &#x27;global state&#x27;, shared by all threads of this state</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">global_State</span> &#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">  stringtable strt;  <span class="comment">/* hash table for strings */</span></span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">  TString *strcache[STRCACHE_N][STRCACHE_M];  <span class="comment">/* cache for strings in API */</span></span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125; global_State;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** &#x27;per thread&#x27; state</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">lua_State</span> &#123;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">  global_State *l_G;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> G(L)	(L-&gt;l_G)</span></span><br></pre></td></tr></table></figure>
+<p><code>global_State</code> 即为 lua 的全局状态，其中就包含了字符串池 <code>strt</code>，而 <code>global_State</code> 又被包含在 <code>lua_State</code> 中。这意味着，针对每一个 Lua 线程，通过该线程的 <code>lua_State</code> 指针 <code>*L</code>，我们就可以通过 <code>stringtable *tb = &amp;G(L)-&gt;strt;</code> 这样的方式来访问全局的字符串池。</p>
+<p>此外，可以看到 <code>global_State</code> 中还有一个 <code>strcache</code> 数组，该数组的作用会放在下文说明。</p>
+<p>与 <code>stringtable</code> 相关的操作函数均定义在 <code>lstring.c</code> 中。</p>
+<h2 id="stringtable-相关函数">stringtable 相关函数</h2>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">tablerehash</span> <span class="params">(TString **vect, <span class="type">int</span> osize, <span class="type">int</span> nsize)</span> </span>&#123;</span><br><span class="line">  <span class="type">int</span> i;</span><br><span class="line">  <span class="keyword">for</span> (i = osize; i &lt; nsize; i++)  <span class="comment">/* clear new elements */</span></span><br><span class="line">    vect[i] = <span class="literal">NULL</span>;</span><br><span class="line">  <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; osize; i++) &#123;  <span class="comment">/* rehash old part of the array */</span></span><br><span class="line">    TString *p = vect[i];</span><br><span class="line">    vect[i] = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">while</span> (p) &#123;  <span class="comment">/* for each string in the list */</span></span><br><span class="line">      TString *hnext = p-&gt;u.hnext;  <span class="comment">/* save next */</span></span><br><span class="line">      <span class="type">unsigned</span> <span class="type">int</span> h = <span class="built_in">lmod</span>(p-&gt;hash, nsize);  <span class="comment">/* new position */</span></span><br><span class="line">      p-&gt;u.hnext = vect[h];  <span class="comment">/* chain it into array */</span></span><br><span class="line">      vect[h] = p;</span><br><span class="line">      p = hnext;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>tablerehash</code> 函数的主要作用是在字符串表大小发生变化时，重新计算每个字符串的位置，并将它们插入到新的哈希表中。这里已经假定 <code>vect</code> 已经经过了扩容，<code>osize</code> 为旧的哈希表大小，<code>nsize</code> 为新的哈希表大小。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** Resize the string table. If allocation fails, keep the current size.</span></span><br><span class="line"><span class="comment">** (This can degrade performance, but any non-zero size should work</span></span><br><span class="line"><span class="comment">** correctly.)</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">luaS_resize</span> <span class="params">(lua_State *L, <span class="type">int</span> nsize)</span> </span>&#123;</span><br><span class="line">  stringtable *tb = &amp;<span class="built_in">G</span>(L)-&gt;strt;</span><br><span class="line">  <span class="type">int</span> osize = tb-&gt;size;</span><br><span class="line">  TString **newvect;</span><br><span class="line">  <span class="keyword">if</span> (nsize &lt; osize)  <span class="comment">/* shrinking table? */</span></span><br><span class="line">    <span class="built_in">tablerehash</span>(tb-&gt;hash, osize, nsize);  <span class="comment">/* depopulate shrinking part */</span></span><br><span class="line">  newvect = <span class="built_in">luaM_reallocvector</span>(L, tb-&gt;hash, osize, nsize, TString*);</span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">unlikely</span>(newvect == <span class="literal">NULL</span>)) &#123;  <span class="comment">/* reallocation failed? */</span></span><br><span class="line">    <span class="keyword">if</span> (nsize &lt; osize)  <span class="comment">/* was it shrinking table? */</span></span><br><span class="line">      <span class="built_in">tablerehash</span>(tb-&gt;hash, nsize, osize);  <span class="comment">/* restore to original size */</span></span><br><span class="line">    <span class="comment">/* leave table as it was */</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> &#123;  <span class="comment">/* allocation succeeded */</span></span><br><span class="line">    tb-&gt;hash = newvect;</span><br><span class="line">    tb-&gt;size = nsize;</span><br><span class="line">    <span class="keyword">if</span> (nsize &gt; osize)</span><br><span class="line">      <span class="built_in">tablerehash</span>(newvect, osize, nsize);  <span class="comment">/* rehash for new size */</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>luaS_resize</code> 函数用于调整字符串表的大小。其中对于空间的重新分配使用到了 <code>luaM_reallocvector</code> 宏，这部分我们会在 Lua 的内存管理中继续讨论，此处只需要知道这个宏可以用于重新分配字符串表的空间即可。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">luaS_remove</span> <span class="params">(lua_State *L, TString *ts)</span> </span>&#123;</span><br><span class="line">  stringtable *tb = &amp;<span class="built_in">G</span>(L)-&gt;strt;</span><br><span class="line">  TString **p = &amp;tb-&gt;hash[<span class="built_in">lmod</span>(ts-&gt;hash, tb-&gt;size)];</span><br><span class="line">  <span class="keyword">while</span> (*p != ts)  <span class="comment">/* find previous element */</span></span><br><span class="line">    p = &amp;(*p)-&gt;u.hnext;</span><br><span class="line">  *p = (*p)-&gt;u.hnext;  <span class="comment">/* remove element from its list */</span></span><br><span class="line">  tb-&gt;nuse--;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>luaS_remove</code> 函数用于从字符串表中移除一个字符串。首先通过哈希值找到该字符串所在的哈希桶，然后遍历该哈希桶中的链表，找到该字符串的前一个字符串，将其 <code>hnext</code> 指向该字符串的下一个字符串，从而将该字符串从哈希表中移除。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">growstrtab</span> <span class="params">(lua_State *L, stringtable *tb)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">unlikely</span>(tb-&gt;nuse == MAX_INT)) &#123;  <span class="comment">/* too many strings? */</span></span><br><span class="line">    <span class="built_in">luaC_fullgc</span>(L, <span class="number">1</span>);  <span class="comment">/* try to free some... */</span></span><br><span class="line">    <span class="keyword">if</span> (tb-&gt;nuse == MAX_INT)  <span class="comment">/* still too many? */</span></span><br><span class="line">      <span class="built_in">luaM_error</span>(L);  <span class="comment">/* cannot even create a message... */</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (tb-&gt;size &lt;= MAXSTRTB / <span class="number">2</span>)  <span class="comment">/* can grow string table? */</span></span><br><span class="line">    <span class="built_in">luaS_resize</span>(L, tb-&gt;size * <span class="number">2</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>growstrtab</code> 函数用于在字符串表中的字符串数量达到一定阈值时，对字符串表进行扩容。</p>
+<h1>字符串哈希方法</h1>
+<p>Lua 中对字符串的哈希方法为：<strong>以当前的时间作为起始种子，根据字符串的内容以某个步长进行逐位的异或运算，最终得到字符串的哈希值</strong>。对于短字符串而言，一般而言步长为 1，即每个字符都参与哈希计算。而对于长字符串，步长则会随字符串的长度而增加，以减少哈希冲突的概率。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** Lua will use at most ~(2^LUAI_HASHLIMIT) bytes from a long string to</span></span><br><span class="line"><span class="comment">** compute its hash</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !defined(LUAI_HASHLIMIT)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LUAI_HASHLIMIT		5</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p>首先定义了一个宏 <code>LUAI_HASHLIMIT</code>，表示 Lua 计算哈希值时最多使用的字符数。默认情况下，这一数值为 2^5 = 32。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">unsigned</span> <span class="type">int</span> <span class="title">luaS_hash</span> <span class="params">(<span class="type">const</span> <span class="type">char</span> *str, <span class="type">size_t</span> l, <span class="type">unsigned</span> <span class="type">int</span> seed,</span></span></span><br><span class="line"><span class="params"><span class="function">                        <span class="type">size_t</span> step)</span> </span>&#123;</span><br><span class="line">  <span class="type">unsigned</span> <span class="type">int</span> h = seed ^ <span class="built_in">cast_uint</span>(l);</span><br><span class="line">  <span class="keyword">for</span> (; l &gt;= step; l -= step)</span><br><span class="line">    h ^= ((h&lt;&lt;<span class="number">5</span>) + (h&gt;&gt;<span class="number">2</span>) + <span class="built_in">cast_byte</span>(str[l - <span class="number">1</span>]));</span><br><span class="line">  <span class="keyword">return</span> h;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">unsigned</span> <span class="type">int</span> <span class="title">luaS_hashlongstr</span> <span class="params">(TString *ts)</span> </span>&#123;</span><br><span class="line">  <span class="built_in">lua_assert</span>(ts-&gt;tt == LUA_VLNGSTR);</span><br><span class="line">  <span class="keyword">if</span> (ts-&gt;extra == <span class="number">0</span>) &#123;  <span class="comment">/* no hash? */</span></span><br><span class="line">    <span class="type">size_t</span> len = ts-&gt;u.lnglen;</span><br><span class="line">    <span class="type">size_t</span> step = (len &gt;&gt; LUAI_HASHLIMIT) + <span class="number">1</span>;</span><br><span class="line">    ts-&gt;hash = <span class="built_in">luaS_hash</span>(<span class="built_in">getstr</span>(ts), len, ts-&gt;hash, step);</span><br><span class="line">    ts-&gt;extra = <span class="number">1</span>;  <span class="comment">/* now it has its hash */</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> ts-&gt;hash;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>luaS_hash</code> 函数用于计算字符串的哈希值，可以看到计算的基本流程就是由 <code>seed</code> 作为起始种子，然后根据字符串的内容以 <code>step</code> 步长进行逐位的异或运算。而 <code>luaS_hashlongstr</code> 函数则用于计算长字符串的哈希值，其中 <code>step</code> 的值会随字符串的长度而增加，以保证最多只有 <code>2^LUAI_HASHLIMIT</code> 个字符参与哈希计算。</p>
+<p>此外可以看到，对于长字符串只会计算一次哈希值，计算完毕后会将 <code>extra</code> 置为 1，表示该字符串已经计算过哈希值。</p>
+<h1>字符串的创建</h1>
+<p><strong>Lua 中为了提升字符串的创建及查找性能，除了 <code>stringtable</code> 外还做了一层额外的缓存，也就是上文提到的 <code>strcache</code>。<code>strcache</code> 利用了程序的 “时间/空间局部性” 思想，将最近使用的字符串缓存起来，下次再有创建相同字符串的需求时，可以直接从缓存中取出。相比于 <code>stringtable</code>，<code>strcache</code> 是一个结构更加简单的一级缓存，它的容量更小，更新的频率也更高。在创建字符串时，Lua 会先检查 <code>strcache</code> 中是否已经存在该字符串，如果存在则直接返回，否则再去 <code>stringtable</code> 中查找</strong>。</p>
+<p>以下我们来看一下字符串的创建过程：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** creates a new string object</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="type">static</span> TString *<span class="title">createstrobj</span> <span class="params">(lua_State *L, <span class="type">size_t</span> l, <span class="type">int</span> tag, <span class="type">unsigned</span> <span class="type">int</span> h)</span> </span>&#123;</span><br><span class="line">  TString *ts;</span><br><span class="line">  GCObject *o;</span><br><span class="line">  <span class="type">size_t</span> totalsize;  <span class="comment">/* total size of TString object */</span></span><br><span class="line">  totalsize = <span class="built_in">sizelstring</span>(l);</span><br><span class="line">  o = <span class="built_in">luaC_newobj</span>(L, tag, totalsize);</span><br><span class="line">  ts = <span class="built_in">gco2ts</span>(o);</span><br><span class="line">  ts-&gt;hash = h;</span><br><span class="line">  ts-&gt;extra = <span class="number">0</span>;</span><br><span class="line">  <span class="built_in">getstr</span>(ts)[l] = <span class="string">&#x27;\0&#x27;</span>;  <span class="comment">/* ending 0 */</span></span><br><span class="line">  <span class="keyword">return</span> ts;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function">TString *<span class="title">luaS_createlngstrobj</span> <span class="params">(lua_State *L, <span class="type">size_t</span> l)</span> </span>&#123;</span><br><span class="line">  TString *ts = <span class="built_in">createstrobj</span>(L, l, LUA_VLNGSTR, <span class="built_in">G</span>(L)-&gt;seed);</span><br><span class="line">  ts-&gt;u.lnglen = l;</span><br><span class="line">  <span class="keyword">return</span> ts;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>createstrobj</code> 与 <code>luaS_createlngstrobj</code> 分别用于创建短字符串和长字符串。但这里仅仅是分配了长度为 <code>l</code> 的字符串的内存空间，并做了一些初始化工作，如将 <code>ts-&gt;extra</code> 置为 0，字符串末尾置为 <code>\0</code> 等，并没有赋予该对象具体的字符串内容。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** Checks whether short string exists and reuses it or creates a new one.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="type">static</span> TString *<span class="title">internshrstr</span> <span class="params">(lua_State *L, <span class="type">const</span> <span class="type">char</span> *str, <span class="type">size_t</span> l)</span> </span>&#123;</span><br><span class="line">  TString *ts;</span><br><span class="line">  global_State *g = <span class="built_in">G</span>(L);</span><br><span class="line">  stringtable *tb = &amp;g-&gt;strt;</span><br><span class="line">  <span class="type">unsigned</span> <span class="type">int</span> h = <span class="built_in">luaS_hash</span>(str, l, g-&gt;seed, <span class="number">1</span>);</span><br><span class="line">  TString **list = &amp;tb-&gt;hash[<span class="built_in">lmod</span>(h, tb-&gt;size)];</span><br><span class="line">  <span class="built_in">lua_assert</span>(str != <span class="literal">NULL</span>);  <span class="comment">/* otherwise &#x27;memcmp&#x27;/&#x27;memcpy&#x27; are undefined */</span></span><br><span class="line">  <span class="keyword">for</span> (ts = *list; ts != <span class="literal">NULL</span>; ts = ts-&gt;u.hnext) &#123;</span><br><span class="line">    <span class="keyword">if</span> (l == ts-&gt;shrlen &amp;&amp; (<span class="built_in">memcmp</span>(str, <span class="built_in">getstr</span>(ts), l * <span class="built_in">sizeof</span>(<span class="type">char</span>)) == <span class="number">0</span>)) &#123;</span><br><span class="line">      <span class="comment">/* found! */</span></span><br><span class="line">      <span class="keyword">if</span> (<span class="built_in">isdead</span>(g, ts))  <span class="comment">/* dead (but not collected yet)? */</span></span><br><span class="line">        <span class="built_in">changewhite</span>(ts);  <span class="comment">/* resurrect it */</span></span><br><span class="line">      <span class="keyword">return</span> ts;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">/* else must create a new string */</span></span><br><span class="line">  <span class="keyword">if</span> (tb-&gt;nuse &gt;= tb-&gt;size) &#123;  <span class="comment">/* need to grow string table? */</span></span><br><span class="line">    <span class="built_in">growstrtab</span>(L, tb);</span><br><span class="line">    list = &amp;tb-&gt;hash[<span class="built_in">lmod</span>(h, tb-&gt;size)];  <span class="comment">/* rehash with new size */</span></span><br><span class="line">  &#125;</span><br><span class="line">  ts = <span class="built_in">createstrobj</span>(L, l, LUA_VSHRSTR, h);</span><br><span class="line">  <span class="built_in">memcpy</span>(<span class="built_in">getstr</span>(ts), str, l * <span class="built_in">sizeof</span>(<span class="type">char</span>));</span><br><span class="line">  ts-&gt;shrlen = <span class="built_in">cast_byte</span>(l);</span><br><span class="line">  ts-&gt;u.hnext = *list;</span><br><span class="line">  *list = ts;</span><br><span class="line">  tb-&gt;nuse++;</span><br><span class="line">  <span class="keyword">return</span> ts;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>internshrstr</code> 函数用于创建短字符串并将其加入到 <code>stringtable</code> 中。首先计算字符串的哈希值，然后遍历哈希表中的链表，查找是否已经存在该字符串。如果存在则直接返回，否则创建一个新的字符串对象，并将其加入到哈希表中。</p>
+<p>这里使用了 <code>memcpy</code> 将真实的字符串内容拷贝到了新创建的字符串对象中。这里的 <code>memcpy</code> 是安全的，因为在 <code>createstrobj</code> 中已经为字符串对象分配了足够的空间。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** new string (with explicit length)</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function">TString *<span class="title">luaS_newlstr</span> <span class="params">(lua_State *L, <span class="type">const</span> <span class="type">char</span> *str, <span class="type">size_t</span> l)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (l &lt;= LUAI_MAXSHORTLEN)  <span class="comment">/* short string? */</span></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">internshrstr</span>(L, str, l);</span><br><span class="line">  <span class="keyword">else</span> &#123;</span><br><span class="line">    TString *ts;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">unlikely</span>(l &gt;= (MAX_SIZE - <span class="built_in">sizeof</span>(TString))/<span class="built_in">sizeof</span>(<span class="type">char</span>)))</span><br><span class="line">      <span class="built_in">luaM_toobig</span>(L);</span><br><span class="line">    ts = <span class="built_in">luaS_createlngstrobj</span>(L, l);</span><br><span class="line">    <span class="built_in">memcpy</span>(<span class="built_in">getstr</span>(ts), str, l * <span class="built_in">sizeof</span>(<span class="type">char</span>));</span><br><span class="line">    <span class="keyword">return</span> ts;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>luaS_newlstr</code> 函数用于创建一个新的字符串对象。如果字符串长度小于等于 <code>LUAI_MAXSHORTLEN</code>，则调用 <code>internshrstr</code> 函数创建短字符串，否则调用 <code>luaS_createlngstrobj</code> 函数创建长字符串。可以看到，长字符串并没有被加入到 <code>stringtable</code> 中。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** Create or reuse a zero-terminated string, first checking in the</span></span><br><span class="line"><span class="comment">** cache (using the string address as a key). The cache can contain</span></span><br><span class="line"><span class="comment">** only zero-terminated strings, so it is safe to use &#x27;strcmp&#x27; to</span></span><br><span class="line"><span class="comment">** check hits.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function">TString *<span class="title">luaS_new</span> <span class="params">(lua_State *L, <span class="type">const</span> <span class="type">char</span> *str)</span> </span>&#123;</span><br><span class="line">  <span class="type">unsigned</span> <span class="type">int</span> i = <span class="built_in">point2uint</span>(str) % STRCACHE_N;  <span class="comment">/* hash */</span></span><br><span class="line">  <span class="type">int</span> j;</span><br><span class="line">  TString **p = <span class="built_in">G</span>(L)-&gt;strcache[i];</span><br><span class="line">  <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; STRCACHE_M; j++) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">strcmp</span>(str, <span class="built_in">getstr</span>(p[j])) == <span class="number">0</span>)  <span class="comment">/* hit? */</span></span><br><span class="line">      <span class="keyword">return</span> p[j];  <span class="comment">/* that is it */</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">/* normal route */</span></span><br><span class="line">  <span class="keyword">for</span> (j = STRCACHE_M - <span class="number">1</span>; j &gt; <span class="number">0</span>; j--)</span><br><span class="line">    p[j] = p[j - <span class="number">1</span>];  <span class="comment">/* move out last element */</span></span><br><span class="line">  <span class="comment">/* new element is first in the list */</span></span><br><span class="line">  p[<span class="number">0</span>] = <span class="built_in">luaS_newlstr</span>(L, str, <span class="built_in">strlen</span>(str));</span><br><span class="line">  <span class="keyword">return</span> p[<span class="number">0</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>luaS_new</code> 就是最终的字符串创建函数了，它首先会检查 <code>strcache</code> 中是否已经存在该字符串，如果存在则直接返回，否则调用 <code>luaS_newlstr</code> 函数创建一个新的字符串对象，并将其加入到 <code>strcache</code> 中。</p>
+<p>我们也可以从中看到 <code>strcache</code> 的更新逻辑：首先，会通过字符串的地址直接计算出一个哈希值并存放在对应的行中；其次，每次有新的字符串创建时，会将 <code>strcache[i]</code> 中的所有字符串向后移动一个位置，最后将新创建的字符串放在第一个位置。</p>
+<p>在 <code>llimits.h</code> 中，我们可以看到 <code>STRCACHE_N</code> 和 <code>STRCACHE_M</code> 的定义：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** Size of cache for strings in the API. &#x27;N&#x27; is the number of</span></span><br><span class="line"><span class="comment">** sets (better be a prime) and &quot;M&quot; is the size of each set (M == 1</span></span><br><span class="line"><span class="comment">** makes a direct cache.)</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !defined(STRCACHE_N)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> STRCACHE_N		53</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> STRCACHE_M		2</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<p><code>STRCACHE_N</code> 是一个大小适中的素数，保证了缓存的容量以及较低的哈希冲突概率。<code>STRCACHE_M</code> 是一个较小的值，这保证了创建时的查找效率，如果该值过大则创建字符串就会十分耗时。</p>
+<h1><code>lstring.c</code> 中的其他函数</h1>
+<p><code>lstring.c</code> 中还有一些其他的函数，如字符串的比较、初始化等，这里简要分析：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** equality for long strings</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">luaS_eqlngstr</span> <span class="params">(TString *a, TString *b)</span> </span>&#123;</span><br><span class="line">  <span class="type">size_t</span> len = a-&gt;u.lnglen;</span><br><span class="line">  <span class="built_in">lua_assert</span>(a-&gt;tt == LUA_VLNGSTR &amp;&amp; b-&gt;tt == LUA_VLNGSTR);</span><br><span class="line">  <span class="keyword">return</span> (a == b) ||  <span class="comment">/* same instance or... */</span></span><br><span class="line">    ((len == b-&gt;u.lnglen) &amp;&amp;  <span class="comment">/* equal length and ... */</span></span><br><span class="line">     (<span class="built_in">memcmp</span>(<span class="built_in">getstr</span>(a), <span class="built_in">getstr</span>(b), len) == <span class="number">0</span>));  <span class="comment">/* equal contents */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>luaS_eqlngstr</code> 函数首先会直接判断两个字符串是否是同一个实例，如果是则直接返回真。否则再比较两个字符串的长度以及内容是否相同。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** Initialize the string table and the string cache</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">luaS_init</span> <span class="params">(lua_State *L)</span> </span>&#123;</span><br><span class="line">  global_State *g = <span class="built_in">G</span>(L);</span><br><span class="line">  <span class="type">int</span> i, j;</span><br><span class="line">  stringtable *tb = &amp;<span class="built_in">G</span>(L)-&gt;strt;</span><br><span class="line">  tb-&gt;hash = <span class="built_in">luaM_newvector</span>(L, MINSTRTABSIZE, TString*);</span><br><span class="line">  <span class="built_in">tablerehash</span>(tb-&gt;hash, <span class="number">0</span>, MINSTRTABSIZE);  <span class="comment">/* clear array */</span></span><br><span class="line">  tb-&gt;size = MINSTRTABSIZE;</span><br><span class="line">  <span class="comment">/* pre-create memory-error message */</span></span><br><span class="line">  g-&gt;memerrmsg = <span class="built_in">luaS_newliteral</span>(L, MEMERRMSG);</span><br><span class="line">  <span class="built_in">luaC_fix</span>(L, <span class="built_in">obj2gco</span>(g-&gt;memerrmsg));  <span class="comment">/* it should never be collected */</span></span><br><span class="line">  <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; STRCACHE_N; i++)  <span class="comment">/* fill cache with valid strings */</span></span><br><span class="line">    <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; STRCACHE_M; j++)</span><br><span class="line">      g-&gt;strcache[i][j] = g-&gt;memerrmsg;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>luaS_init</code> 函数用于初始化字符串表和字符串缓存。首先会为字符串表分配空间，并初始化哈希表。然后会为字符串缓存填充初始值，这里填充的是一个内存错误的字符串。在 Lua 的初始化过程中，就会调用这个函数以初始化字符串表和字符串缓存。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// lstate.c</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">** open parts of the state that may cause memory-allocation errors.</span></span><br><span class="line"><span class="comment">** (&#x27;g-&gt;nilvalue&#x27; being a nil value flags that the state was completely</span></span><br><span class="line"><span class="comment">** build.)</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">f_luaopen</span> <span class="params">(lua_State *L, <span class="type">void</span> *ud)</span> </span>&#123;</span><br><span class="line">  global_State *g = <span class="built_in">G</span>(L);</span><br><span class="line">  <span class="built_in">UNUSED</span>(ud);</span><br><span class="line">  <span class="built_in">stack_init</span>(L, L);  <span class="comment">/* init stack */</span></span><br><span class="line">  <span class="built_in">init_registry</span>(L, g);</span><br><span class="line">  <span class="built_in">luaS_init</span>(L);</span><br><span class="line">  <span class="built_in">luaT_init</span>(L);</span><br><span class="line">  <span class="built_in">luaX_init</span>(L);</span><br><span class="line">  g-&gt;gcrunning = <span class="number">1</span>;  <span class="comment">/* allow gc */</span></span><br><span class="line">  <span class="built_in">setnilvalue</span>(&amp;g-&gt;nilvalue);</span><br><span class="line">  <span class="built_in">luai_userstateopen</span>(L);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1>总结</h1>
+<p>字符串在 Lua 中是一种不可变对象，Lua 使用 <code>TString</code> 结构体来表示一个字符串对象，长字符串与短字符串分别会使用该结构中的不同字段。为了优化字符串的创建和查找性能，Lua 维护了两层字符串的缓存机制，分别是 <code>stringtable</code> 和 <code>strcache</code>。<code>stringtable</code> 是一个全局的哈希表，用于存放运行过程中创建的所有短字符串，<code>stringtable</code> 通过链表法解决哈希冲突，且对于字符串的哈希方式为逐位异或。而 <code>strcache</code> 则是一个容量更小、结构更简单、更新频率更高的一级缓存，用于存放最近使用的字符串，以提升字符串的创建性能，<code>strcache</code> 通过字符串的地址直接计算哈希值，然后将字符串放入对应的行中。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2024/11/15/2024-11-15-1/">https://qlipphoth.github.io/2024/11/15/2024-11-15-1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Lua/">Lua</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img class="cover" src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</div></div></a></div><div class="next-post pull-right"><a href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img class="cover" src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">Lua 源码解析（二）：基本数据类型 —— 表（上）</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img class="cover" src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-11-23</div><div class="title">Lua 源码解析（二）：基本数据类型 —— 表（下）</div></div></a></div><div><a href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img class="cover" src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-11-17</div><div class="title">Lua 源码解析（二）：基本数据类型 —— 表（上）</div></div></a></div><div><a href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img class="cover" src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-11-14</div><div class="title">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</div></div></a></div><div><a href="/2024/07/16/2024-7-16-1/" title="Lua 入门"><img class="cover" src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-07-16</div><div class="title">Lua 入门</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">String 的定义</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">3.</span> <span class="toc-text">String Table</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#stringtable-%E7%9B%B8%E5%85%B3%E5%87%BD%E6%95%B0"><span class="toc-number">3.1.</span> <span class="toc-text">stringtable 相关函数</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">4.</span> <span class="toc-text">字符串哈希方法</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">5.</span> <span class="toc-text">字符串的创建</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">6.</span> <span class="toc-text">lstring.c 中的其他函数</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">7.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

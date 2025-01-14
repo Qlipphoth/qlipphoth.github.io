@@ -1,0 +1,620 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Unity 补完计划（四）：UGUI-8：IMeshModifier &amp; IMaterialModifier | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="前言 在 上一篇 中我们提到了：Graphic 在渲染流程中分别使用到了 IMeshModifier 和 IMaterialModifier 接口来实现对于网格以及材质的修改，本节我们就来分析一下 UGUI 中实现了这些接口的组件分别都起到了什么作用。 IMeshModifier 在 UGUI 中，实现了 IMeshModifier 接口的组件间的关系如下图所示：  在 Graphic 中的使用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unity 补完计划（四）：UGUI-8：IMeshModifier &amp; IMaterialModifier">
+<meta property="og:url" content="https://qlipphoth.github.io/2024/09/30/2024-9-30-1/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="前言 在 上一篇 中我们提到了：Graphic 在渲染流程中分别使用到了 IMeshModifier 和 IMaterialModifier 接口来实现对于网格以及材质的修改，本节我们就来分析一下 UGUI 中实现了这些接口的组件分别都起到了什么作用。 IMeshModifier 在 UGUI 中，实现了 IMeshModifier 接口的组件间的关系如下图所示：  在 Graphic 中的使用">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg">
+<meta property="article:published_time" content="2024-09-30T13:58:31.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="Unity">
+<meta property="article:tag" content="C#">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2024/09/30/2024-9-30-1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Unity 补完计划（四）：UGUI-8：IMeshModifier & IMaterialModifier',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Unity 补完计划（四）：UGUI-8：IMeshModifier &amp; IMaterialModifier</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-09-30T13:58:31.000Z" title="Created 2024-09-30 13:58:31">2024-09-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Unity/UGUI/">UGUI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">6.6k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>24min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Unity 补完计划（四）：UGUI-8：IMeshModifier &amp; IMaterialModifier"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1>前言</h1>
+<p>在 <a href="https://qlipphoth.github.io/2024/09/27/2024-9-27-1/">上一篇</a> 中我们提到了：<code>Graphic</code> 在渲染流程中分别使用到了 <code>IMeshModifier</code> 和 <code>IMaterialModifier</code> 接口来实现对于网格以及材质的修改，本节我们就来分析一下 UGUI 中实现了这些接口的组件分别都起到了什么作用。</p>
+<h1>IMeshModifier</h1>
+<p>在 UGUI 中，实现了 <code>IMeshModifier</code> 接口的组件间的关系如下图所示：</p>
+<p><img src="https://s2.loli.net/2024/09/30/rQ9PVxMTDdSfkEj.png" alt="IMeshModifier.png"></p>
+<h2 id="在-Graphic-中的使用">在 <code>Graphic</code> 中的使用</h2>
+<p>首先来看看 <code>IMeshModifier</code> 在 <code>Graphic</code> 中是如何使用的：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">DoMeshGeneration</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (rectTransform != <span class="literal">null</span> &amp;&amp; rectTransform.rect.width &gt;= <span class="number">0</span> &amp;&amp; rectTransform.rect.height &gt;= <span class="number">0</span>)</span><br><span class="line">        OnPopulateMesh(s_VertexHelper);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        s_VertexHelper.Clear(); <span class="comment">// clear the vertex helper so invalid graphics dont draw.</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> components = ListPool&lt;Component&gt;.Get();</span><br><span class="line">    GetComponents(<span class="keyword">typeof</span>(IMeshModifier), components);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; components.Count; i++)</span><br><span class="line">        ((IMeshModifier)components[i]).ModifyMesh(s_VertexHelper);</span><br><span class="line"></span><br><span class="line">    ListPool&lt;Component&gt;.Release(components);</span><br><span class="line"></span><br><span class="line">    s_VertexHelper.FillMesh(workerMesh);</span><br><span class="line">    canvasRenderer.SetMesh(workerMesh);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在 <code>DoMeshGeneration</code> 方法中（即 <code>UpdateGeometry</code> 阶段）， 会遍历当前物体上挂载的所有 <code>IMeshModifier</code> 组件，并调用其 <code>ModifyMesh</code> 方法来修改 <code>s_VertexHelper</code>，由于 <code>s_VertexHelper</code> 是引用传递，因此所有的修改都会累计到 <code>s_VertexHelper</code> 中。</p>
+<h2 id="BaseMeshEffect">BaseMeshEffect</h2>
+<p><code>BaseMeshEffect</code> 是实现了 <code>IMeshModifier</code> 接口的基类，其余的 <code>IMeshModifier</code> 组件都是继承自该类，查看该类的实现：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title">BaseMeshEffect</span> : <span class="title">UIBehaviour</span>, <span class="title">IMeshModifier</span></span><br><span class="line">&#123;</span><br><span class="line">    [<span class="meta">NonSerialized</span>]</span><br><span class="line">    <span class="keyword">private</span> Graphic m_Graphic;</span><br><span class="line"></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> The graphic component that the Mesh Effect will aplly to.</span></span><br><span class="line">    <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">    <span class="keyword">protected</span> Graphic graphic</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">get</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (m_Graphic == <span class="literal">null</span>)</span><br><span class="line">                m_Graphic = GetComponent&lt;Graphic&gt;();</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> m_Graphic;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">ModifyMesh</span>(<span class="params">VertexHelper vh</span>)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看出，该类也仅仅是一个抽象类，并没有实现 <code>ModifyMesh</code> 方法。但在该类中维护了一个 <code>Graphic</code> 类型的变量 <code>m_Graphic</code>，代表着目前的 <code>BaseMeshEffect</code> 所作用的 <code>Graphic</code> 组件。在 <code>get</code> 方法中也可以看到，会使用 <code>GetComponent&lt;Graphic&gt;()</code> 来获取到当前 <code>BaseMeshEffect</code> 所作用的 <code>Graphic</code> 对象。</p>
+<h2 id="Shadow">Shadow</h2>
+<p><code>Shadow</code> 组件用于为 <code>Graphic</code> 组件添加阴影效果，该组件继承自 <code>BaseMeshEffect</code>，并实现了 <code>ModifyMesh</code> 方法：</p>
+<p><img src="https://s2.loli.net/2024/09/30/YTKMSO6Atz2rmgZ.png" alt="image.png"></p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Shadow</span> : <span class="title">BaseMeshEffect</span></span><br><span class="line">&#123;</span><br><span class="line">    [<span class="meta">SerializeField</span>]</span><br><span class="line">    <span class="keyword">private</span> Color m_EffectColor = <span class="keyword">new</span> Color(<span class="number">0f</span>, <span class="number">0f</span>, <span class="number">0f</span>, <span class="number">0.5f</span>);</span><br><span class="line"></span><br><span class="line">    [<span class="meta">SerializeField</span>]</span><br><span class="line">    <span class="keyword">private</span> Vector2 m_EffectDistance = <span class="keyword">new</span> Vector2(<span class="number">1f</span>, <span class="number">-1f</span>);</span><br><span class="line"></span><br><span class="line">    [<span class="meta">SerializeField</span>]</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">bool</span> m_UseGraphicAlpha = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="built_in">float</span> kMaxEffectDistance = <span class="number">600f</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> Color effectColor</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123; <span class="keyword">return</span> m_EffectColor; &#125;</span><br><span class="line">        <span class="keyword">set</span></span><br><span class="line">        &#123;</span><br><span class="line">            m_EffectColor = <span class="keyword">value</span>;</span><br><span class="line">            <span class="keyword">if</span> (graphic != <span class="literal">null</span>)</span><br><span class="line">                graphic.SetVerticesDirty();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> Vector2 effectDistance</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123; <span class="keyword">return</span> m_EffectDistance; &#125;</span><br><span class="line">        <span class="keyword">set</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">value</span>.x &gt; kMaxEffectDistance)</span><br><span class="line">                <span class="keyword">value</span>.x = kMaxEffectDistance;</span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">value</span>.x &lt; -kMaxEffectDistance)</span><br><span class="line">                <span class="keyword">value</span>.x = -kMaxEffectDistance;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">value</span>.y &gt; kMaxEffectDistance)</span><br><span class="line">                <span class="keyword">value</span>.y = kMaxEffectDistance;</span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">value</span>.y &lt; -kMaxEffectDistance)</span><br><span class="line">                <span class="keyword">value</span>.y = -kMaxEffectDistance;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (m_EffectDistance == <span class="keyword">value</span>)</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">            m_EffectDistance = <span class="keyword">value</span>;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (graphic != <span class="literal">null</span>)</span><br><span class="line">                graphic.SetVerticesDirty();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">bool</span> useGraphicAlpha</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">get</span> &#123; <span class="keyword">return</span> m_UseGraphicAlpha; &#125;</span><br><span class="line">        <span class="keyword">set</span></span><br><span class="line">        &#123;</span><br><span class="line">            m_UseGraphicAlpha = <span class="keyword">value</span>;</span><br><span class="line">            <span class="keyword">if</span> (graphic != <span class="literal">null</span>)</span><br><span class="line">                graphic.SetVerticesDirty();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先，<code>Shadow</code> 组件中定义了三个变量用于控制阴影的效果，分别是 <code>m_EffectColor</code>（阴影颜色）、<code>m_EffectDistance</code>（阴影偏移）和 <code>m_UseGraphicAlpha</code>（是否使用 <code>Graphic</code> 的透明度）。在 <code>ModifyMesh</code> 方法中，会根据这三个变量来修改 <code>VertexHelper</code> 中的顶点信息，从而实现阴影效果。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">ApplyShadowZeroAlloc</span>(<span class="params">List&lt;UIVertex&gt; verts, Color32 color, <span class="built_in">int</span> start, <span class="built_in">int</span> end, <span class="built_in">float</span> x, <span class="built_in">float</span> y</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    UIVertex vt;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> neededCapacity = verts.Count + end - start;</span><br><span class="line">    <span class="keyword">if</span> (verts.Capacity &lt; neededCapacity)</span><br><span class="line">        verts.Capacity = neededCapacity;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = start; i &lt; end; ++i)</span><br><span class="line">    &#123;</span><br><span class="line">        vt = verts[i];</span><br><span class="line">        verts.Add(vt);</span><br><span class="line"></span><br><span class="line">        Vector3 v = vt.position;</span><br><span class="line">        v.x += x;</span><br><span class="line">        v.y += y;</span><br><span class="line">        vt.position = v;</span><br><span class="line">        <span class="keyword">var</span> newColor = color;</span><br><span class="line">        <span class="keyword">if</span> (m_UseGraphicAlpha)</span><br><span class="line">            newColor.a = (<span class="built_in">byte</span>)((newColor.a * verts[i].color.a) / <span class="number">255</span>);</span><br><span class="line">        vt.color = newColor;</span><br><span class="line">        verts[i] = vt;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>ApplyShadowZeroAlloc</code> 方法是实现阴影的主要方法，从逻辑中可以看出：<strong>阴影实际上的实现方式就是在指定的位置上多渲染了一倍的顶点，并且将颜色进行了调整。这样就实现了阴影的效果</strong>。</p>
+<blockquote>
+<p>此外，仔细研究我们会发现一个有趣的事实：<strong>新添加的顶点实际上占据了原始顶点的位置，而原始的顶点则被放在了顶点队列的最后</strong>。这是为什么呢？答案就是渲染的先后顺序问题，<strong>如果我们将新增加的阴影顶点放在队列末尾，那么在渲染时，阴影就会覆盖掉原始的图片</strong>，这显然不是我们想要的效果。因此，我们需要将阴影顶点放在原始顶点的前面，这样就能保证阴影在原始图片的下方。</p>
+</blockquote>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">ApplyShadow</span>(<span class="params">List&lt;UIVertex&gt; verts, Color32 color, <span class="built_in">int</span> start, <span class="built_in">int</span> end, <span class="built_in">float</span> x, <span class="built_in">float</span> y</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    ApplyShadowZeroAlloc(verts, color, start, end, x, y);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">ModifyMesh</span>(<span class="params">VertexHelper vh</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (!IsActive())</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> output = ListPool&lt;UIVertex&gt;.Get();</span><br><span class="line">    vh.GetUIVertexStream(output);</span><br><span class="line"></span><br><span class="line">    ApplyShadow(output, effectColor, <span class="number">0</span>, output.Count, effectDistance.x, effectDistance.y);</span><br><span class="line">    vh.Clear();</span><br><span class="line">    vh.AddUIVertexTriangleStream(output);</span><br><span class="line">    ListPool&lt;UIVertex&gt;.Release(output);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在 <code>ModifyMesh</code> 方法中，会调用 <code>ApplyShadow</code> 方法来实现阴影的效果，最后将修改后的顶点信息重新填充到 <code>VertexHelper</code> 中。</p>
+<p>添加阴影后的效果如下：</p>
+<p><img src="https://s2.loli.net/2024/09/30/GQBP2mOLltgE9io.png" alt="image.png"></p>
+<h2 id="Outline">Outline</h2>
+<p><code>Outline</code> 组件用于为 <code>Graphic</code> 组件添加描边效果，该组件继承自 <code>Shadow</code>，并且也实现了 <code>ModifyMesh</code> 方法：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Outline</span> : <span class="title">Shadow</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="title">Outline</span>()</span></span><br><span class="line">    &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">ModifyMesh</span>(<span class="params">VertexHelper vh</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (!IsActive())</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">var</span> verts = ListPool&lt;UIVertex&gt;.Get();</span><br><span class="line">        vh.GetUIVertexStream(verts);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">var</span> neededCpacity = verts.Count * <span class="number">5</span>;</span><br><span class="line">        <span class="keyword">if</span> (verts.Capacity &lt; neededCpacity)</span><br><span class="line">            verts.Capacity = neededCpacity;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">var</span> start = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">var</span> end = verts.Count;</span><br><span class="line">        ApplyShadowZeroAlloc(verts, effectColor, start, verts.Count, effectDistance.x, effectDistance.y);</span><br><span class="line"></span><br><span class="line">        start = end;</span><br><span class="line">        end = verts.Count;</span><br><span class="line">        ApplyShadowZeroAlloc(verts, effectColor, start, verts.Count, effectDistance.x, -effectDistance.y);</span><br><span class="line"></span><br><span class="line">        start = end;</span><br><span class="line">        end = verts.Count;</span><br><span class="line">        ApplyShadowZeroAlloc(verts, effectColor, start, verts.Count, -effectDistance.x, effectDistance.y);</span><br><span class="line"></span><br><span class="line">        start = end;</span><br><span class="line">        end = verts.Count;</span><br><span class="line">        ApplyShadowZeroAlloc(verts, effectColor, start, verts.Count, -effectDistance.x, -effectDistance.y);</span><br><span class="line"></span><br><span class="line">        vh.Clear();</span><br><span class="line">        vh.AddUIVertexTriangleStream(verts);</span><br><span class="line">        ListPool&lt;UIVertex&gt;.Release(verts);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>描边的实现原理与阴影类似，<strong>分别在四个方向上共添加了四倍的顶点，从而实现了描边的效果</strong>。这里描边的处理也与阴影相同，由于都调用了 <code>ApplyShadowZeroAlloc</code> 方法，因此描边的顶点也会被放在原始顶点的前面，从而不会覆盖原始图片。</p>
+<p>添加描边后的效果如下：</p>
+<p><img src="https://s2.loli.net/2024/09/30/Cnt85uqTkmSNUg6.png" alt="image.png"></p>
+<p>可以看到，由于这里使用的 <code>Alpha</code> 值不为 <code>1</code>，因此描边有一些露馅，但也证明了描边确实是通过向四个方向移动而实现的。</p>
+<h2 id="PositionAsUV1">PositionAsUV1</h2>
+<p><code>PositionAsUV1</code> 组件用于将顶点的位置信息映射到 <code>UV1</code> 通道上。老实说，笔者并不知道这个组件有什么用，可能在渲染时会用到吧。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">PositionAsUV1</span> : <span class="title">BaseMeshEffect</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="title">PositionAsUV1</span>()</span></span><br><span class="line">    &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">ModifyMesh</span>(<span class="params">VertexHelper vh</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        UIVertex vert = <span class="keyword">new</span> UIVertex();</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; vh.currentVertCount; i++)</span><br><span class="line">        &#123;</span><br><span class="line">            vh.PopulateUIVertex(<span class="keyword">ref</span> vert, i);</span><br><span class="line">            vert.uv1 =  <span class="keyword">new</span> Vector2(vert.position.x, vert.position.y);</span><br><span class="line">            vh.SetUIVertex(vert, i);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>实现的逻辑也比较简单，就是遍历所有的顶点，将顶点的位置信息映射到 <code>UV1</code> 通道上。</p>
+<h2 id="小结">小结</h2>
+<p><code>IMeshModifier</code> 接口的实现类主要是用于修改 <code>VertexHelper</code> 中的顶点信息，从而实现一些特殊的效果，如阴影、描边等。这主要是通过向 <code>VertexHelper</code> 中添加额外的顶点来实现的，其中阴影是向指定方向添加一倍的顶点，而描边则是向四个方向添加四倍的顶点。</p>
+<p><img src="https://s2.loli.net/2024/09/30/rQ9PVxMTDdSfkEj.png" alt="IMeshModifier.png"></p>
+<h1>IMaterialModifier</h1>
+<p>不同于 <code>IMeshModifier</code> 的清晰结构与简单功能。<code>IMaterialModifier</code> 与 UGUI 中一个非常重要的内容强耦合：遮罩（Mask）。遮罩用于限制子元素的可见区域，使得我们可以实现一些特殊的效果，如圆形头像、进度条等。</p>
+<p>在讨论 UGUI 如何实现遮罩之前我们可以思考一下：在渲染管线中，如何实现遮罩功能？一种最直观的想法就是利用 “测试与混合（Test &amp; Blending）” 阶段了。渲染管线的内容可以参考 <a href="https://qlipphoth.github.io/2023/12/07/2023-12-7-1/">Rendering Pipeline</a>。</p>
+<p>测试阶段按照测试的先后顺序包括了裁剪测试、Alpha 测试、模板测试以及深度测试。在测试阶段，所有未经过测试的片段（Fragment）都会被丢弃，而通过测试的片段才会成为最终的像素（Pixel）。利用这一特性，我们可以在测试阶段对片段进行一些特殊的处理，从而实现遮罩的效果。</p>
+<p>UGUI 中也正是这样处理的。</p>
+<p>在 UGUI 中，遮罩主要有两种实现方式：<code>Mask</code> 和 <code>RectMask2D</code>，两种组件均可完成遮罩的效果，但实现遮罩的原理不同。<code>Mask</code> 组件作用在模板测试阶段，通过修改材质而间接地修改 <code>Stencil Buffer</code> 中的值来实现遮罩效果；而 <code>RectMask2D</code> 组件作用在裁剪测试阶段，通过设置 <code>CanvasRenderer</code> 的属性来将超出遮罩区域的片段直接丢弃。</p>
+<p><code>IMaterialModifier</code> 与这些组件的关系如下图所示，有一些本文不会分析到的组件仅做简单表示：</p>
+<img src="https://s2.loli.net/2024/10/07/DftXqGiNHF7yWcT.png" alt="IMaterialModifier.png" style="zoom:70%;" />
+<p>可以看出，以 <code>IMaterialModifier</code> 为起点，延伸出了 <code>Mask</code> 这种通过修改材质（实际是利用 <code>Stencil Buffer</code>）来实现遮罩效果的组件。其次，以 <code>IClippable</code> 为起点，也延伸出了 <code>RectMask2D</code> 这种通过设置 <code>CanvasRenderer</code> 的裁剪功能而实现遮罩效果的组件。</p>
+<p>同时，作为 <code>Image</code> 以及 <code>RawImage</code> 的基类，<code>MaskableGraphic</code> 同时实现了两种遮罩接口。因此对于 <code>Image</code> 这种组件来说，既可以通过 <code>Mask</code> 来实现遮罩效果，也可以通过 <code>RectMask2D</code> 来实现遮罩效果。</p>
+<p>本节主要分析 <code>Mask</code> 的实现，其他的遮罩组件会在下一篇文章中进行分析。</p>
+<h2 id="Stencil-Buffer">Stencil Buffer</h2>
+<p>在介绍 <code>Mask</code> 的实现之前，我们需要先了解一下 <code>Stencil Buffer</code>。</p>
+<p>模版缓冲区（stencil buffer），是在 OpenGL 三维绘图等计算机图像硬件中常见的除颜色缓冲区（color buffer或frame buffer）、深度缓冲区（depth buffer 或 z buffer ）、累积缓冲区(accumulation buffer)之外另一种数据缓冲。模版缓冲区通常是<strong>每像素 8 位</strong>。该值可以写入、递增或递减。后续绘制调用可以根据该值进行测试，以确定在运行像素着色器之前是否应丢弃像素。</p>
+<p>通常会将模板缓冲区用于特殊效果，例如 UI Mask、门户或镜子。此外，在渲染硬阴影或者构造型实体几何 (CSG: constructive solid geometry) 时，有时会使用模板缓冲区。更详细的介绍可以参考 <a target="_blank" rel="noopener" href="https://docs.unity.cn/cn/2020.3/Manual/SL-Stencil.html">ShaderLab 命令：模板</a>。</p>
+<p>在 Unity 的渲染管线中，模板测试阶段有多种参数可以配置，以下列举一些常用的参数：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Stencil &#123;</span><br><span class="line">    Ref &lt;<span class="keyword">ref</span>&gt;</span><br><span class="line">    ReadMask &lt;readMask&gt;</span><br><span class="line">    WriteMask &lt;writeMask&gt;</span><br><span class="line">    Comp &lt;comparisonOperation&gt;</span><br><span class="line">    Pass &lt;passOperation&gt;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p><code>ref</code>：整数；范围为 0 到 255；默认值为 0</p>
+<p>用于设置模板测试的参考值。GPU 使用在 <code>compareOperation</code> 中定义的操作将模板缓冲区的当前内容与此值进行比较。此值使用 <code>readMask</code> 或 <code>writeMask</code> 进行遮罩，具体取决于进行的是读取操作还是写入操作。如果 Pass、Fail 或 ZFail 的值为 <code>Replace</code>，则 GPU 也可以将此值写入模板缓冲区。</p>
+<p>总之就是一个八位的数字，代表着将要写入到模板缓冲区的值。</p>
+</li>
+<li>
+<p><code>readMask</code>：整数；范围为 0 到 255；默认值为 255</p>
+<p>用于设置模板缓冲区的读取掩码。GPU 会将此值与 <code>Ref</code> 进行按位与操作，以确定要读取的位。如果 <code>ReadMask</code> 的某个位为 0，则不会读取该位。默认情况下，所有位都会读取。</p>
+</li>
+<li>
+<p><code>writeMask</code>：整数；范围为 0 到 255；默认值为 255</p>
+<p>用于设置模板缓冲区的写入掩码。GPU 会将此值与 <code>Ref</code> 进行按位与操作，以确定要写入缓冲区的位。如果 <code>WriteMask</code> 的某个位为 0，则不会写入该位。默认情况下，所有位都会写入。</p>
+</li>
+<li>
+<p><code>comparisonOperation</code>：枚举；默认值为 <code>Always</code></p>
+<p>用于设置模板测试的比较操作。GPU 会使用此操作将 <code>Ref</code> 与模板缓冲区的当前值进行比较。如果比较成功，则会执行 <code>Pass</code> 操作。如果比较失败，则会执行 <code>Fail</code> 操作。在 Unity 中，对于该枚举类型的定义如下：</p>
+  <figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="built_in">enum</span> CompareFunction</span><br><span class="line">&#123;</span><br><span class="line">    Disabled,</span><br><span class="line"></span><br><span class="line">    Never,</span><br><span class="line"></span><br><span class="line">    Less,</span><br><span class="line"></span><br><span class="line">    Equal,</span><br><span class="line"></span><br><span class="line">    LessEqual,</span><br><span class="line"></span><br><span class="line">    Greater,</span><br><span class="line"></span><br><span class="line">    NotEqual,</span><br><span class="line"></span><br><span class="line">    GreaterEqual,</span><br><span class="line"></span><br><span class="line">    Always</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>有等于、小于、大于等比较操作，默认情况下是 <code>Always</code>，即总是通过模板测试。如果设置为 <code>Disabled</code>，则会禁用模板测试。</p>
+</li>
+<li>
+<p><code>passOperation</code>：枚举；默认值为 <code>Keep</code></p>
+<p>用于设置模板测试通过时的操作。在 Unity 中，对于该枚举类型的定义如下：</p>
+  <figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="built_in">enum</span> StencilOp</span><br><span class="line">&#123;</span><br><span class="line">    Keep,</span><br><span class="line"></span><br><span class="line">    Zero,</span><br><span class="line"></span><br><span class="line">    Replace,</span><br><span class="line"></span><br><span class="line">    IncrementSaturate,</span><br><span class="line"></span><br><span class="line">    DecrementSaturate,</span><br><span class="line"></span><br><span class="line">    Invert,</span><br><span class="line"></span><br><span class="line">    IncrementWrap,</span><br><span class="line"></span><br><span class="line">    DecrementWrap</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>有保持、替换、增加、减少等操作。默认情况下是 <code>Keep</code>，即保持原有的值。如果设置为 <code>Replace</code>，则会将 <code>Ref</code> 的值写入到模板缓冲区（需要结合 <code>WriteMask</code> 使用）。</p>
+</li>
+</ul>
+<p>我们可以打开一个默认的 UI 材质文件，来看看 Unity 是如何配置模板测试的：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Compiled-UI-Default.shader</span></span><br><span class="line"></span><br><span class="line">Shader <span class="string">&quot;UI/Default&quot;</span> &#123;</span><br><span class="line">Properties &#123;</span><br><span class="line">[<span class="meta">PerRendererData</span>]  _MainTex (<span class="string">&quot;Sprite Texture&quot;</span>, <span class="number">2</span>D) = <span class="string">&quot;white&quot;</span> &#123; &#125;</span><br><span class="line"> _Color (<span class="string">&quot;Tint&quot;</span>, Color) = (<span class="number">1.000000</span>,<span class="number">1.000000</span>,<span class="number">1.000000</span>,<span class="number">1.000000</span>)</span><br><span class="line"> _StencilComp (<span class="string">&quot;Stencil Comparison&quot;</span>, Float) = <span class="number">8.000000</span></span><br><span class="line"> _Stencil (<span class="string">&quot;Stencil ID&quot;</span>, Float) = <span class="number">0.000000</span></span><br><span class="line"> _StencilOp (<span class="string">&quot;Stencil Operation&quot;</span>, Float) = <span class="number">0.000000</span></span><br><span class="line"> _StencilWriteMask (<span class="string">&quot;Stencil Write Mask&quot;</span>, Float) = <span class="number">255.000000</span></span><br><span class="line"> _StencilReadMask (<span class="string">&quot;Stencil Read Mask&quot;</span>, Float) = <span class="number">255.000000</span></span><br><span class="line"> _ColorMask (<span class="string">&quot;Color Mask&quot;</span>, Float) = <span class="number">15.000000</span></span><br><span class="line">[<span class="meta">Toggle(UNITY_UI_ALPHACLIP)</span>]  _UseUIAlphaClip (<span class="string">&quot;Use Alpha Clip&quot;</span>, Float) = <span class="number">0.000000</span></span><br><span class="line">&#125;</span><br><span class="line">SubShader &#123; </span><br><span class="line"> Tags &#123; <span class="string">&quot;QUEUE&quot;</span>=<span class="string">&quot;Transparent&quot;</span> <span class="string">&quot;IGNOREPROJECTOR&quot;</span>=<span class="string">&quot;true&quot;</span> <span class="string">&quot;RenderType&quot;</span>=<span class="string">&quot;Transparent&quot;</span> <span class="string">&quot;CanUseSpriteAtlas&quot;</span>=<span class="string">&quot;true&quot;</span> <span class="string">&quot;PreviewType&quot;</span>=<span class="string">&quot;Plane&quot;</span> &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"> <span class="comment">// Stats for Vertex shader:</span></span><br><span class="line"> <span class="comment">//        d3d11: 19 math</span></span><br><span class="line"> <span class="comment">// Stats for Fragment shader:</span></span><br><span class="line"> <span class="comment">//        d3d11: 9 avg math (6..13), 1 texture</span></span><br><span class="line"> Pass &#123;</span><br><span class="line">  Name <span class="string">&quot;Default&quot;</span></span><br><span class="line">  Tags &#123; <span class="string">&quot;QUEUE&quot;</span>=<span class="string">&quot;Transparent&quot;</span> <span class="string">&quot;IGNOREPROJECTOR&quot;</span>=<span class="string">&quot;true&quot;</span> <span class="string">&quot;RenderType&quot;</span>=<span class="string">&quot;Transparent&quot;</span> <span class="string">&quot;CanUseSpriteAtlas&quot;</span>=<span class="string">&quot;true&quot;</span> <span class="string">&quot;PreviewType&quot;</span>=<span class="string">&quot;Plane&quot;</span> &#125;</span><br><span class="line">  ZTest [unity_GUIZTestMode]</span><br><span class="line">  ZWrite Off</span><br><span class="line">  Cull Off</span><br><span class="line">  <span class="comment">// 模板测试</span></span><br><span class="line">  Stencil &#123;</span><br><span class="line">   Ref [_Stencil]</span><br><span class="line">   ReadMask [_StencilReadMask]</span><br><span class="line">   WriteMask [_StencilWriteMask]</span><br><span class="line">   Comp [_StencilComp]</span><br><span class="line">   Pass [_StencilOp]</span><br><span class="line">  &#125;</span><br><span class="line">  Blend One OneMinusSrcAlpha</span><br><span class="line">  ColorMask [_ColorMask]</span><br><span class="line"></span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看出，Unity 在材质中设置了与模板测试相关的参数，并在 <code>Stencil</code> 块中进行了配置。可以看出：<strong>材质的 <code>Stencil ID</code> 参数即为 <code>Ref</code> 值，而 <code>Stencil Operation</code> 参数代表通过了模板测试后的操作</strong>。</p>
+<p>此外，还有一个不属于 <code>Stencil</code> 块的参数 <code>Color Mask</code>，该参数用于设置颜色掩码，用于控制颜色的写入。默认情况下，颜色掩码为 <code>15</code>，即 <code>RGBA</code> 都会写入。如果设置为 <code>0</code>，则不会写入任何颜色。这一参数也会在 <code>Mask</code> 组件中用到。</p>
+<h2 id="Mask-的使用">Mask 的使用</h2>
+<p>为什么这里要先说 <code>Mask</code> 的使用呢，原因是如果对于 UGUI 设置 <code>Stencil Buffer</code> 的过程没有直观的了解，很难理解 <code>Mask</code> 的代码究竟在干什么。因此，这里用一个涵盖了各种参数的例子来说明 <code>Stencil Buffer</code> 中各个参数的作用，这样在后续的分析中就能更好地理解 <code>Mask</code> 的实现。</p>
+<p>我们先在场景中创建一个 <code>Image</code> 并添加一个 <code>Mask</code> 组件，为了方便区分，将 <code>Image</code> 的颜色设置为蓝色：</p>
+<p><img src="https://s2.loli.net/2024/10/06/yvDBHrVZQ3CtUwp.png" alt="image.png"></p>
+<p>查看该组件的 Shader 属性：</p>
+<p><img src="https://s2.loli.net/2024/10/06/ZRDCp1QhU3ByNYv.png" alt="image.png"></p>
+<p>可以看到，Unity 为 <code>Mask</code> 组件设置了一些默认的 <code>Stencil Buffer</code> 参数，其中 <code>Stencil ID</code> 为 <code>1</code>，<code>Stencil Comp</code> 为 <code>8</code>（即 <code>Always</code>），<code>Stencil Op</code> 为 <code>2</code>（即 <code>Replace</code>），<code>Stencil Write Mask</code> 为 <code>255</code>，<code>Stencil Read Mask</code> 为 <code>255</code>。</p>
+<p>所表达的意思即为：该 <code>Image</code> 总是通过模板测试，通过后会将 <code>Stencil ID</code> 的值 <code>1</code> 写入到模板缓冲区中。</p>
+<p>结合模板缓冲区默认为 <code>0</code>，则此时的模板缓冲区如下：</p>
+<img src="https://s2.loli.net/2024/10/06/iMsSWvyhbmD34fz.png" alt="Mask.png" style="zoom:30%;" />
+<p>我们接着为蓝色图片添加一个子物体，并设置其颜色为红色：</p>
+<p><img src="https://s2.loli.net/2024/10/06/Sfe3hUMrNAqlEnD.png" alt="image.png"></p>
+<p>可以看到，超出蓝色图片的部分的确被遮罩了，这便是 <code>Mask</code> 在起作用。同样查看该红色图片的 Shader 属性：</p>
+<p><img src="https://s2.loli.net/2024/10/06/94iaHr3LJUy7VZq.png" alt="image.png"></p>
+<p>可以看出，该红色图片的 <code>Stencil ID</code> 为 <code>1</code>，<code>Stencil Comp</code> 为 <code>3</code>（即 <code>Equal</code>），<code>Stencil Op</code> 为 <code>0</code>（即 <code>Keep</code>），<code>Stencil Write Mask</code> 为 <code>0</code>，<code>Stencil Read Mask</code> 为 <code>1</code>。</p>
+<p>这就比较有意思了。结合前两条信息以及 <code>ReadMask</code> 我们会发现，在这种设置下，红色图片将<strong>只能在 <code>Stencil Buffer</code> 中的值为 <code>1</code> 的地方通过模板测试</strong>，<code>ReadMask</code> 为 <code>1</code> 则<strong>保证了子物体读取到的恰好是父物体写入的缓冲区位数</strong>，这样就实现了遮罩的效果。<br>
+并且由于 <code>Keep</code> 及 <code>Write Mask</code> 的设置，红色图片并不会对模板缓冲区进行写入操作。因此，<strong>单独的 <code>Image</code> 组件并不会修改模板缓冲区的值</strong>。</p>
+<p>那如果我们给红色图片也添加一个 <code>Mask</code> 组件呢？</p>
+<p>添加了 <code>Mask</code> 组件后，红色图片的 Shader 属性发生了一些微妙的变化：</p>
+<p><img src="https://s2.loli.net/2024/10/07/K7PVZ5MEoB21zRy.png" alt="image.png"></p>
+<p>首先，<code>Stencil Comp</code> 为 <code>3</code>（即 <code>Equal</code>），而 <code>StencilID &amp;&amp; ReadMask == 1</code>，保证了红色图片依然只会在 <code>Stencil Buffer</code> 中的值为 <code>1</code> 的地方通过模板测试；其次，<code>Stencil Operation</code> 为 <code>2</code>（即 <code>Replace</code>），<code>StencilID &amp;&amp; WriteMask == 3</code>，这表明红色图片会将 <code>3</code> 写入到通过模板测试的位置中。</p>
+<p>此时的模板缓冲区如下：</p>
+<img src="https://s2.loli.net/2024/10/07/sWQACg8JthpKGBn.png" alt="Mask.png" style="zoom:30%;" />
+<p>如果我们再添加一个绿色的子物体呢？</p>
+<p><img src="https://s2.loli.net/2024/10/07/5QfTOwZn61XqP7c.png" alt="image.png"></p>
+<p>想必大家也能够猜到绿色图片的 Shader 属性了：</p>
+<p><img src="https://s2.loli.net/2024/10/07/Gy1qlzd2vp5wNY9.png" alt="image.png"></p>
+<p>同样地，也只是在 <code>Stencil Buffer</code> 中的值为 <code>3</code> 的地方通过模板测试，而不对 <code>Stencil Buffer</code> 进行写入操作。</p>
+<p>同样为绿色图片添加一个 <code>Mask</code> 组件，其 Shader 属性如下：</p>
+<p><img src="https://s2.loli.net/2024/10/07/9Op5nRhylbQ1i8L.png" alt="image.png"></p>
+<p>不出意料地，通过各种参数的相互计算，该图片会将 <code>7</code> 写入到原本为 <code>3</code> 的通过模板测试的位置中。此时的模板缓冲区如下：</p>
+<img src="https://s2.loli.net/2024/10/07/nXlpI7SuWvsPrfe.png" alt="Mask.png" style="zoom:30%;" />
+<p>到这里，我们就能基本理解 <code>Mask</code> 实现遮罩的过程了：将子物体通过模板测试的平面范围利用 <code>StencilID</code>、<code>ReadMask</code>、<code>WriteMask</code> 等一系列参数限制在父物体的范围内，从而实现遮罩的效果。在有多级 <code>Mask</code> 的情况下，<code>StencilID</code> 的值会以 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>n</mi></msup><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">2^n - 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7477em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6644em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> 的形式递增（从 <code>1</code> 开始计算），这样的设置是为了方便 <code>ReadMask</code> 和 <code>WriteMask</code> 发挥作用。</p>
+<h3 id="对于-Mask-的进一步探究">对于 Mask 的进一步探究</h3>
+<p>虽然通过上述的例子我们已经能够理解 <code>Mask</code> 的实现原理，但默认的 Shader 参数并不能修改，如何 DIY 出相同的效果呢？</p>
+<p>由于 <code>Mask</code> 是通过修改材质属性中与模板测试相关的参数来实现的，因此我们可以通过生成具有不同参数的材质来实现相同的效果。我们新建一个材质并将 Shader 设置为 <code>UI/Default</code>，然后就会惊喜地发现，<code>Stencil</code> 的相关参数居然可以自由设置了！</p>
+<p><img src="https://s2.loli.net/2024/10/07/whjp5zNVqsvuLrf.png" alt="image.png"></p>
+<p>我们在场景中新添加一个图片，并将其材质设置为我们刚刚生成的材质：</p>
+<p><img src="https://s2.loli.net/2024/10/07/xa9LPpyfmFUMN1D.png" alt="image.png"></p>
+<p>再如法炮制地添加一个子物体并创建新的材质，就会得到与 <code>Mask</code> 相同的效果。</p>
+<p>下面就说一下通过这种方法笔者发现地一些有趣的现象：</p>
+<ol>
+<li>
+<p>ReadMask 的真实作用</p>
+<p>由于渲染管线这一部分依然不是开源的，因此 Unity 内部对于 <code>Stencil Buffer</code> 的处理我们无法得知。但通过上述的操作我们可以发现，<code>ReadMask</code> 的作用并不是简单地与 <code>StencilID</code> 进行按位与操作以得到真实的测试值，而是会将模板缓冲区的值也和 <code>ReadMask</code> 进行按位与操作，即最终是 <code>StencilID &amp;&amp; ReadMask</code> 与 <code>StencilBuffer &amp;&amp; ReadMask</code> 进行比较。举例说明：</p>
+<p>将蓝色图片（父物体）的参数设置为如下：</p>
+<p><img src="https://s2.loli.net/2024/10/07/HfBCItwZ6yiU7mX.png" alt="image.png"></p>
+<p>红色图片（子物体）的参数设置为如下：</p>
+<p><img src="https://s2.loli.net/2024/10/07/IfSWidLGqCnQJo1.png" alt="image.png"></p>
+<p>按照上述的分析，子物体的 <code>StencilID &amp;&amp; ReadMask == 110 &amp;&amp; 001 == 0</code>，因此红色图片应当只在模板缓冲区为 <code>0</code> 的地方才会渲染，而真实情况则为：</p>
+<p><img src="https://s2.loli.net/2024/10/07/aRxBSKyfzluYVqw.png" alt="image.png"></p>
+<p>可以看到，在模板缓冲区为 <code>2</code> 的地方也会渲染红色图片，因此合理的猜测是 <code>StencilBuffer &amp;&amp; ReadMask == 010 &amp;&amp; 001 == 0</code>，所以这一部分也通过了模板测试。</p>
+<p>想要进一步验证可以将蓝色图片（父物体）的 <code>StencilID</code> 设置为 <code>3</code>，此时 <code>StencilBuffer &amp;&amp; ReadMask == 011 &amp;&amp; 001 == 1</code>，不能通过模板测试，因此红色图片只会在模板缓冲区为 <code>0</code> 的背景区域渲染。</p>
+<p><img src="https://s2.loli.net/2024/10/07/6aRCmAy3TB8JXWI.png" alt="image.png"></p>
+</li>
+<li>
+<p>ColorMask 的作用</p>
+<p>上文提到了在 UI 的默认材质中有一个 <code>ColorMask</code> 参数，用于控制颜色的写入。实际上 <code>ColorWriteMask</code> 也是一个枚举类，定义如下：</p>
+ <figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="built_in">enum</span> ColorWriteMask</span><br><span class="line">&#123;</span><br><span class="line">    Alpha = <span class="number">1</span>,</span><br><span class="line"></span><br><span class="line">    Blue = <span class="number">2</span>,</span><br><span class="line"></span><br><span class="line">    Green = <span class="number">4</span>,</span><br><span class="line"></span><br><span class="line">    Red = <span class="number">8</span>,</span><br><span class="line"></span><br><span class="line">    All = <span class="number">0xF</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>按照四位二进制数的顺序，那么从高到低位刚好分别代表 <code>RGBA</code> 四个通道。比如我们将 <code>ColorMask</code> 设置为 <code>10</code>，同时父物体颜色设置为白色。这样就只有 <code>BR</code> 通道会被渲染，从而呈现出紫色的效果。</p>
+<p><img src="https://s2.loli.net/2024/10/07/XdZtbsV9lj68YSW.png" alt="image.png"></p>
+<p>同样地，如果我们将 <code>ColorMask</code> 设置为 <code>0</code>，则不会渲染任何颜色。</p>
+</li>
+</ol>
+<h2 id="Mask-的实现">Mask 的实现</h2>
+<p>在理解了 <code>Stencil Buffer</code> 的机制以及 <code>Mask</code> 的使用后，就该来看看 <code>Mask</code> 的实现了。</p>
+<h3 id="成员变量">成员变量</h3>
+<p>这里挑几个重要的成员变量来看一下：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">SerializeField</span>]</span><br><span class="line"><span class="keyword">private</span> <span class="built_in">bool</span> m_ShowMaskGraphic = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> Show the graphic that is associated with the Mask render area.</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="keyword">public</span> <span class="built_in">bool</span> showMaskGraphic</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">get</span> &#123; <span class="keyword">return</span> m_ShowMaskGraphic; &#125;</span><br><span class="line">    <span class="keyword">set</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (m_ShowMaskGraphic == <span class="keyword">value</span>)</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">        m_ShowMaskGraphic = <span class="keyword">value</span>;</span><br><span class="line">        <span class="keyword">if</span> (graphic != <span class="literal">null</span>)</span><br><span class="line">            graphic.SetMaterialDirty();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>showMaskGraphic</code> 用于控制是否显示遮罩的图形，如果设置为 <code>false</code>，则不会显示遮罩本身（即父物体），只会显示子物体。这里也可以看到，在设置 <code>showMaskGraphic</code> 时会触发 <code>graphic.SetMaterialDirty()</code>，用于重新渲染图片。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">NonSerialized</span>]</span><br><span class="line"><span class="keyword">private</span> Graphic m_Graphic;</span><br><span class="line"></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> The graphic associated with the Mask.</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="keyword">public</span> Graphic graphic</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">get</span> &#123; <span class="keyword">return</span> m_Graphic ?? (m_Graphic = GetComponent&lt;Graphic&gt;()); &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>graphic</code> 就是 <code>Mask</code> 组件的操作对象了，<code>Mask</code> 组件就是通过改变 <code>graphic</code> 材质的方式来实现遮罩的效果。因此这里需要注意：<strong><code>Mask</code> 组件是依赖于 <code>Graphic</code> 组件的</strong>。这一点和后续会介绍的 <code>RectMask2D</code> 不同。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">NonSerialized</span>]</span><br><span class="line"><span class="keyword">private</span> Material m_MaskMaterial;</span><br><span class="line"></span><br><span class="line">[<span class="meta">NonSerialized</span>]</span><br><span class="line"><span class="keyword">private</span> Material m_UnmaskMaterial;</span><br></pre></td></tr></table></figure>
+<p>这两个变量维护的便是实现 <code>Mask</code> 效果的材质了。是的，<code>Mask</code> 组件不仅需要负责遮罩，还需要负责取消遮罩。这样才能在 <code>Mask</code> 被禁用时恢复原来的效果。</p>
+<h3 id="GetModifiedMaterial">GetModifiedMaterial</h3>
+<p>在对于 <code>Graphic</code> 的分析中我们了解到，<code>Graphic</code> 组件会调用 <code>IMaterialModifier.GetModifiedMaterial()</code> 方法来获取修改后的材质。因此 <code>Mask</code> 生效的地方也一定在这个函数中，查看该函数的实现：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">virtual</span> Material <span class="title">GetModifiedMaterial</span>(<span class="params">Material baseMaterial</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (!MaskEnabled())</span><br><span class="line">        <span class="keyword">return</span> baseMaterial;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> rootSortCanvas = MaskUtilities.FindRootSortOverrideCanvas(transform);</span><br><span class="line">    <span class="keyword">var</span> stencilDepth = MaskUtilities.GetStencilDepth(transform, rootSortCanvas);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先还是使用到了 <code>MaskUtilities</code> 辅助类中的两个方法，来获取当前 <code>Mask</code> 的深度，这里的深度指的正是上述例子中 <code>Mask</code> 的层级。</p>
+<p>来看一下这两个函数的实现：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Transform <span class="title">FindRootSortOverrideCanvas</span>(<span class="params">Transform start</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">var</span> canvasList = ListPool&lt;Canvas&gt;.Get();</span><br><span class="line">    start.GetComponentsInParent(<span class="literal">false</span>, canvasList);</span><br><span class="line">    Canvas canvas = <span class="literal">null</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; canvasList.Count; ++i)</span><br><span class="line">    &#123;</span><br><span class="line">        canvas = canvasList[i];</span><br><span class="line"></span><br><span class="line">        <span class="comment">// We found the canvas we want to use break</span></span><br><span class="line">        <span class="keyword">if</span> (canvas.overrideSorting)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ListPool&lt;Canvas&gt;.Release(canvasList);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> canvas != <span class="literal">null</span> ? canvas.transform : <span class="literal">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>FindRootSortOverrideCanvas</code> 会找到当前 <code>Mask</code> 所属的最顶层 <code>Canvas</code> 或第一个开启了 <code>overrideSorting</code> 的 <code>Canvas</code>（该 <code>Canvas</code> 独立于其他 <code>Canvas</code> 的渲染顺序）。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">int</span> <span class="title">GetStencilDepth</span>(<span class="params">Transform transform, Transform stopAfter</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">var</span> depth = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (transform == stopAfter)</span><br><span class="line">        <span class="keyword">return</span> depth;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> t = transform.parent;</span><br><span class="line">    <span class="keyword">var</span> components = ListPool&lt;Mask&gt;.Get();</span><br><span class="line">    <span class="keyword">while</span> (t != <span class="literal">null</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        t.GetComponents&lt;Mask&gt;(components);</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; components.Count; ++i)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (components[i] != <span class="literal">null</span> &amp;&amp; components[i].MaskEnabled() &amp;&amp; components[i].graphic.IsActive())</span><br><span class="line">            &#123;</span><br><span class="line">                ++depth;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (t == stopAfter)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">        t = t.parent;</span><br><span class="line">    &#125;</span><br><span class="line">    ListPool&lt;Mask&gt;.Release(components);</span><br><span class="line">    <span class="keyword">return</span> depth;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>GetStencilDepth</code> 会计算当前 <code>Mask</code> 的深度，即当前 <code>Mask</code> 与 <code>rootSortCanvas</code> 之间有多少个其他的 <code>Mask</code>，从上面的例子中我们也可以看出，<code>Mask</code> 会根据深度的不同来设置不同的 <code>StencilID</code>，这样就能实现多级 <code>Mask</code> 的效果。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (stencilDepth &gt;= <span class="number">8</span>)</span><br><span class="line">&#123;</span><br><span class="line">    Debug.LogWarning(<span class="string">&quot;Attempting to use a stencil mask with depth &gt; 8&quot;</span>, gameObject);</span><br><span class="line">    <span class="keyword">return</span> baseMaterial;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">int</span> desiredStencilBit = <span class="number">1</span> &lt;&lt; stencilDepth;</span><br></pre></td></tr></table></figure>
+<p>这里限制了 <code>Mask</code> 的深度不得超过 <code>8</code>，<strong>这是因为 <code>Stencil Buffer</code> 一般只有 <code>8</code> 位</strong>，并且 UGUI 自带的 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>n</mi></msup><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">2^n - 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7477em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6644em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> 的设置方式也限制了 <code>Mask</code> 最多叠加 <code>8</code> 层。 <code>desiredStencilBit</code> 便是 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mrow><mo stretchy="false">(</mo><mi>n</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">2^{(n - 1)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.888em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.888em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathnormal mtight">n</span><span class="mbin mtight">−</span><span class="mord mtight">1</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span></span></span></span> 的值（程序中从 <code>0</code> 开始计数），再经过一点简单的位运算即可得到真正的 <code>StencilID</code>。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (desiredStencilBit == <span class="number">1</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">var</span> maskMaterial = StencilMaterial.Add(baseMaterial, <span class="number">1</span>, </span><br><span class="line">        StencilOp.Replace, CompareFunction.Always, m_ShowMaskGraphic ? ColorWriteMask.All : <span class="number">0</span>);</span><br><span class="line">    StencilMaterial.Remove(m_MaskMaterial);</span><br><span class="line">    m_MaskMaterial = maskMaterial;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> unmaskMaterial = StencilMaterial.Add(baseMaterial, <span class="number">1</span>, StencilOp.Zero, CompareFunction.Always, <span class="number">0</span>);</span><br><span class="line">    StencilMaterial.Remove(m_UnmaskMaterial);</span><br><span class="line">    m_UnmaskMaterial = unmaskMaterial;</span><br><span class="line">    graphic.canvasRenderer.popMaterialCount = <span class="number">1</span>;</span><br><span class="line">    graphic.canvasRenderer.SetPopMaterial(m_UnmaskMaterial, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> m_MaskMaterial;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于第一层的情况，<code>Mask</code> 会将 <code>StencilID</code> 设置为 <code>1</code>，并且始终通过模板测试。这里使用了 <code>StencilMaterial</code> 辅助类来生成指定模板配置的材质。这个类的实现这里就不再赘述了，只需要知道能够生成指定模板配置的材质即可。</p>
+<p>此外，也可以看出 <code>m_ShowMaskGraphic</code> 实际上是通过 <code>ColorWriteMask</code> 来控制遮罩的显隐。</p>
+<blockquote>
+<p>需要注意的是，除了 <code>m_MaskMaterial</code> 外，<code>Mask</code> 在 <code>GetModifiedMaterial()</code> 中还生成了一个 <code>m_UnmaskMaterial</code>，这个材质用于 Shader 的第二个 Pass 中，作用是将 <code>Stencil Buffer</code> 中的值恢复为修改之前。在此处是将 <code>Stencil Buffer</code> 中的值设置为 <code>0</code>，而在多层级的情况下则会将 <code>Stencil Buffer</code> 中的值设置为上一层的 <code>Mask</code> 所设置的值。详见 <a href="https://qlipphoth.github.io/2024/11/03/2024-11-3-1/">UGUI 番外之合批</a></p>
+</blockquote>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> maskMaterial2 = StencilMaterial.Add(baseMaterial, desiredStencilBit | (desiredStencilBit - <span class="number">1</span>), </span><br><span class="line">    StencilOp.Replace, CompareFunction.Equal, </span><br><span class="line">    m_ShowMaskGraphic ? ColorWriteMask.All : <span class="number">0</span>, desiredStencilBit - <span class="number">1</span>, desiredStencilBit | (desiredStencilBit - <span class="number">1</span>));</span><br><span class="line">StencilMaterial.Remove(m_MaskMaterial);</span><br><span class="line">m_MaskMaterial = maskMaterial2;</span><br><span class="line"></span><br><span class="line">graphic.canvasRenderer.hasPopInstruction = <span class="literal">true</span>;</span><br><span class="line"><span class="keyword">var</span> unmaskMaterial2 = StencilMaterial.Add(baseMaterial, desiredStencilBit - <span class="number">1</span>, </span><br><span class="line">    StencilOp.Replace, CompareFunction.Equal, <span class="number">0</span>, desiredStencilBit - <span class="number">1</span>, desiredStencilBit | (desiredStencilBit - <span class="number">1</span>));</span><br><span class="line">StencilMaterial.Remove(m_UnmaskMaterial);</span><br><span class="line">m_UnmaskMaterial = unmaskMaterial2;</span><br><span class="line">graphic.canvasRenderer.popMaterialCount = <span class="number">1</span>;</span><br><span class="line">graphic.canvasRenderer.SetPopMaterial(m_UnmaskMaterial, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+<p>对于多层的情况就稍微复杂一些，由上面的例子我们知道：对于某一层 mask，如 <code>StencilID</code> 为 <code>7</code>，那么在进行模板测试时需要与父物体范围内的 <code>StencilBuffer</code> 值进行比较（此时为 <code>3</code>）。因此需要设置 <code>readMask</code> 为 <code>3</code>，以便在该掩码的作用下得到 <code>StencilID &amp;&amp; readMask == StecilBuffer &amp;&amp; readMask == 3</code> 的效果。同时，在写入时需要确保 <code>StencilID</code> 的每一位都被写入，因此最简单的 <code>writeMask</code> 便是 <code>7</code>。</p>
+<p>不失一般性地，对于第 <code>n</code> 层的 <code>Mask</code>（按照程序逻辑从 <code>0</code> 开始计数），<code>StencilID</code> 为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mrow><mo stretchy="false">(</mo><mi>n</mi><mo>+</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></msup><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">2^{(n + 1)} - 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9713em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.888em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathnormal mtight">n</span><span class="mbin mtight">+</span><span class="mord mtight">1</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>，<code>readMask</code> 为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>n</mi></msup><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">2^n - 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7477em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6644em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>（这一数值等于父物体的 <code>StencilID</code>），<code>writeMask</code> 为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mrow><mo stretchy="false">(</mo><mi>n</mi><mo>+</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></msup><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">2^{(n + 1)} - 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9713em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.888em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathnormal mtight">n</span><span class="mbin mtight">+</span><span class="mord mtight">1</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>。这便是这段代码的逻辑。</p>
+<h1>总结</h1>
+<p>本文主要分析了 <code>Graphic</code> 在渲染过程中用到的两个接口：<code>IMeshModifier</code> 与 <code>IMaterialModifier</code>。<code>IMeshModifier</code> 主要用于修改 <code>VertexHelper</code> 中的顶点信息，从而实现阴影、描边等效果；<code>IMaterialModifier</code> 则主要用于修改材质的参数，从而实现遮罩等效果。二者分别作用在渲染管线的 <code>Vertex Shader</code> 与 <code>Fragment Shader</code> 阶段，是 UGUI 中实现特殊效果的重要接口。</p>
+<p><code>IMeshModifier</code> 对于顶点的修改都较为简单，主要是对顶点的位置以及颜色的修改。而 <code>IMaterialModifier</code> 则是 UGUI 中遮罩的一种实现方式，涉及到较多的其他类。<code>Mask</code> 是实现了 <code>IMaterialModifier</code> 接口的组件之一，通过修改 <code>Stencil Buffer</code> 中的值来实现遮罩效果。在 <code>Mask</code> 的实现中，通过 <code>StencilID</code>、<code>ReadMask</code>、<code>WriteMask</code> 等参数的设置，可以实现多级遮罩的效果。遮罩还包括了以 <code>RectMask2D</code> 为代表的另一种实现方式，这将在下一篇文章中进行分析。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2024/09/30/2024-9-30-1/">https://qlipphoth.github.io/2024/09/30/2024-9-30-1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity/">Unity</a><a class="post-meta__tags" href="/tags/C/">C#</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/09/27/2024-9-27-1/" title="Unity 补完计划（四）：UGUI-7：Graphic"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">Unity 补完计划（四）：UGUI-7：Graphic</div></div></a></div><div class="next-post pull-right"><a href="/2024/10/08/2024-10-8-1/" title="Unity 补完计划（四）：UGUI-9：RectMask2D &amp; MaskableGraphic"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">Unity 补完计划（四）：UGUI-9：RectMask2D &amp; MaskableGraphic</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2024/08/05/2024-8-5-1/" title="UGUI 源码解析"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-08-05</div><div class="title">UGUI 源码解析</div></div></a></div><div><a href="/2024/11/03/2024-11-3-1/" title="UGUI 番外之合批"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-11-03</div><div class="title">UGUI 番外之合批</div></div></a></div><div><a href="/2024/10/25/2024-10-25-2/" title="Unity 补完计划（四）：UGUI-16：Dropdown"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-25</div><div class="title">Unity 补完计划（四）：UGUI-16：Dropdown</div></div></a></div><div><a href="/2024/10/25/2024-10-25-1/" title="Unity 补完计划（四）：UGUI-15：ScrollBar &amp; ScrollRect"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-25</div><div class="title">Unity 补完计划（四）：UGUI-15：ScrollBar &amp; ScrollRect</div></div></a></div><div><a href="/2024/10/23/2024-10-23-1/" title="Unity 补完计划（四）：UGUI-14：InputField"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-23</div><div class="title">Unity 补完计划（四）：UGUI-14：InputField</div></div></a></div><div><a href="/2024/10/17/2024-10-17-1/" title="Unity 补完计划（四）：UGUI-13：Toggle &amp; ToggleGroup &amp; Slider"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-10-17</div><div class="title">Unity 补完计划（四）：UGUI-13：Toggle &amp; ToggleGroup &amp; Slider</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">IMeshModifier</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%A8-Graphic-%E4%B8%AD%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="toc-number">2.1.</span> <span class="toc-text">在 Graphic 中的使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BaseMeshEffect"><span class="toc-number">2.2.</span> <span class="toc-text">BaseMeshEffect</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Shadow"><span class="toc-number">2.3.</span> <span class="toc-text">Shadow</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Outline"><span class="toc-number">2.4.</span> <span class="toc-text">Outline</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#PositionAsUV1"><span class="toc-number">2.5.</span> <span class="toc-text">PositionAsUV1</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">2.6.</span> <span class="toc-text">小结</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">3.</span> <span class="toc-text">IMaterialModifier</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Stencil-Buffer"><span class="toc-number">3.1.</span> <span class="toc-text">Stencil Buffer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mask-%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="toc-number">3.2.</span> <span class="toc-text">Mask 的使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%B9%E4%BA%8E-Mask-%E7%9A%84%E8%BF%9B%E4%B8%80%E6%AD%A5%E6%8E%A2%E7%A9%B6"><span class="toc-number">3.2.1.</span> <span class="toc-text">对于 Mask 的进一步探究</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mask-%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-number">3.3.</span> <span class="toc-text">Mask 的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F"><span class="toc-number">3.3.1.</span> <span class="toc-text">成员变量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GetModifiedMaterial"><span class="toc-number">3.3.2.</span> <span class="toc-text">GetModifiedMaterial</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

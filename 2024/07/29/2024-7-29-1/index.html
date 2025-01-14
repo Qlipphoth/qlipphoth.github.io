@@ -1,0 +1,793 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>内存管理杂谈 | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="内核   什么是内核呢？ 计算机是由各种外部硬件设备组成的，比如内存、cpu、硬盘等，如果每个应用都要和这些硬件设备对接通信协议，那这样太累了，所以这个中间人就由内核来负责，让内核作为应用连接硬件设备的桥梁，应用程序只需关心与内核交互，不用关心硬件的细节。   内核有哪些能力呢？ 现代操作系统，内核一般会提供 4 个基本能力：  管理进程、线程，决定哪个进程、线程使用 CPU，也就是进程调度的能力">
+<meta property="og:type" content="article">
+<meta property="og:title" content="内存管理杂谈">
+<meta property="og:url" content="https://qlipphoth.github.io/2024/07/29/2024-7-29-1/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="内核   什么是内核呢？ 计算机是由各种外部硬件设备组成的，比如内存、cpu、硬盘等，如果每个应用都要和这些硬件设备对接通信协议，那这样太累了，所以这个中间人就由内核来负责，让内核作为应用连接硬件设备的桥梁，应用程序只需关心与内核交互，不用关心硬件的细节。   内核有哪些能力呢？ 现代操作系统，内核一般会提供 4 个基本能力：  管理进程、线程，决定哪个进程、线程使用 CPU，也就是进程调度的能力">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg">
+<meta property="article:published_time" content="2024-07-29T11:33:08.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="Cpp">
+<meta property="article:tag" content="OS">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2024/07/29/2024-7-29-1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '内存管理杂谈',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">内存管理杂谈</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2024-07-29T11:33:08.000Z" title="Created 2024-07-29 11:33:08">2024-07-29</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/OS/">OS</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">9.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>27min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="内存管理杂谈"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1>内核</h1>
+<ul>
+<li>
+<p>什么是内核呢？</p>
+<p>计算机是由各种外部硬件设备组成的，比如内存、cpu、硬盘等，如果每个应用都要和这些硬件设备对接通信协议，那这样太累了，所以这个中间人就由内核来负责，<strong>让内核作为应用连接硬件设备的桥梁</strong>，应用程序只需关心与内核交互，不用关心硬件的细节。</p>
+</li>
+<li>
+<p>内核有哪些能力呢？</p>
+<p>现代操作系统，内核一般会提供 4 个基本能力：</p>
+<ol>
+<li>管理进程、线程，决定哪个进程、线程使用 CPU，也就是进程调度的能力；</li>
+<li>管理内存，决定内存的分配和回收，也就是内存管理的能力；</li>
+<li>管理硬件设备，为进程与硬件设备之间提供通信能力，也就是硬件通信能力；</li>
+<li>提供系统调用，如果应用程序要运行更高权限运行的服务，那么就需要有系统调用，它是用户程序与操作系统之间的接口。</li>
+</ol>
+</li>
+<li>
+<p>内核是怎么工作的？</p>
+<p>内核具有很高的权限，可以控制 cpu、内存、硬盘等硬件，而应用程序具有的权限很小，因此大多数操作系统，把内存分成了两个区域：</p>
+<ol>
+<li>内核空间，这个内存空间只有内核程序可以访问；</li>
+<li>用户空间，这个内存空间专门给应用程序使用；</li>
+</ol>
+<p>用户空间的代码只能访问一个局部的内存空间，而内核空间的代码可以访问所有内存空间。因此，当程序使用用户空间时，我们常说该程序在用户态执行，而当程序使内核空间时，程序则在内核态执行。</p>
+</li>
+</ul>
+<p>应用程序如果需要进入内核空间，就需要通过系统调用，下面来看看系统调用的过程：</p>
+<p><img src="https://s2.loli.net/2024/07/29/hKD84XiL6O2Pper.png" alt="image.png"></p>
+<p>内核程序执行在内核态，用户程序执行在用户态。当应用程序使用系统调用时，<strong>会产生一个中断</strong>。发生中断后， CPU 会中断当前在执行的用户程序，转而跳转到中断处理程序，也就是开始执行内核程序。内核处理完后，主动触发中断，把 CPU 执行权限交回给用户程序，回到用户态继续工作。</p>
+<h1>内存管理</h1>
+<h2 id="虚拟内存与物理内存">虚拟内存与物理内存</h2>
+<p>虚拟内存是一种计算机系统内存管理技术，它为应用程序提供了一个连续的、统一的地址空间，使得每个程序都认为自己独占了整个内存。虚拟内存通过硬件和操作系统的协作，将物理内存和磁盘存储结合起来。</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>虚拟内存</th>
+<th>物理内存</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>定义</td>
+<td>虚拟内存是操作系统提供的一个抽象层，使得每个进程都认为自己拥有一个连续的、独立的内存空间。</td>
+<td>物理内存是计算机硬件实际提供的内存资源，通常由RAM（随机存取存储器）组成。</td>
+</tr>
+<tr>
+<td>地址空间</td>
+<td>虚拟内存地址空间是由操作系统和硬件（如MMU）管理的，可以比实际的物理内存大得多。</td>
+<td>物理内存地址空间是有限的，由实际的硬件内存大小决定。</td>
+</tr>
+<tr>
+<td>访问权限</td>
+<td>虚拟内存提供了内存保护机制，不同进程的虚拟地址空间是隔离的，防止进程间的非法访问。</td>
+<td>物理内存没有这种保护机制，直接访问物理内存可能导致数据损坏或系统崩溃。</td>
+</tr>
+<tr>
+<td>内存管理</td>
+<td>虚拟内存通过页面表将虚拟地址映射到物理地址，并使用页面调度和换页机制来管理内存。</td>
+<td>物理内存直接由硬件管理，操作系统通过内存分配和释放来管理物理内存的使用。</td>
+</tr>
+<tr>
+<td>扩展性</td>
+<td>虚拟内存可以使用磁盘空间作为扩展，允许程序使用比实际物理内存更多的内存。</td>
+<td>物理内存的容量是固定的，受限于硬件配置。</td>
+</tr>
+<tr>
+<td>性能</td>
+<td>虚拟内存的访问速度可能较慢，因为涉及到地址转换和可能的页面调度。</td>
+<td>物理内存的访问速度较快，因为它是直接由硬件访问的。</td>
+</tr>
+</tbody>
+</table>
+<p>操作系统会提供一种机制，将不同进程的虚拟地址和不同内存的物理地址映射起来。</p>
+<p>如果程序要访问虚拟地址的时候，由操作系统转换成不同的物理地址，这样不同的进程运行的时候，写入的是不同的物理地址，这样就不会冲突了。</p>
+<p>于是，这里就引出了两种地址的概念：</p>
+<ol>
+<li>我们程序所使用的内存地址叫做虚拟内存地址（Virtual Memory Address）</li>
+<li>实际存在硬件里面的空间地址叫物理内存地址（Physical Memory Address）。</li>
+</ol>
+<p>操作系统引入了虚拟内存，进程持有的虚拟地址会通过 CPU 芯片中的 <strong>内存管理单元（MMU）</strong> 的映射关系，来转换变成物理地址，然后再通过物理地址访问内存，如下图所示：</p>
+<p><img src="https://s2.loli.net/2024/07/29/wE52d4Hcvri7lXS.png" alt="image.png"></p>
+<h2 id="为什么要引入虚拟内存">为什么要引入虚拟内存</h2>
+<blockquote>
+<p>一言以蔽之，虚拟内存是程序使用的内存与操作系统中的真实物理内存之间的一层抽象层，通过虚拟内存的方式可以使得运行过程中的各个进程互不干扰，都具有自己独立的虚拟地址空间；而虚拟地址到真实物理地址的映射则由 CPU 的 内存管理单元（MMU）完成。</p>
+</blockquote>
+<p>假设现在没有虚拟内存地址，我们在程序中对内存的操作全都都是使用物理内存地址，在这种情况下，程序员就需要精确的知道每一个变量在内存中的具体位置，我们需要手动对物理内存进行布局，明确哪些数据存储在内存的哪些位置，除此之外我们还需要考虑为每个进程究竟要分配多少内存？内存紧张的时候该怎么办？如何避免进程与进程之间的地址冲突？等等一系列复杂且琐碎的细节。</p>
+<p>如果我们在单进程系统中比如嵌入式设备上开发应用程序，系统中只有一个进程，这单个进程独享所有的物理资源包括内存资源。在这种情况下，上述提到的这些直接使用物理内存的问题可能还好处理一些，但是仍然具有很高的开发门槛。</p>
+<p>然而在现代操作系统中往往支持多个进程，需要处理多进程之间的协同问题，在多进程系统中直接使用物理内存地址操作内存所带来的上述问题就变得非常复杂了。</p>
+<p>这里我为大家举一个简单的例子来说明在多进程系统中直接使用物理内存地址的复杂性。</p>
+<p>比如我们现在有这样一个简单的 Java 程序。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="type">string</span> <span class="variable">i</span> <span class="operator">=</span> args[<span class="number">0</span>];</span><br><span class="line">    <span class="comment">// ..........</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在程序代码相同的情况下，我们用这份代码同时启动三个 JVM 进程，我们暂时将进程依次命名为 a , b , c 。</p>
+<p>这三个进程用到的代码是一样的，都是我们提前写好的，可以被多次运行。由于我们是直接操作物理内存地址，假设变量 i 保存在 <code>0x354</code> 这个物理地址上。这三个进程运行起来之后，同时操作这个 <code>0x354</code> 物理地址，这样这个变量 i 的值不就混乱了吗？ 三个进程就会出现变量的地址冲突。</p>
+<p><img src="https://s2.loli.net/2024/07/29/yuMecopabGRQgCJ.png" alt="image.png"></p>
+<p>现实中一个程序会有很多的变量和函数，这样一来我们给它们都需要计算一个合理的位置，还不能与其他进程冲突，这就很复杂了。</p>
+<p>那么我们该如何解决这个问题呢？程序的局部性原理再一次救了我们~~</p>
+<ul>
+<li>程序的局部性原理：程序局部性原理表现为<strong>时间局部性</strong>和<strong>空间局部性</strong>。时间局部性是指如果程序中的某条指令一旦执行，则不久之后该指令可能再次被执行；如果某块数据被访问，则不久之后该数据可能再次被访问。空间局部性是指一旦程序访问了某个存储单元，则不久之后，其附近的存储单元也将被访问。</li>
+</ul>
+<p>从程序局部性原理的描述中我们可以得出这样一个结论：进程在运行之后，对于内存的访问不会一下子就要访问全部的内存，相反进程对于内存的访问会表现出明显的倾向性，更加倾向于访问最近访问过的数据以及热点数据附近的数据。</p>
+<p>根据这个结论我们就清楚了，无论一个进程实际可以占用的内存资源有多大，根据程序局部性原理，在某一段时间内，进程真正需要的物理内存其实是很少的一部分，我们只需要为每个进程分配很少的物理内存就可以保证进程的正常执行运转。</p>
+<p>而虚拟内存的引入正是要解决上述的问题，虚拟内存引入之后，进程的视角就会变得非常开阔，<strong>每个进程都拥有自己独立的虚拟地址空间，进程与进程之间的虚拟内存地址空间是相互隔离，互不干扰的</strong>。每个进程都认为自己独占所有内存空间，自己想干什么就干什么。</p>
+<p>系统上还运行了哪些进程和我没有任何关系。这样一来我们就可以将多进程之间协同的相关复杂细节统统交给内核中的内存管理模块来处理，极大地解放了程序员的心智负担。这一切都是因为虚拟内存能够提供内存地址空间的隔离，极大地扩展了可用空间。</p>
+<p><img src="https://s2.loli.net/2024/07/29/ImuTt9jOE4ZacD6.png" alt="image.png"></p>
+<p>这样进程就以为自己独占了整个内存空间资源，给进程产生了所有内存资源都属于它自己的幻觉，这其实是 CPU 和操作系统使用的一个障眼法罢了，任何一个虚拟内存里所存储的数据，本质上还是保存在真实的物理内存里的。只不过<strong>内核帮我们做了虚拟内存到物理内存的这一层映射，将不同进程的虚拟地址和不同内存的物理地址映射起来</strong>。</p>
+<p>当 CPU 访问进程的虚拟地址时，经过地址翻译硬件将虚拟地址转换成不同的物理地址，这样不同的进程运行的时候，虽然操作的是同一虚拟地址，但其实背后写入的是不同的物理地址，这样就不会冲突了。</p>
+<blockquote>
+<p>稍微总结下虚拟内存的作用：</p>
+<ol>
+<li>虚拟内存可以使得进程对运行内存超过物理内存大小，因为程序运行符合局部性原理，CPU 访问内存会有很明显的重复访问的倾向性，对于那些没有被经常使用到的内存，我们可以把它换出到物理内存之外，比如硬盘上的 swap 区域。</li>
+<li>由于每个进程都有自己的页表，所以每个进程的虚拟内存空间就是相互独立的。进程也没有办法访问其他进程的页表，所以这些页表是私有的，这就解决了多进程之间地址冲突的问题。</li>
+<li>页表里的页表项中除了物理地址之外，还有一些标记属性的比特，比如控制一个页的读写权限，标记该页是否存在等。在内存访问方面，操作系统提供了更好的安全性。</li>
+</ol>
+</blockquote>
+<h2 id="内存分段与分页">内存分段与分页</h2>
+<p>操作系统主要通过内存分段与分页的方式来管理虚拟地址与物理地址之间的映射关系。</p>
+<h3 id="内存分段">内存分段</h3>
+<p>程序是由若干个逻辑分段组成的，如可由代码分段、数据分段、栈段、堆段组成。不同的段是有不同的属性的，所以就用分段（Segmentation）的形式把这些段分离出来。</p>
+<p>分段机制下的虚拟地址由两部分组成，段选择因子和段内偏移量。</p>
+<ul>
+<li>
+<p>段选择因子就保存在段寄存器里面。段选择子里面最重要的是段号，用作段表的索引。段表里面保存的是这个段的基地址、段的界限和特权等级等。</p>
+</li>
+<li>
+<p>虚拟地址中的段内偏移量应该位于 0 和段界限之间，如果段内偏移量是合法的，就将段基地址加上段内偏移量得到物理内存地址。</p>
+</li>
+</ul>
+<p>在上面，知道了虚拟地址是通过段表与物理地址进行映射的，分段机制会把程序的虚拟地址分成 4 个段，每个段在段表中有一个项，在这一项找到段的基地址，再加上偏移量，于是就能找到物理内存中的地址。</p>
+<h4 id="内存分段的缺点">内存分段的缺点</h4>
+<p>分段的办法很好，解决了程序本身不需要关心具体的物理内存地址的问题，但它也有一些不足之处：</p>
+<ul>
+<li>第一个就是内存碎片的问题。</li>
+<li>第二个就是内存交换的效率低的问题。</li>
+</ul>
+<ol>
+<li>
+<p>内存碎片问题</p>
+<p>我们来看看这样一个例子。假设有 1G 的物理内存，用户执行了多个程序，其中：</p>
+<ul>
+<li>游戏占用了 512MB 内存</li>
+<li>浏览器占用了 128MB 内存</li>
+<li>音乐占用了 256 MB 内存。</li>
+</ul>
+<p>这个时候，如果我们关闭了浏览器，则空闲内存还有 1024 - 512 - 256 = 256MB。</p>
+<p>如果这个 256MB 不是连续的，被分成了两段 128 MB 内存，这就会导致没有空间再打开一个 200MB 的程序。</p>
+<p><img src="https://s2.loli.net/2024/07/29/QNzhm1jvJtwuG42.png" alt="image.png"></p>
+<p>内存碎片主要分为，内部内存碎片和外部内存碎片。</p>
+<p>内存分段管理可以做到段根据实际需求分配内存，所以有多少需求就分配多大的段，所以<strong>不会出现内部内存碎片</strong>。</p>
+<p>但是由于每个段的长度不固定，所以多个段未必能恰好使用所有的内存空间，会产生了多个不连续的小物理内存，导致新的程序无法被装载，所以<strong>会出现外部内存碎片的问题</strong>。</p>
+</li>
+<li>
+<p>内存交换的效率低问题</p>
+<p>解决「外部内存碎片」的问题就是内存交换。</p>
+<p>可以把音乐程序占用的那 256MB <strong>内存写到硬盘上，然后再从硬盘上读回来到内存里</strong>。不过再读回的时候，我们不能装载回原来的位置，而是紧紧跟着那已经被占用了的 512MB 内存后面。这样就能空缺出连续的 256MB 空间，于是新的 200MB 程序就可以装载进来。</p>
+<p>这个内存交换空间，在 Linux 系统里，也就是我们常看到的 <strong>Swap 空间</strong>，这块空间是从硬盘划分出来的，用于内存与硬盘的空间交换。</p>
+<p>对于多进程的系统来说，用分段的方式，外部内存碎片是很容易产生的，产生了外部内存碎片，那不得不重新 Swap 内存区域，这个过程会产生性能瓶颈。</p>
+<p>因为硬盘的访问速度要比内存慢太多了，每一次内存交换，我们都需要把一大段连续的内存数据写到硬盘上。</p>
+<p><strong>所以，如果内存交换的时候，交换的是一个占内存空间很大的程序，这样整个机器都会显得卡顿</strong>。</p>
+<p>为了解决内存分段的「外部内存碎片和内存交换效率低」的问题，就出现了内存分页。</p>
+</li>
+</ol>
+<h3 id="内存分页">内存分页</h3>
+<p>分段的好处就是能产生连续的内存空间，但是会出现「外部内存碎片和内存交换的空间太大」的问题。</p>
+<p>要解决这些问题，那么就要想出能少出现一些内存碎片的办法。另外，当需要进行内存交换的时候，让需要交换写入或者从磁盘装载的数据更少一点，这样就可以解决问题了。这个办法，也就是内存分页（Paging）。</p>
+<p>分页是把整个虚拟和物理内存空间切成一段段固定尺寸的大小。这样一个连续并且尺寸固定的内存空间，我们叫页（Page）。在 Linux 下，每一页的大小为 <code>4KB</code>。</p>
+<p>虚拟地址与物理地址之间通过页表来映射，如下图：</p>
+<p><img src="https://s2.loli.net/2024/07/29/78hBgOA3a1r6JMo.png" alt="image.png"></p>
+<p>页表是存储在内存里的，内存管理单元 （MMU）就做将虚拟内存地址转换成物理地址的工作。</p>
+<p>而当进程访问的虚拟地址在页表中查不到时，系统会产生一个<strong>缺页异常</strong>，进入系统内核空间分配物理内存、更新进程页表，最后再返回用户空间，恢复进程的运行。</p>
+<p>内存分页由于内存空间都是预先划分好的，也就不会像内存分段一样，在段与段之间会产生间隙非常小的内存，这正是分段会产生外部内存碎片的原因。<strong>而采用了分页，页与页之间是紧密排列的，所以不会有外部碎片</strong>。</p>
+<p>但是，因为内存分页机制分配内存的最小单位是一页，即使程序不足一页大小，我们最少只能分配一个页，所以页内会出现内存浪费，所以针对<strong>内存分页机制会有内部内存碎片的现象</strong>。</p>
+<p>如果内存空间不够，操作系统会把其他正在运行的进程中的「最近没被使用」的内存页面给释放掉，也就是暂时写在硬盘上，称为换出（Swap Out）。一旦需要的时候，再加载进来，称为换入（Swap In）。所以，一次性写入磁盘的也只有少数的一个页或者几个页，不会花太多时间，<strong>内存交换的效率就相对比较高</strong>。</p>
+<p>更进一步地，分页的方式使得我们在加载程序的时候，不再需要一次性都把程序加载到物理内存中。我们完全可以在进行虚拟内存和物理内存的页之间的映射之后，并不真的把页加载到物理内存里，而是<strong>只有在程序运行中，需要用到对应虚拟内存页里面的指令和数据时，再加载到物理内存里面去</strong>。</p>
+<h4 id="页表">页表</h4>
+<p>在分页机制下，虚拟地址分为两部分，页号和页内偏移。页号作为页表的索引，页表包含物理页每页所在物理内存的基地址，这个基地址与页内偏移的组合就形成了物理内存地址，见下图。</p>
+<p><img src="https://s2.loli.net/2024/07/29/G2Og6QijqokY39p.png" alt="image.png"></p>
+<ul>
+<li>简单分页存在的问题</li>
+</ul>
+<p>因为操作系统是可以同时运行非常多的进程的，那这不就意味着页表会非常的庞大。</p>
+<p>在 32 位的环境下，虚拟地址空间共有 4GB，假设一个页的大小是 4KB（2^12），那么就需要大约 100 万 （2^20） 个页，每个「页表项」需要 4 个字节大小来存储，那么整个 4GB 空间的映射就需要有 4MB 的内存来存储页表。</p>
+<p>这 4MB 大小的页表，看起来也不是很大。但是要知道每个进程都是有自己的虚拟地址空间的，也就说都有自己的页表。</p>
+<p>那么，100 个进程的话，就需要 400MB 的内存来存储页表，这是非常大的内存了，更别说 64 位的环境了。</p>
+<h4 id="多级页表">多级页表</h4>
+<p>要解决上面的问题，就需要采用一种叫作**多级页表（Multi-Level Page Table）**的解决方案。</p>
+<p>在前面我们知道了，对于单页表的实现方式，在 32 位和页大小 4KB 的环境下，一个进程的页表需要装下 100 多万个「页表项」，并且每个页表项是占用 4 字节大小的，于是相当于每个页表需占用 4MB 大小的空间。</p>
+<p>我们把这个 100 多万个「页表项」的单级页表再分页，将页表（一级页表）分为 1024 个页表（二级页表），每个表（二级页表）中包含 1024 个「页表项」，形成二级分页。如下图所示：</p>
+<p><img src="https://s2.loli.net/2024/07/29/1SPE4JCNHktQaBV.png" alt="image.png"></p>
+<p>你可能会问，分了二级表，映射 4GB 地址空间就需要 4KB（一级页表）+ 4MB（二级页表）的内存，这样占用空间不是更大了吗？</p>
+<p>当然如果 4GB 的虚拟地址全部都映射到了物理内存上的话，二级分页占用空间确实是更大了，但是，我们往往不会为一个进程分配那么多内存。</p>
+<p>其实我们应该换个角度来看问题，还记得计算机组成原理里面无处不在的<strong>局部性原理</strong>么？</p>
+<p>每个进程都有 4GB 的虚拟地址空间，而显然对于大多数程序来说，其使用到的空间远未达到 4GB，因为会存在部分对应的页表项都是空的，根本没有分配，对于已分配的页表项，如果存在最近一定时间未访问的页表，在物理内存紧张的情况下，操作系统会将页面换出到硬盘，也就是说不会占用物理内存。</p>
+<p>如果使用了二级分页，一级页表就可以覆盖整个 4GB 虚拟地址空间，<strong>但如果某个一级页表的页表项没有被用到，也就不需要创建这个页表项对应的二级页表了，即可以在需要时才创建二级页表</strong>。做个简单的计算，假设只有 20% 的一级页表项被用到了，那么页表占用的内存空间就只有 4KB（一级页表） + 20% * 4MB（二级页表）= 0.804MB，这对比单级页表的 4MB 是不是一个巨大的节约？</p>
+<p>那么为什么不分级的页表就做不到这样节约内存呢？</p>
+<p>我们从页表的性质来看，保存在内存中的页表承担的职责是将虚拟地址翻译成物理地址。假如虚拟地址在页表中找不到对应的页表项，计算机系统就不能工作了。<strong>所以页表一定要覆盖全部虚拟地址空间，不分级的页表就需要有 100 多万个页表项来映射，而二级分页则只需要 1024 个页表项</strong>（此时一级页表覆盖到了全部虚拟地址空间，二级页表在需要时创建）。</p>
+<p>我们把二级分页再推广到多级页表，就会发现页表占用的内存空间更少了，这一切都要归功于对局部性原理的充分应用。</p>
+<p>对于 64 位的系统，两级分页肯定不够了，就变成了四级目录，分别是：</p>
+<ul>
+<li>全局页目录项 PGD（Page Global Directory）；</li>
+<li>上层页目录项 PUD（Page Upper Directory）；</li>
+<li>中间页目录项 PMD（Page Middle Directory）；</li>
+<li>页表项 PTE（Page Table Entry）；</li>
+</ul>
+<h3 id="段页式内存管理">段页式内存管理</h3>
+<p>内存分段和内存分页并不是对立的，它们是可以组合起来在同一个系统中使用的，那么组合起来后，通常称为<strong>段页式内存管理</strong>。</p>
+<p>段页式内存管理实现的方式：</p>
+<ul>
+<li>先将程序划分为多个有逻辑意义的段，也就是前面提到的分段机制；</li>
+<li>接着再把每个段划分为多个页，也就是对分段划分出来的连续空间，再划分固定大小的页；</li>
+</ul>
+<p>这样，地址结构就由<strong>段号、段内页号和页内位移</strong>三部分组成。</p>
+<p>用于段页式地址变换的数据结构是每一个程序一张段表，每个段又建立一张页表，段表中的地址是页表的起始地址，而页表中的地址则为某页的物理页号，如图所示：</p>
+<p><img src="https://s2.loli.net/2024/07/29/tZ1U4wT3lJ8ap7P.png" alt="image.png"></p>
+<p>段页式地址变换中要得到物理地址须经过三次内存访问：</p>
+<ol>
+<li>第一次访问段表，得到页表起始地址；</li>
+<li>第二次访问页表，得到物理页号；</li>
+<li>第三次将物理页号与页内位移组合，得到物理地址。</li>
+</ol>
+<p>可用软、硬件相结合的方法实现段页式地址变换，这样虽然增加了硬件成本和系统开销，但提高了内存的利用率。</p>
+<h3 id="页表缓存（Translation-Lookaside-Buffer，TLB）">页表缓存（Translation Lookaside Buffer，TLB）</h3>
+<p>多级页表虽然解决了空间上的问题，但是虚拟地址到物理地址的转换就多了几道转换的工序，这显然就降低了这俩地址转换的速度，也就是带来了时间上的开销。</p>
+<p>程序是有局部性的，即在一段时间内，整个程序的执行仅限于程序中的某一部分。相应地，执行所访问的存储空间也局限于某个内存区域。</p>
+<p>我们就可以利用这一特性，把最常访问的几个页表项存储到访问速度更快的硬件，于是计算机科学家们，就在 CPU 芯片中，加入了一个<strong>专门存放程序最常访问的页表项的 Cache，这个 Cache 就是 TLB（Translation Lookaside Buffer）</strong>，通常称为页表缓存、转址旁路缓存、快表等。</p>
+<p><img src="https://s2.loli.net/2024/07/29/NF53V8lXqRYKTmj.png" alt="image.png"></p>
+<p>在 CPU 芯片里面，封装了内存管理单元（Memory Management Unit）芯片，它用来完成地址转换和 TLB 的访问与交互。</p>
+<p>有了 TLB 后，那么 <strong>CPU 在寻址时，会先查 TLB，如果没找到，才会继续查常规的页表</strong>。</p>
+<p>TLB 的命中率其实是很高的，因为程序最常访问的页就那么几个。</p>
+<h1>进程虚拟内存空间布局</h1>
+<p>上小节中，我们介绍了为了防止多进程运行时造成的内存地址冲突，内核引入了虚拟内存地址，为每个进程提供了一个独立的虚拟内存空间，使得进程以为自己独占全部内存资源。</p>
+<p>那么这个进程独占的虚拟内存空间到底是什么样子呢？在本小节中，我就为大家揭开这层神秘的面纱~~~</p>
+<h2 id="内核空间和用户空间">内核空间和用户空间</h2>
+<p>在 Linux 操作系统中，虚拟地址空间的内部又被分为内核空间和用户空间两部分，不同位数的系统，地址空间的范围也不同。比如最常见的 32 位和 64 位系统，如下所示：</p>
+<p><img src="https://s2.loli.net/2024/07/29/jPfxZQpyFtoEXLT.png" alt="image.png"></p>
+<p>通过这里可以看出：</p>
+<ul>
+<li>32 位系统的内核空间占用 1G，位于最高处，剩下的 3G 是用户空间；</li>
+<li>64 位系统的内核空间和用户空间都是 128T，分别占据整个内存空间的最高和最低处，剩下的中间部分是未定义的。</li>
+</ul>
+<p>再来说说内核空间与用户空间的区别：</p>
+<ul>
+<li>进程在用户态时，只能访问用户空间内存；</li>
+<li>只有进入内核态后，才可以访问内核空间的内存；</li>
+</ul>
+<p>虽然每个进程都各自有独立的虚拟内存，但是每个虚拟内存中的内核地址，其实关联的都是相同的物理内存。这样，进程切换到内核态后，就可以很方便地访问内核空间内存。</p>
+<p><img src="https://s2.loli.net/2024/07/29/2YL86hoay1medGX.png" alt="image.png"></p>
+<h2 id="用户态虚拟内存空间的布局">用户态虚拟内存空间的布局</h2>
+<blockquote>
+<p>内核态虚拟内存空间布局比较复杂，有空再继续研究吧，详见 <a target="_blank" rel="noopener" href="https://xiaolincoding.com/os/3_memory/linux_mem.html#_7-%E5%86%85%E6%A0%B8%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4">小林coding</a></p>
+</blockquote>
+<p>总的来说，用户态进程的虚拟内存空间布局长这个样子：</p>
+<p><img src="https://s2.loli.net/2024/07/29/VFEqaOMmhCyZDr7.png" alt="image.png"></p>
+<p>我们从下至上依次分析：</p>
+<ol>
+<li>
+<p>代码段</p>
+<p>一个进程运行起来是为了执行我们交代给进程的工作，执行这些工作的步骤我们通过程序代码事先编写好，然后编译成二进制文件存放在磁盘中，CPU 会执行二进制文件中的机器码来驱动进程的运行。所以在进程运行之前，这些存放在二进制文件中的机器码需要被加载进内存中，而用于<strong>存放这些机器码的虚拟内存空间叫做代码段</strong>。</p>
+</li>
+<li>
+<p>数据段 / BSS 段</p>
+<p>在程序运行起来之后，总要操作变量吧，在程序代码中我们通常会定义大量的全局变量和静态变量，这些全局变量在程序编译之后也会存储在二进制文件中，在程序运行之前，这些全局变量也需要被加载进内存中供程序访问。所以在虚拟内存空间中也需要一段区域来存储这些全局变量。</p>
+<ul>
+<li>
+<p>那些在代码中被我们<strong>指定了初始值的全局变量和静态变量</strong>在虚拟内存空间中的存储区域我们叫做<strong>数据段</strong>。</p>
+</li>
+<li>
+<p>那些<strong>没有指定初始值的全局变量和静态变量</strong>在虚拟内存空间中的存储区域我们叫做 <strong>BSS 段</strong>。这些未初始化的全局变量被<strong>加载进内存之后会被初始化为 0 值</strong>。</p>
+</li>
+</ul>
+</li>
+<li>
+<p>堆</p>
+<p>上面介绍的这些全局变量和静态变量都是在<strong>编译期间就确定</strong>的，但是我们程序在运行期间往往需要动态的申请内存，所以在虚拟内存空间中也需要一块区域来存放这些动态申请的内存，这块区域就叫做堆。注意这里的堆指的是 OS 堆并不是 JVM 中的堆。</p>
+</li>
+<li>
+<p>文件映射与匿名映射区</p>
+<p>除此之外，我们的程序在运行过程中还需要依赖动态链接库，这些动态链接库以 <code>.so</code> 文件的形式存放在磁盘中，比如 C 程序中的 <code>glibc</code>，里边对系统调用进行了封装。<code>glibc</code> 库里提供的用于动态申请堆内存的 <code>malloc</code> 函数就是对系统调用 <code>sbrk</code> 和 <code>mmap</code> 的封装。这些动态链接库也有自己的对应的代码段，数据段，BSS 段，也需要一起被加载进内存中。</p>
+<p>还有用于内存文件映射的系统调用 <code>mmap</code>，会将文件与内存进行映射，那么映射的这块内存（虚拟内存）也需要在虚拟地址空间中有一块区域存储。</p>
+<p>这些动态链接库中的代码段，数据段，BSS 段，以及通过 <code>mmap</code> 系统调用映射的共享内存区，在虚拟内存空间的存储区域叫做文件映射与匿名映射区。</p>
+</li>
+<li>
+<p>栈</p>
+<p>最后我们在程序运行的时候总该要调用各种函数吧，那么调用函数过程中使用到的局部变量和函数参数也需要一块内存区域来保存。这一块区域在虚拟内存空间中叫做栈。</p>
+</li>
+</ol>
+<p>现在进程的虚拟内存空间所包含的主要区域，我就为大家介绍完了，我们看到内核根据进程运行的过程中所需要不同种类的数据而为其开辟了对应的地址空间。分别为：</p>
+<ul>
+<li>
+<p>用于存放进程程序二进制文件中的机器指令的代码段</p>
+</li>
+<li>
+<p>用于存放程序二进制文件中定义的全局变量和静态变量的数据段和 BSS 段。</p>
+</li>
+<li>
+<p>用于在程序运行过程中动态申请内存的堆。</p>
+</li>
+<li>
+<p>用于存放动态链接库以及内存映射区域的文件映射与匿名映射区。</p>
+</li>
+<li>
+<p>用于存放函数调用过程中的局部变量和函数参数的栈。</p>
+</li>
+</ul>
+<h3 id="对比-C-的内存布局">对比 C++ 的内存布局</h3>
+<p>对比一下 C++ 中的内存布局可以得到这样的有趣结果：</p>
+<p><img src="https://s2.loli.net/2024/07/29/olHwXSzaesVBUy6.png" alt="image.png"></p>
+<p>C++ 将内存主要分为四块区域：常量区、全局/静态区、堆区和栈区，但实际上还有存放自身代码的代码区。在了解了进程的虚拟内存布局后我们可以发现：</p>
+<ol>
+<li>C++ 中的代码区(<code>.text</code>)与常量区(<code>.rodata</code>) 实际上都包含在 “代码段” 中。</li>
+<li>C++ 中的全局/静态区实际上为 未初始化全局/静态段(<code>.bss</code>) 与 已初始化全局/静态段 (<code>.data</code>) 的集合。</li>
+<li>堆区与栈区与进程空间中对应的段相一致。</li>
+</ol>
+<h1>malloc</h1>
+<h2 id="malloc-分配内存的过程">malloc 分配内存的过程</h2>
+<p>malloc() 并不是系统调用，而是 C 库里的函数，用于动态分配内存。</p>
+<p>malloc 申请内存的时候，会有两种方式向操作系统申请堆内存。</p>
+<ol>
+<li>通过 <code>brk()</code> 系统调用从堆分配内存</li>
+<li>通过 <code>mmap()</code> 系统调用在文件映射区域分配内存；</li>
+</ol>
+<p>方式一实现的方式很简单，就是通过 <code>brk()</code> 函数将「堆顶」指针向高地址移动，获得新的内存空间。如下图：</p>
+<p><img src="https://s2.loli.net/2024/07/29/InQRprtqkaU4STg.png" alt="image.png"></p>
+<p>方式二通过 <code>mmap()</code> 系统调用中「私有匿名映射」的方式，在文件映射区分配一块内存，也就是从文件映射区“偷”了一块内存。如下图：</p>
+<p><img src="https://s2.loli.net/2024/07/29/JKiQjHBwz6Y47Eg.png" alt="image.png"></p>
+<p><code>malloc()</code> 源码里默认定义了一个阈值：</p>
+<ol>
+<li>如果用户分配的内存小于 <code>128 KB</code>，则通过 <code>brk()</code> 申请内存；</li>
+<li>如果用户分配的内存大于 <code>128 KB</code>，则通过<code> mmap()</code> 申请内存；</li>
+</ol>
+<p>注意，不同的 <code>glibc</code> 版本定义的阈值也是不同的。</p>
+<blockquote>
+<p>联想 STL 的空间配置器中最大的分配阈值，是 128 字节；超过这个阈值就调用 <code>malloc</code> 否则使用自己的空间配置器；因此虽然 <code>malloc</code> 自己也有内存池，但 STL 内存池的意义在于为小对象单独做了优化，并且有着内存上调等等策略，详见 <a href="https://qlipphoth.github.io/2023/08/20/2023-8-20-2/">STL-Alloc</a></p>
+</blockquote>
+<h2 id="malloc-分配的是物理内存吗？">malloc() 分配的是物理内存吗？</h2>
+<p>不是的，<strong>malloc() 分配的是虚拟内存</strong>。</p>
+<p><strong>如果分配后的虚拟内存没有被访问的话，虚拟内存是不会映射到物理内存的</strong>，这样就不会占用物理内存了。</p>
+<p>只有在访问已分配的虚拟地址空间的时候，操作系统通过查找页表，发现虚拟内存对应的页没有在物理内存中，就会触发<strong>缺页中断</strong>，然后<strong>操作系统会建立虚拟内存和物理内存之间的映射关系</strong>。</p>
+<h2 id="malloc-的内存分配策略">malloc 的内存分配策略</h2>
+<p>一言以蔽之，malloc 内部也会采用内存池的设计模式，预分配更大的空间作为备用，同时在回收时也会将 <code>brk()</code> 方式申请的内存再次归还给内存池。</p>
+<blockquote>
+<p>这样看来 STL 的空间配置器完全就是 malloc 的翻版。</p>
+</blockquote>
+<ul>
+<li>
+<p><code>malloc()</code> 在分配内存的时候，并不是老老实实按用户预期申请的字节数来分配内存空间大小，而是会预分配更大的空间作为内存池,具体会预分配多大的空间，跟 malloc 使用的内存管理器有关。</p>
+</li>
+<li>
+<p><code>malloc()</code> 通过 <code>brk()</code> 方式申请的内存，<code>free</code> 释放内存的时候，并不会把内存归还给操作系统，而是缓存在 <code>malloc</code> 的内存池中，待下次使用；</p>
+</li>
+<li>
+<p>malloc 通过 <code>mmap()</code> 方式申请的内存，free 释放内存的时候，会把内存归还给操作系统，内存得到真正的释放。</p>
+</li>
+</ul>
+<h2 id="free-为什么能知道要释放多大的内存">free 为什么能知道要释放多大的内存</h2>
+<p>总的来说，malloc 在分配空间时除了由于内存池策略而多分配一部分空间外，还会额外为每一份分配的内存添加一部分信息。</p>
+<p>这个多出来的 16 字节就是保存了该内存块的描述信息，比如有该内存块的大小。</p>
+<p><img src="https://s2.loli.net/2024/07/29/TVFAkYxj8HPDNSX.png" alt="image.png"></p>
+<p>这样当执行 <code>free()</code> 函数时，free 会对传入进来的内存地址向左偏移 16 字节，然后从这个 16 字节的分析出当前的内存块的大小，自然就知道要释放多大的内存了。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2024/07/29/2024-7-29-1/">https://qlipphoth.github.io/2024/07/29/2024-7-29-1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Cpp/">Cpp</a><a class="post-meta__tags" href="/tags/OS/">OS</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/07/28/2024-7-28-1/" title="C# 补完计划（二）：C# 的 GC"><img class="cover" src="https://s2.loli.net/2024/07/25/OIHbUkK6TgaV2NY.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">C# 补完计划（二）：C# 的 GC</div></div></a></div><div class="next-post pull-right"><a href="/2024/08/05/2024-8-5-1/" title="UGUI 源码解析"><img class="cover" src="https://s2.loli.net/2024/07/14/2wNJafA1kFbesZy.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">UGUI 源码解析</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2023/08/19/2023-8-19-1/" title="从零开始的 STL 实现记录"><img class="cover" src="https://s2.loli.net/2023/08/18/cDqb7yXhnK6rkpN.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-08-19</div><div class="title">从零开始的 STL 实现记录</div></div></a></div><div><a href="/2024/08/23/2024-8-23-1/" title="C++ 补完计划（七）：RTTI"><img class="cover" src="https://s2.loli.net/2023/08/12/a6FceKmItYSsW7b.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-08-23</div><div class="title">C++ 补完计划（七）：RTTI</div></div></a></div><div><a href="/2024/07/27/2024-7-27-1/" title="C++ 补完计划（六）：C++ 编译过程"><img class="cover" src="https://s2.loli.net/2023/08/12/a6FceKmItYSsW7b.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-07-27</div><div class="title">C++ 补完计划（六）：C++ 编译过程</div></div></a></div><div><a href="/2024/03/22/2024-3-22-2/" title="C++ 补完计划（五）：C++ 设计模式"><img class="cover" src="https://s2.loli.net/2023/08/12/a6FceKmItYSsW7b.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-22</div><div class="title">C++ 补完计划（五）：C++ 设计模式</div></div></a></div><div><a href="/2024/02/29/2024-2-29-1/" title="UE4智能指针与STL智能指针对比分析"><img class="cover" src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-02-29</div><div class="title">UE4智能指针与STL智能指针对比分析</div></div></a></div><div><a href="/2023/12/14/2023-12-14-2/" title="C++ 补完计划（四）：C++ 中的一些关键字"><img class="cover" src="https://s2.loli.net/2023/08/12/a6FceKmItYSsW7b.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-14</div><div class="title">C++ 补完计划（四）：C++ 中的一些关键字</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">内核</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">内存管理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E4%B8%8E%E7%89%A9%E7%90%86%E5%86%85%E5%AD%98"><span class="toc-number">2.1.</span> <span class="toc-text">虚拟内存与物理内存</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%BC%95%E5%85%A5%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98"><span class="toc-number">2.2.</span> <span class="toc-text">为什么要引入虚拟内存</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E5%88%86%E6%AE%B5%E4%B8%8E%E5%88%86%E9%A1%B5"><span class="toc-number">2.3.</span> <span class="toc-text">内存分段与分页</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E5%88%86%E6%AE%B5"><span class="toc-number">2.3.1.</span> <span class="toc-text">内存分段</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E5%88%86%E6%AE%B5%E7%9A%84%E7%BC%BA%E7%82%B9"><span class="toc-number">2.3.1.1.</span> <span class="toc-text">内存分段的缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E5%88%86%E9%A1%B5"><span class="toc-number">2.3.2.</span> <span class="toc-text">内存分页</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%A1%B5%E8%A1%A8"><span class="toc-number">2.3.2.1.</span> <span class="toc-text">页表</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%9A%E7%BA%A7%E9%A1%B5%E8%A1%A8"><span class="toc-number">2.3.2.2.</span> <span class="toc-text">多级页表</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AE%B5%E9%A1%B5%E5%BC%8F%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="toc-number">2.3.3.</span> <span class="toc-text">段页式内存管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B5%E8%A1%A8%E7%BC%93%E5%AD%98%EF%BC%88Translation-Lookaside-Buffer%EF%BC%8CTLB%EF%BC%89"><span class="toc-number">2.3.4.</span> <span class="toc-text">页表缓存（Translation Lookaside Buffer，TLB）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">3.</span> <span class="toc-text">进程虚拟内存空间布局</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E7%A9%BA%E9%97%B4%E5%92%8C%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4"><span class="toc-number">3.1.</span> <span class="toc-text">内核空间和用户空间</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%A8%E6%88%B7%E6%80%81%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4%E7%9A%84%E5%B8%83%E5%B1%80"><span class="toc-number">3.2.</span> <span class="toc-text">用户态虚拟内存空间的布局</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%B9%E6%AF%94-C-%E7%9A%84%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80"><span class="toc-number">3.2.1.</span> <span class="toc-text">对比 C++ 的内存布局</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">4.</span> <span class="toc-text">malloc</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#malloc-%E5%88%86%E9%85%8D%E5%86%85%E5%AD%98%E7%9A%84%E8%BF%87%E7%A8%8B"><span class="toc-number">4.1.</span> <span class="toc-text">malloc 分配内存的过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#malloc-%E5%88%86%E9%85%8D%E7%9A%84%E6%98%AF%E7%89%A9%E7%90%86%E5%86%85%E5%AD%98%E5%90%97%EF%BC%9F"><span class="toc-number">4.2.</span> <span class="toc-text">malloc() 分配的是物理内存吗？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#malloc-%E7%9A%84%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E7%AD%96%E7%95%A5"><span class="toc-number">4.3.</span> <span class="toc-text">malloc 的内存分配策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#free-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%83%BD%E7%9F%A5%E9%81%93%E8%A6%81%E9%87%8A%E6%94%BE%E5%A4%9A%E5%A4%A7%E7%9A%84%E5%86%85%E5%AD%98"><span class="toc-number">4.4.</span> <span class="toc-text">free 为什么能知道要释放多大的内存</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>

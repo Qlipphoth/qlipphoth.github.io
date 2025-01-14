@@ -1,0 +1,571 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>图形学补完计划（二）：Rendering Pipeline | Qliphoth's Blog</title><meta name="author" content="Qliphoth"><meta name="copyright" content="Qliphoth"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="参考:  细说图形学渲染管线 https:&#x2F;&#x2F;zhuanlan.zhihu.com&#x2F;p&#x2F;223033896   图形渲染管线 图形渲染管线是实时渲染的核心组件。图形渲染管线实际上指的是一堆原始图形数据途经一个输送管道，期间经过各种变化处理最终出现在屏幕的过程。渲染管线是实时渲染的重要工具，实时渲染离不开渲染管线。 图形渲染管线主要包括两个功能：一是将物体3D坐标转变为屏幕空间2D坐标，二是为屏幕">
+<meta property="og:type" content="article">
+<meta property="og:title" content="图形学补完计划（二）：Rendering Pipeline">
+<meta property="og:url" content="https://qlipphoth.github.io/2023/12/07/2023-12-7-1/index.html">
+<meta property="og:site_name" content="Qliphoth&#39;s Blog">
+<meta property="og:description" content="参考:  细说图形学渲染管线 https:&#x2F;&#x2F;zhuanlan.zhihu.com&#x2F;p&#x2F;223033896   图形渲染管线 图形渲染管线是实时渲染的核心组件。图形渲染管线实际上指的是一堆原始图形数据途经一个输送管道，期间经过各种变化处理最终出现在屏幕的过程。渲染管线是实时渲染的重要工具，实时渲染离不开渲染管线。 图形渲染管线主要包括两个功能：一是将物体3D坐标转变为屏幕空间2D坐标，二是为屏幕">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://s2.loli.net/2023/12/07/EMI7hzVflNRW5Xj.png">
+<meta property="article:published_time" content="2023-12-07T13:08:55.000Z">
+<meta property="article:modified_time" content="2025-01-14T10:20:41.000Z">
+<meta property="article:author" content="Qliphoth">
+<meta property="article:tag" content="图形学">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/12/07/EMI7hzVflNRW5Xj.png"><link rel="shortcut icon" href="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png"><link rel="canonical" href="https://qlipphoth.github.io/2023/12/07/2023-12-7-1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: 'days',
+  dateSuffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: {"limitCount":500,"languages":{"author":"Author: Qliphoth","link":"Link: ","source":"Source: Qliphoth's Blog","info":"Copyright is owned by the author. For commercial reprints, please contact the author for authorization. For non-commercial reprints, please indicate the source."}},
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '图形学补完计划（二）：Rendering Pipeline',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-01-14 10:20:41'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 10 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom/beauty.css" media="defer" onload="this.media='all'"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.css"><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://s2.loli.net/2023/12/06/JlZLrtjTXB3WY1o.png')"><nav id="nav"><span id="blog-info"><a href="/" title="Qliphoth's Blog"><span class="site-name">Qliphoth's Blog</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> Tags</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span></a></div><div class="menus_item"><a class="site-page" href="/talk/"><i class="fa-fw fas fa-comment-dots"></i><span> Talk</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw far fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">图形学补完计划（二）：Rendering Pipeline</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2023-12-07T13:08:55.000Z" title="Created 2023-12-07 13:08:55">2023-12-07</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2025-01-14T10:20:41.000Z" title="Updated 2025-01-14 10:20:41">2025-01-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/NERV/">NERV</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/NERV/%E5%9B%BE%E5%BD%A2%E5%AD%A6/">图形学</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">Word count:</span><span class="word-count">6.6k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">Reading time:</span><span>19min</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="图形学补完计划（二）：Rendering Pipeline"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post View:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><blockquote>
+<p>参考:</p>
+<ol start="0">
+<li><a target="_blank" rel="noopener" href="https://positiveczp.github.io/%E7%BB%86%E8%AF%B4%E5%9B%BE%E5%BD%A2%E5%AD%A6%E6%B8%B2%E6%9F%93%E7%AE%A1%E7%BA%BF.html">细说图形学渲染管线</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/223033896">https://zhuanlan.zhihu.com/p/223033896</a></li>
+</ol>
+</blockquote>
+<h2 id="图形渲染管线">图形渲染管线</h2>
+<p>图形渲染管线是实时渲染的核心组件。图形渲染管线实际上指的是一堆原始图形数据途经一个输送管道，期间经过各种变化处理最终出现在屏幕的过程。渲染管线是实时渲染的重要工具，实时渲染离不开渲染管线。</p>
+<p>图形渲染管线主要包括两个功能：一是将物体3D坐标转变为屏幕空间2D坐标，二是为屏幕每个像素点进行着色。渲染管线的一般流程如下图所示。分别是：顶点数据的输入、顶点着色器、曲面细分过程、几何着色器、图元组装、裁剪剔除、光栅化、片段着色器以及混合测试。</p>
+<p><img src="https://s2.loli.net/2023/12/07/WSidPnhIA8uyaqD.png" alt="image.png"></p>
+<p>渲染管线的一个特点就是每个阶段都会把前一个阶段的输出作为该阶段的输入。例如，片段着色器会将光栅化后的片段(以及片段的数据块)作为输入进行光照计算。除了图元组装和光栅化几个阶段是由硬件自动完成之外，管线的其他阶段管线都是可编程/可配置的。其中顶点着色器、曲面细分相关着色器、几何着色器和片段着色器是可编程的阶段，而混合测试是可高度配置的阶段。管线的可编程/可配置是渲染管理的另一个特点。因为早期的渲染管线采用的是立即渲染模式(Immediate mode，也就是固定渲染管线)，不允许开发人员改变GPU渲染的方式，而核心渲染默认(Core-profile mode)允许开发人员定制化GPU的渲染方式。</p>
+<p>渲染管线并非严格这样划分，不同的教材会有不同的划分方法。《Real Time Rendering》一书将渲染管线划分为以下四个阶段：应用程序阶段(Application)、几何处理阶段(Geometry Processing)、光栅化(Rasterization)和像素处理阶段(Pixel Processing)。应用阶段通常是在CPU端进行处理，包括碰撞检测、动画物理模拟以及视椎体剔除等任务，这个阶段会将数据送到渲染管线中；几何处理阶段主要执行顶点着色器、投影变换、裁剪和屏幕映射的功能；光栅化阶段和我们上面讨论的差不多，都是将图元离散化片段的过程；像素处理阶段包括像素着色和混合的功能。我们可以发现，虽然管线的划分粒度不一样，但是每个阶段的具体功能其实是差不多的，原理也是一样的，并没有太大的差异。</p>
+<p><img src="https://s2.loli.net/2023/12/07/EMI7hzVflNRW5Xj.png" alt="image.png"></p>
+<p>本节就按照 RTR4 中对于渲染管线的划分方式，分别分析渲染管线各个阶段的定义及作用。</p>
+<h3 id="应用程序阶段">应用程序阶段</h3>
+<p>应用程序阶段的主要任务，是识别出潜在可视的网格实例，并把它们及其材质呈交至图形硬件以供渲染。该阶段包含三大任务：可见性判断、控制着色器参数和渲染状态、提交图元至GPU硬件以供渲染。<strong>应用程序阶段在CPU端完成，后面的所有阶段都是在GPU端完成</strong>。</p>
+<p>应用程序阶段，该阶段主要是在软件层面上执行的一些工作，包括空间加速算法、视锥剔除、碰撞检测、动画物理模拟等。大体逻辑是：<strong>执行视锥剔除，查询出可能需要绘制的图元并生成渲染数据，设置渲染状态和绑定各种 Shader 参数，调用 DrawCall</strong>，进入到下一个阶段，GPU渲染管线。</p>
+<h3 id="几何阶段">几何阶段</h3>
+<p>几何阶段主要负责大部分多边形操作和顶点操作，将三维空间的数据转换为二维空间的数据，可以分为顶点着色（Vertex Shader）、投影变换、裁剪和屏幕映射阶段。</p>
+<p><img src="https://s2.loli.net/2023/12/07/WSidPnhIA8uyaqD.png" alt="image.png"></p>
+<p>从上述的流程中可以看出，VertexData 对应的就是应用程序阶段 CPU 将数据提交给 GPU 渲染的步骤。</p>
+<p>几何阶段和上述管线中对应的步骤有：顶点着色器、曲面细分、几何着色器、图元组装、裁剪；其中，曲面细分和几何着色器是可选阶段。</p>
+<p>我们知道，从输入的顶点局部坐标到最终的屏幕坐标需要经过一系列的坐标变换，才能最终显示到屏幕上。下面的图片展示了顶点坐标的一系列变换过程。我们从建模工具得到的是物体的<strong>局部坐标</strong>(Local Coordinate)，局部坐标通过模型矩阵Model变换到<strong>世界坐标</strong>(World Coordinate)，世界坐标通过观察矩阵View变换到<strong>观察坐标</strong>(View Coordinate)，观察坐标经过投影矩阵Projection变换到<strong>裁剪坐标</strong>(Clip Coordinate)，裁剪坐标经过透射除法(Perspective Division)得到<strong>标准设备空间</strong>(Normalized Device Coordinates，NDC)，NDC坐标通过视口变换(Viewport Transformation)变换到<strong>窗口坐标</strong>进行显示。</p>
+<p><img src="https://s2.loli.net/2023/12/07/OzgJ95nrMUThB7D.png" alt="image.png"></p>
+<blockquote>
+<p>关于这部分的详细推导与内容可以查看<a href="https://qlipphoth.github.io/2023/12/06/2023-12-6-1/">上一篇博客</a></p>
+</blockquote>
+<h4 id="顶点着色器">顶点着色器</h4>
+<p>顶点着色器主要功能是进行坐标变换。<strong>将输入的局部坐标变换到世界坐标、观察坐标和裁剪坐标</strong>。虽然我们也会在顶点着色器进行光照计算(称作高洛德着色)，然后经过光栅化插值得到各个片段的颜色，但由于这种方法得到的光照比较不自然，所以一般在片段着色器进行光照计算。</p>
+<p><strong>总的来说，Vertex Shader 就是对顶点数据进行 MVP 矩阵变换，最终将输入顶点从局部坐标系转换到裁剪坐标系中</strong>。</p>
+<h5 id="高洛德着色-Gouraud-Shading">高洛德着色 (Gouraud Shading)</h5>
+<p><img src="https://s2.loli.net/2023/12/07/xKlOgQnYDhNydSt.png" alt="image.png"></p>
+<ul>
+<li>
+<p>平面着色 (Flat Shading)<br>
+根据光照计算的不同，可以将着色方式分为平面着色、高洛德着色和冯氏着色。其中，最简单的着色方式就是平面着色。平面着色是使用一个顶点颜色来代表整个三角面的颜色，默认是使用索引中第一个顶点的颜色，例如，第一个顶点是红色，那么整个三角面都是红色的。上图最左边的图像就是利用平面着色渲染得到的，我们可以看到平面着色几乎无法展示高光效果。</p>
+</li>
+<li>
+<p>高洛德着色 (Gouraud Shading)<br>
+高洛德着色就是在<strong>顶点着色器</strong>中计算顶点的光照信息，所以也叫作逐顶点着色。高洛德着色是平面着色和冯氏着色的折中方案，该方法会在顶点着色器中计算三个顶点的光照信息，然后在光栅化阶段插值得到三角形内部各个片段的光照信息。上图中间的图像就是利用高洛德着色渲染得到的，我们可以看到在高光部分高洛德着色表现的并不是很令人满意，原因在于高光并非是线性变换的，所以通过插值得到的效果比较差。</p>
+</li>
+<li>
+<p>冯氏着色 (Phong Shading)<br>
+冯氏着色就是在<strong>片段着色器</strong>中计算每个片段的光照信息，所以也叫作逐片段着色。冯氏着色是三种着色方式中效果最好的，也是性能消耗最大的着色方式。冯氏着色会在根据输入的顶点法线信息在光栅化阶段插值得到各个片段的法线信息，然后在片段着色器中利用法线、纹理坐标、位置等信息计算每个片段的光照信息。开销最大，同时效果也是最好的，我们可以从上图右边的图像看到冯氏着色渲染得到的，通过对比高洛德着色和冯氏着色的高光部分，我们看发现冯氏着色处理得更加自然真实。</p>
+<blockquote>
+<p>Phong Shading 作用于 Fragment Shader 阶段，放在这里只是为了查看方便。</p>
+</blockquote>
+</li>
+</ul>
+<p>从上面的讨论我们发现：这三种着色方案中平面着色效果最差(计算量最少)，高洛德着色其次(计算量其次)，冯氏着色最好(计算量最多)。我们需要根据实际的需求选择对应的着色方式，需要在画面效果和性能开销之间进行取舍。</p>
+<h4 id="曲面细分">曲面细分</h4>
+<p><img src="https://s2.loli.net/2023/12/07/l7Yi1oKO2Ex6TJQ.png" alt="image.png"></p>
+<p>曲面细分是利用镶嵌化处理技术对三角面进行细分，以此来增加物体表面的三角面的数量，是渲染管线一个可选的阶段。它由外壳着色器(Hull Shader)、镶嵌器(Tessellator)和域着色器(Domain Shader)构成，其中外壳着色器和域着色器是可编程的，而镶嵌器是有硬件管理的。我们可以借助曲面细分的技术实现细节层次(Level-of-Detail， <strong>LOD</strong>)的机制，使得离摄像机越近的物体具有更加丰富的细节，而远离摄像机的物体具有较少的细节。</p>
+<p>我们不创建高模(high-poly)来丰富网格信息主要是考虑到以下几个原因：第一，基于GPU可以实现动态的LOD技术，可以根据物体距离摄像机的远近来调整多边形网格的细节，比如说，若物体距离摄像机比较远，则按照高模的规格对它进行渲染会造成浪费，因为我们根本看不清网格的所有具体细节。随着物体和摄像机之间距离的拉近，我们可以实现连续镶嵌化处理，增加物体的细节；第二，节省内存。我们可以在各种存储器中保存低模网格信息，再根据需求用GPU动态地增加物体表面的细节。</p>
+<h4 id="几何着色器">几何着色器</h4>
+<p>几何着色器(Geometry Shader)属于渲染管线的一个可选阶段，位于曲面细分(Tessellation)和光栅化(Rasterization)之间。顶点着色器以顶点数据作为输入数据，而几何着色器则以完整的图元(Primitive)作为输入数据。例如，以三角形的三个顶点作为输入，然后输出对应的图元。与顶点着色器不能销毁或创建顶点不同，几何着色器的主要亮点就是可以创建或销毁几何图元，此功能让GPU可以实现一些有趣的效果。例如，根据输入图元类型扩展为一个或更多其他类型的图元，或者不输出任何图元。需要注意的是，几何着色器的输出图元不一定和输入图元相同。几何着色器的一个拿手好戏就是将一个点扩展为一个四边形(即两个三角形)。几何着色器通常用来实现一种叫做公告栏(BillBoards)的视觉效果。</p>
+<blockquote>
+<p>几何着色器优点很明显：可以修改网格（增删改模型的顶点及三角面等）。但缺点也很明显：几何体着色器并行调用硬件困难，并行程度低。且对移动端不友好，需要Shader Model 4.0以上</p>
+</blockquote>
+<p>几何着色器输出的图元由顶点列表定义而成，而且顶点必须变换到裁剪空间。也就是说，<strong>经过几何着色器处理后，得到的是一系列位于齐次裁剪空间的顶点所组成的图元</strong>。这些顶点会在后面的裁剪、透视除法和光栅化阶段得到进一步处理。</p>
+<p>一个问题是，图元装配与几何着色器的顺序，这部分内容可以参考 <a target="_blank" rel="noopener" href="https://www.khronos.org/opengl/wiki/Primitive_Assembly">OpenGL Wiki</a>。</p>
+<p><img src="https://s2.loli.net/2023/12/07/tEVKT8uQkzROvnD.png" alt="image.png"></p>
+<p>大致可以理解为，如果几何着色器或图元细分（Tessellation）启用，则会将这部分所需图元进行提前<strong>进行装配</strong>。所以说图元装配和几何着色器二者哪个在前都有一定道理。</p>
+<h4 id="图元装配-Primitive-Assembly">图元装配(Primitive Assembly)</h4>
+<p>所谓图元就是虚拟空间中构成物体的最基本的几何单位，如点、线、三角形等，程序可以直接绘制任何一个图元。</p>
+<p>这个阶段主要有两个任务，一个是图元组装，另一个是图元处理。图元组装将输入的顶点组装成指定的图元；例如，点绘制方式下仅需要一个单独的顶点，每个顶点为一个图元；线段绘制方式则需要两个顶点，每两个顶点构成一个图元。图元处理会进行裁剪和背面剔除相关的优化，以减少进入光栅化的图元的数量，加速渲染过程。<strong>在光栅化之前，还会进行屏幕映射的操作：透视除法和视口变换</strong>。</p>
+<blockquote>
+<p>关于透视除法和视口变换到底属于流水线的那个阶段并没有一个权威的说法，某些资料将这两个操作归入到图元组装阶段，某些资料将它归入到光栅化过程，但对我们理解整个渲染管线并没有太大的影响，我们只需要知道在光栅化前需要进行屏幕映射就可以了，所以我们这里将屏幕映射放到了图元组装过程。这两个操作主要是硬件实现，不同厂商会有不同的设计。</p>
+</blockquote>
+<h5 id="裁剪-Clipping">裁剪(Clipping)</h5>
+<p>只有当图元部分或全部位于视椎体内时，我们才会将它送到流水线的下个阶段，也就是光栅化阶段。而完全位于视椎体外部的图元会被裁剪掉，不会对它们进行渲染。对于部分位于视椎体的图元，我们需要对他们进行所谓的剪裁操作，例如，线段的两个顶点一个位于视椎体内而另一个位于视椎体外，那么位于外部的顶点将被裁剪掉，而且在视椎体与线段的交界处产生新的顶点。通过之前顶点着色器的投影变换后，视椎体是一个立方体，这有利于我们进行裁剪操作，使得该操作变得更加容易和一致。</p>
+<p><img src="https://s2.loli.net/2023/12/07/bOwZhB6yL9FlrzY.png" alt="image.png"></p>
+<p>从上图中我们可以看到红色的三角形被丢弃了，而绿色的三角形被送到了光栅化阶段，需要特别留意的是黄色三角形被部分裁剪了，位于视椎体外的顶点被裁剪了，并且在交界处产生了两个新的顶点代替原来的旧顶点。<strong>裁剪阶段使用的是4-分量的齐次坐标</strong>，通过执行透射除法我们可以得到归一化设备坐标(Normalized Device Coordinates，NDC)，然后通过视口变换将NDC坐标变换到屏幕坐标。我们注意到<strong>透射除法在裁剪操作之后进行</strong>，可以保证透射除法中 w != 0。常见的裁剪算法有Cohen-Sutherland算法、Liang-Barsky算法和Sutherland-Hodgman多边形裁剪算法。</p>
+<blockquote>
+<p>在应用程序阶段，已经由 CPU 进行了一次视锥剔除，即只将视锥体内的物体送到 GPU 进行渲染；为什么有了视锥剔除，到这个阶段还需要进行一次裁剪呢？简单来说就是两次裁剪的粒度不同，前者是在物体对象层面的，一般对对象的包围盒做剔除，剔除掉不在视锥体内的物体，几何阶段的裁剪是在三角形层面做的，裁剪掉不在屏幕内的像素。</p>
+</blockquote>
+<h5 id="背面剔除-Back-Face-Culling">背面剔除(Back-Face Culling)</h5>
+<p><img src="https://s2.loli.net/2023/12/07/4Pbf73g6nApN5Ql.png" alt="image.png"></p>
+<p>背面剔除指的是剔除那些背对摄像机的图元，如下图所以，图元t1背向摄像机，需要被剔除，而图元t2需要被保留。我们利用三角形顶点的环绕顺序(Winding Order)来确定所谓的正面(front-face)和背面(back-face)。通常情况下，三角形的3个顶点是逆时针顺序(couter-clockwise，ccw)进行排列时，我们会认为是正面，而顺时针(clockwise，cw)排序时，我们会认为是背面。例如t2的三个顶点顺序为逆时针的(v1，v2，v3)，所以是正面，需要保留。将t1和t2投影到XY平面后，我们可以清楚的看到它们顶点的环绕顺序。</p>
+<p><img src="https://s2.loli.net/2023/12/07/w1OFQk7aCjYXfLT.png" alt="image.png"></p>
+<p>从上图可以看到，这里我们可以使用行列式(determinant)来确定投影后的2D三角形到底是CW还是CCW顺序。行列式的第一行由顶点v1和v2坐标确定，而第二行由顶点v1和v3坐标确定。如果行列式的值为负数，那么该三角面是背面朝向；如果为正数，则是正面朝向。</p>
+<p>虽然背面剔除可以大概减少50%的渲染图元，但是在渲染半透明或不透明物体时，不能使用该技术，否则会出现穿帮的情况，因为半透明或不透明物体可以看到物体背后的东西。</p>
+<h3 id="光栅化阶段">光栅化阶段</h3>
+<p>经过图元组装以及屏幕映射阶段后，我们将物体坐标变换到了窗口坐标。光栅化是个离散化的过程，将3D连续的物体转化为离散屏幕像素点的过程。包括三角形组装和三角形遍历两个阶段。光栅化会确定图元所覆盖的片段，利用顶点属性插值得到片段的属性信息，然后送到片段着色器进行颜色计算，我们这里需要注意到片段是像素的候选者，只有通过后续的测试，片段才会成为最终显示的像素点。</p>
+<p>这里有个概念需要我们注意，就是如何定义图元覆盖(Overlap)一个片段。如果我们采用最简单的点采样(Point Sampling)而且采样点位于片段的中央位置。当采样点位于图元的内部时，我们认为图元覆盖了该片段。这是最简单的采样方式，除此还有超级采样和多重采样技术，我们会在抗锯齿的部分展开介绍。</p>
+<h4 id="三角形组装-Triangle-Setup">三角形组装 (Triangle Setup)</h4>
+<p>三角形组装会计算出三角形的一些重要数据(如三条边的方程、深度值等)以供三角形遍历阶段使用，这些数据同样可用于各种着色数据的插值。</p>
+<h4 id="三角形遍历-Triangle-Traversal">三角形遍历 (Triangle Traversal)</h4>
+<p>三角形遍历会找到哪些像素被三角形所覆盖，并对这些像素的属性值进行插值。通过判断像素的中心采样点是否被三角形覆盖来决定该像素是否要生成片段。通过三角形三个顶点的属性数据，插值得到每个像素的属性值。此外透视校正插值也在这个阶段执行。里对法线的插值进行了可视化处理。不过我们这里只是进行一个简单的示范，一般情况下，我们很少去插值颜色值，通常都是利用片段着色器对片段进行着色。</p>
+<p><img src="https://s2.loli.net/2023/12/07/HdwYXvxCQFLGgT4.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2023/12/07/tMleuFTYwL3hrVp.png" alt="image.png"></p>
+<p>这两个阶段是完全硬件控制的，不可进行任何操作。</p>
+<h3 id="像素处理阶段">像素处理阶段</h3>
+<p>这一阶段包括片段着色器（Fragment Shader）与测试混合两个部分</p>
+<h4 id="片段着色器-Fragment-Shader">片段着色器(Fragment Shader)</h4>
+<p>片段着色器在DirectX中也成为像素着色器(Pixel Shader)。片段着色器用来决定屏幕上像素的最终颜色。在这个阶段会进行光照计算以及阴影处理，是渲染管线高级效果产生的地方。这部分内容非常多，开个坑下一篇博客介绍。</p>
+<h4 id="测试与混合-Tests-Blending">测试与混合(Tests &amp; Blending)</h4>
+<p>管线的最后一个阶段是测试混合阶段。测试包括裁切测试、Alpha测试、模板测试和深度测试。各种测试的相对顺序：裁剪-&gt;Alpha-&gt;模板-&gt;深度。</p>
+<p>没有经过测试的片段会被丢弃，不需要进行混合阶段；经过测试的片段会进入混合阶段。</p>
+<p>值得注意的是，半透明物体的绘制需要遵循画家算法(painter Algorithm)由远及近进行绘制，因为半透明的混合跟物体的顺序有严格的对应关系。从下面两张图我们可以看到，先绘制红色还是先绘制绿色对最终颜色的有这很大的影响。所以，绘制半透明物体之前，我们需要按照距离远近对场景中的物体进行严格排序，然而这是一个非常棘手的问题。比如，我们如何排序下面几个三角形呢？所以当进行半透明物体渲染时，一般会使用顺序无关的半透明渲染技术(Order-independent transparency，OIT)。</p>
+<p><img src="https://s2.loli.net/2023/12/07/AmOqzh6SKuP8U25.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2023/12/07/EWxLQc1T63hZmjN.png" alt="image.png"></p>
+<p>经过了测试合并阶段，并存到帧缓冲的像素值，才是最终呈现在屏幕上的图像。</p>
+<ol>
+<li>
+<p>裁剪测试</p>
+<p>在裁剪测试中，允许程序员开设一个裁剪框，只有在裁剪框内的片元才会被显示出来，在裁剪框外的片元皆被剔除。裁切测试可以避免当视口比屏幕窗口小时造成的渲染浪费问题。通常情况下，我们会让视口的大小和屏幕空间一样大，此时可以不需要使用到裁切测试。但当两者大小不一样大时，我们需要用到裁切测试来避免其产生的一些问题。如下图所示：</p>
+<p><img src="https://s2.loli.net/2023/12/07/mdxoMhWDNGgRfVj.png" alt="image.png"></p>
+<p>图中的绿色方框表示视口范围，大的黑色方框表示屏幕范围，当视口小于屏幕的时候，如果不用裁剪测试，则会将视口范围外的背景白色也绘制出来，导致渲染浪费，结果也不正确。</p>
+</li>
+<li>
+<p>Alpha 测试</p>
+<p>像素值一般是由RGBA四个分量来表示的，其中的A是alpha，表示的是物体的不透明度。1代表完全不透明，0代表完全透明。可选的 alpha 测试可在深度测试执行前在传入片段上运行。片段的 alpha 值与参考值作某些特定的测试（如等于，大于等），如果片段未能通过测试，它将不再进行进一步的处理。 alpha 测试经常用于不影响深度缓存的全透明片段的处理。简单来说，就是根据物体的透明度来决定是否渲染。</p>
+</li>
+<li>
+<p>模板测试</p>
+<p>模板缓冲是用于记录所呈现图元位置的离屏缓存，如下图所示，如果使用了模板缓冲，就相当于在屏幕上有一块模板盖在上面，只有位于这个模板中的图元片段，才会被渲染出来。模板测试就是用片段指定的参考值与模板缓冲中的模板值进行比较，如果达到预设的比较结果，模板测试就通过了，然后用这个参考值更新模板缓冲中的模板值；如果没有达到预设的比较结果，就是没有通过测试，就不更新模板缓冲。简单来说，就是根据物体的位置范围决定是否渲染。</p>
+<p><img src="https://s2.loli.net/2023/12/07/5wV6fZKQ91mUOTa.png" alt="image.png"></p>
+<blockquote>
+<p>模板测试在 UGUI 中的应用：<a href="https://qlipphoth.github.io/2024/09/30/2024-9-30-1/">Mask 组件</a></p>
+</blockquote>
+</li>
+<li>
+<p>深度测试</p>
+<p>我们在观察物体的时候，位于前面的物体会把后面的物体挡住，所以在渲染的时候，图形管线会先对每一个位置的像素存储一个深度值，称为深度缓冲，代表了该像素点在3D世界中离相机最近物体的深度值。于是在计算每一个物体的像素值的时候，都会将它的深度值和缓冲器当中的深度值进行比较，如果这个深度值小于缓冲器中的深度值，就更新深度缓冲和颜色缓冲的值，否则就丢弃；简单来说，就是根据物体的深度决定是否渲染。</p>
+<blockquote>
+<p>Early-Z是一种提前深度测试的技术，它位于光栅化阶段之后，像素处理阶段之前，目的是减少进入像素着色阶段的片段，优化性能。Early-Z会带来透明测试的冲突，例如某个片元A虽然遮挡了另一个片元B，但A却是透明的，GPU应当渲染的是片元B，这就产生了矛盾，这就是透明度测试会导致性能下降的原因(因为无法用Early-Z)，但是有一种叫PreZ的技术可以解决这个问题。</p>
+</blockquote>
+</li>
+</ol>
+<p>在经过了上述的裁切测试、Alpha测试、模板测试和深度测试后，最终还要经过Alpha混合。从前面我们已经知道，颜色一般采用RGBA四分量来进行表示，其中颜色的Alpha值用来表示物体本身的不透明度，引入Alpha技术是为了实现半透明的效果。当场景中既有不透明物体，又有半透明物体时，我们需要先渲染不透明物体，渲染顺序为从前往后(Front-to-Back)；然后再渲染半透明物体，渲染顺序为从后往前(Back-to-Front)。</p>
+<p>我们需要对不透明和半透明物体分开渲染是因为：我们可以透过半透明物体看到半透明物体背后的东西，所以对半透明物体进行渲染时需要后面图层的信息，才能够正确进行混合。</p>
+<h2 id="总结">总结</h2>
+<p>到此为止，基本上就把图形渲染管线的各个阶段分析清楚了，光栅化阶段的抗锯齿方法与片段着色器的具体内容留到其他的文章中分析。</p>
+<p>现在再看这些描述渲染管线流程的示意图，是不是就清晰多了。</p>
+<p><img src="https://s2.loli.net/2023/12/07/EMI7hzVflNRW5Xj.png" alt="image.png"></p>
+<p><img src="https://s2.loli.net/2023/12/07/WSidPnhIA8uyaqD.png" alt="image.png"></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io">Qliphoth</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://qlipphoth.github.io/2023/12/07/2023-12-7-1/">https://qlipphoth.github.io/2023/12/07/2023-12-7-1/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%9B%BE%E5%BD%A2%E5%AD%A6/">图形学</a></div><div class="post_share"><div class="social-share" data-image="https://s2.loli.net/2023/12/07/EMI7hzVflNRW5Xj.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/12/06/2023-12-6-1/" title="图形学补完计划（一）：MVP矩阵"><img class="cover" src="https://s2.loli.net/2023/12/06/JlZLrtjTXB3WY1o.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">Previous Post</div><div class="prev_info">图形学补完计划（一）：MVP矩阵</div></div></a></div><div class="next-post pull-right"><a href="/2023/12/08/2023-12-8-1/" title="图形学补完计划（三）：Antialiasing"><img class="cover" src="https://s2.loli.net/2023/12/08/CZwgpQi641rs7Pf.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">Next Post</div><div class="next_info">图形学补完计划（三）：Antialiasing</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><div><a href="/2023/12/14/2023-12-14-1/" title="图形学补完计划（五）：Forward Rendering &amp; Deferred Rendering"><img class="cover" src="https://s2.loli.net/2023/12/06/JlZLrtjTXB3WY1o.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-14</div><div class="title">图形学补完计划（五）：Forward Rendering &amp; Deferred Rendering</div></div></a></div><div><a href="/2023/12/10/2023-12-10-1/" title="图形学补完计划（四）：光照模型-2"><img class="cover" src="https://s2.loli.net/2023/12/11/16sU4Xkpd9TvhEA.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-10</div><div class="title">图形学补完计划（四）：光照模型-2</div></div></a></div><div><a href="/2023/12/08/2023-12-8-2/" title="图形学补完计划（四）：光照模型-1"><img class="cover" src="https://s2.loli.net/2023/12/08/zJmF2S7y6UplW4r.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-08</div><div class="title">图形学补完计划（四）：光照模型-1</div></div></a></div><div><a href="/2023/12/08/2023-12-8-1/" title="图形学补完计划（三）：Antialiasing"><img class="cover" src="https://s2.loli.net/2023/12/08/CZwgpQi641rs7Pf.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-08</div><div class="title">图形学补完计划（三）：Antialiasing</div></div></a></div><div><a href="/2023/12/06/2023-12-6-1/" title="图形学补完计划（一）：MVP矩阵"><img class="cover" src="https://s2.loli.net/2023/12/06/JlZLrtjTXB3WY1o.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-12-06</div><div class="title">图形学补完计划（一）：MVP矩阵</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> Comment</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://s2.loli.net/2023/08/12/NkcT1PLmZVj5iY3.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Qliphoth</div><div class="author-info__description">See You Next Game</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">131</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">22</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/qlipphoth"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/qlipphoth" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="https://space.bilibili.com/33030427" target="_blank" title="Bilibili"><i class="fab fa-bilibili" style="color: #FB7299;"></i></a><a class="social-icon" href="mailto:1841362281@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Catalog</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93%E7%AE%A1%E7%BA%BF"><span class="toc-number">1.</span> <span class="toc-text">图形渲染管线</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E9%98%B6%E6%AE%B5"><span class="toc-number">1.1.</span> <span class="toc-text">应用程序阶段</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%A0%E4%BD%95%E9%98%B6%E6%AE%B5"><span class="toc-number">1.2.</span> <span class="toc-text">几何阶段</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8"><span class="toc-number">1.2.1.</span> <span class="toc-text">顶点着色器</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%AB%98%E6%B4%9B%E5%BE%B7%E7%9D%80%E8%89%B2-Gouraud-Shading"><span class="toc-number">1.2.1.1.</span> <span class="toc-text">高洛德着色 (Gouraud Shading)</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9B%B2%E9%9D%A2%E7%BB%86%E5%88%86"><span class="toc-number">1.2.2.</span> <span class="toc-text">曲面细分</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%A0%E4%BD%95%E7%9D%80%E8%89%B2%E5%99%A8"><span class="toc-number">1.2.3.</span> <span class="toc-text">几何着色器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9B%BE%E5%85%83%E8%A3%85%E9%85%8D-Primitive-Assembly"><span class="toc-number">1.2.4.</span> <span class="toc-text">图元装配(Primitive Assembly)</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%A3%81%E5%89%AA-Clipping"><span class="toc-number">1.2.4.1.</span> <span class="toc-text">裁剪(Clipping)</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%83%8C%E9%9D%A2%E5%89%94%E9%99%A4-Back-Face-Culling"><span class="toc-number">1.2.4.2.</span> <span class="toc-text">背面剔除(Back-Face Culling)</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%89%E6%A0%85%E5%8C%96%E9%98%B6%E6%AE%B5"><span class="toc-number">1.3.</span> <span class="toc-text">光栅化阶段</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%89%E8%A7%92%E5%BD%A2%E7%BB%84%E8%A3%85-Triangle-Setup"><span class="toc-number">1.3.1.</span> <span class="toc-text">三角形组装 (Triangle Setup)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%89%E8%A7%92%E5%BD%A2%E9%81%8D%E5%8E%86-Triangle-Traversal"><span class="toc-number">1.3.2.</span> <span class="toc-text">三角形遍历 (Triangle Traversal)</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%83%8F%E7%B4%A0%E5%A4%84%E7%90%86%E9%98%B6%E6%AE%B5"><span class="toc-number">1.4.</span> <span class="toc-text">像素处理阶段</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%89%87%E6%AE%B5%E7%9D%80%E8%89%B2%E5%99%A8-Fragment-Shader"><span class="toc-number">1.4.1.</span> <span class="toc-text">片段着色器(Fragment Shader)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E4%B8%8E%E6%B7%B7%E5%90%88-Tests-Blending"><span class="toc-number">1.4.2.</span> <span class="toc-text">测试与混合(Tests &amp; Blending)</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">2.</span> <span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门"><img src="https://s2.loli.net/2023/08/14/mkTFOD8fJbu4VH3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="TortoiseSVN 简单入门"/></a><div class="content"><a class="title" href="/2024/12/10/2024-12-10-1/" title="TortoiseSVN 简单入门">TortoiseSVN 简单入门</a><time datetime="2024-12-10T17:21:06.000Z" title="Created 2024-12-10 17:21:06">2024-12-10</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（下）"/></a><div class="content"><a class="title" href="/2024/11/23/2024-11-23-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（下）">Lua 源码解析（二）：基本数据类型 —— 表（下）</a><time datetime="2024-11-23T16:58:19.000Z" title="Created 2024-11-23 16:58:19">2024-11-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 表（上）"/></a><div class="content"><a class="title" href="/2024/11/17/2024-11-17-1/" title="Lua 源码解析（二）：基本数据类型 —— 表（上）">Lua 源码解析（二）：基本数据类型 —— 表（上）</a><time datetime="2024-11-17T16:36:15.000Z" title="Created 2024-11-17 16:36:15">2024-11-17</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— 字符串"/></a><div class="content"><a class="title" href="/2024/11/15/2024-11-15-1/" title="Lua 源码解析（二）：基本数据类型 —— 字符串">Lua 源码解析（二）：基本数据类型 —— 字符串</a><time datetime="2024-11-15T16:09:05.000Z" title="Created 2024-11-15 16:09:05">2024-11-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"><img src="https://s2.loli.net/2024/11/08/NRtroieCAd98Uzp.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型"/></a><div class="content"><a class="title" href="/2024/11/14/2024-11-14-1/" title="Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型">Lua 源码解析（二）：基本数据类型 —— Lua 中的数据类型</a><time datetime="2024-11-14T15:28:37.000Z" title="Created 2024-11-14 15:28:37">2024-11-14</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://s2.loli.net/2023/12/06/JlZLrtjTXB3WY1o.png')"><div id="footer-wrap"><div class="copyright">&copy;2022 - 2025 By Qliphoth</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Read Mode"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="Switch Between Traditional Chinese And Simplified Chinese">繁</button><button id="darkmode" type="button" title="Switch Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table Of Contents"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="Scroll To Comments"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="Back To Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+      region: '',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script>window.addEventListener('load', () => {
+  const changeContent = (content) => {
+    if (content === '') return content
+
+    content = content.replace(/<img.*?src="(.*?)"?[^\>]+>/ig, '[image]') // replace image link
+    content = content.replace(/<a[^>]+?href=["']?([^"']+)["']?[^>]*>([^<]+)<\/a>/gi, '[link]') // replace url
+    content = content.replace(/<pre><code>.*?<\/pre>/gi, '[code]') // replace code
+    content = content.replace(/<[^>]+>/g,"") // remove html tag
+
+    if (content.length > 150) {
+      content = content.substring(0,150) + '...'
+    }
+    return content
+  }
+
+  const getComment = () => {
+    const runTwikoo = () => {
+      twikoo.getRecentComments({
+        envId: 'https://qliphoth.netlify.app/.netlify/functions/twikoo',
+        region: '',
+        pageSize: 6,
+        includeReply: true
+      }).then(function (res) {
+        const twikooArray = res.map(e => {
+          return {
+            'content': changeContent(e.comment),
+            'avatar': e.avatar,
+            'nick': e.nick,
+            'url': e.url + '#' + e.id,
+            'date': new Date(e.created).toISOString()
+          }
+        })
+
+        saveToLocal.set('twikoo-newest-comments', JSON.stringify(twikooArray), 10/(60*24))
+        generateHtml(twikooArray)
+      }).catch(function (err) {
+        const $dom = document.querySelector('#card-newest-comments .aside-list')
+        $dom.textContent= "Unable to get the data, please make sure the settings are correct."
+      })
+    }
+
+    if (typeof twikoo === 'object') {
+      runTwikoo()
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runTwikoo)
+    }
+  }
+
+  const generateHtml = array => {
+    let result = ''
+
+    if (array.length) {
+      for (let i = 0; i < array.length; i++) {
+        result += '<div class=\'aside-list-item\'>'
+
+        if (true) {
+          const name = 'src'
+          result += `<a href='${array[i].url}' class='thumbnail'><img ${name}='${array[i].avatar}' alt='${array[i].nick}'></a>`
+        }
+        
+        result += `<div class='content'>
+        <a class='comment' href='${array[i].url}' title='${array[i].content}'>${array[i].content}</a>
+        <div class='name'><span>${array[i].nick} / </span><time datetime="${array[i].date}">${btf.diffDate(array[i].date, true)}</time></div>
+        </div></div>`
+      }
+    } else {
+      result += 'No Comment'
+    }
+
+    let $dom = document.querySelector('#card-newest-comments .aside-list')
+    $dom.innerHTML= result
+    window.lazyLoadInstance && window.lazyLoadInstance.update()
+    window.pjax && window.pjax.refresh($dom)
+  }
+
+  const newestCommentInit = () => {
+    if (document.querySelector('#card-newest-comments .aside-list')) {
+      const data = saveToLocal.get('twikoo-newest-comments')
+      if (data) {
+        generateHtml(JSON.parse(data))
+      } else {
+        getComment()
+      }
+    }
+  }
+
+  newestCommentInit()
+  document.addEventListener('pjax:complete', newestCommentInit)
+})</script><div class="aplayer no-destroy" data-id="8654234284" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="false"> </div><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start -->
+  <script data-pjax src="https://cdn.jsdelivr.net/gh/Zfour/hexo-github-calendar@1.21/hexo_githubcalendar.js"></script>
+  <script data-pjax>
+        function GithubCalendarConfig(){
+            var git_githubapiurl ="https://hexo-api-khaki.vercel.app/api/?user=qlipphoth";
+            var git_color =['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'];
+            var git_user ="qlipphoth";
+            var parent_div_git = document.getElementById('recent-posts');
+            var git_div_html = '<div class="recent-post-item" style="width:100%;height:auto;padding:10px;"><div id="github_loading" style="width:10%;height:100%;margin:0 auto;display: block"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div><div id="github_container"></div></div>';
+            if(parent_div_git && location.pathname =='/'){
+                console.log("已挂载hexo-github-calendar https://github.com/Barry-Flynn/hexo-github-calendar");
+                // parent_div_git.innerHTML=git_div_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",git_div_html) // 有报错，但不影响使用(支持pjax跳转)
+            };
+            GithubCalendar(git_githubapiurl,git_color,git_user)
+        }
+        if(document.getElementById('recent-posts')){
+            GithubCalendarConfig()
+        }
+    </script>
+    <style>#github_container{min-height:280px}@media screen and (max-width:650px) {#github_container{background-image:;min-height:0px}}</style>
+    <style></style><script data-pjax>function electric_clock_injector_config(){
+                var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+                var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img id="card-clock-loading" src="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-clock/clock/images/weather/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading" class="entered loading"></div></div></div></div></div>';
+                console.log('已挂载electric_clock')
+                // parent_div_git.innerHTML=item_html+parent_div_git.innerHTML // 无报错，但不影响使用(支持pjax跳转)
+                parent_div_git.insertAdjacentHTML("afterbegin",item_html) // 有报错，但不影响使用(支持pjax跳转)
+            }if( document.getElementsByClassName('sticky_layout')[0] && (location.pathname ==='/'|| '/' ==='all')){
+
+            electric_clock_injector_config()
+        } </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax  src="https://cdn.jsdelivr.net/gh/Zfour/hexo-electric-clock@1.0.6/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><div id="ghbdages" style="overflow:hidden;max-height:90px;height:auto;text-align:center;margin-top:10px"><div class="swiper-wrapper"><div class="swiper-slide"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" title="博客框架为Hexo_v5.4.0"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" title="主题版本Butterfly_v3.8.2"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></div></div></div><style>a.github-badge:hover:before {display:none}</style>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><script defer src="https://unpkg.zhimg.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://unpkg.zhimg.com/hexo-butterfly-footer-beautify/lib/swiperbdage_init.min.js"></script><!-- hexo injector body_end end --></body></html>
